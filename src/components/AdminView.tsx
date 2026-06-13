@@ -27,9 +27,12 @@ import {
   Stethoscope,
   Trash2,
   Video,
+  Edit,
   TrendingUp,
   IndianRupee,
-  Activity
+  Activity,
+  Sparkles,
+  Columns
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -59,17 +62,26 @@ export const AdminView: React.FC = () => {
     galleryItems,
     addGalleryItem,
     removeGalleryItem,
+    updateGalleryItem,
     reels,
     addReel,
     removeReel,
+    updateReel,
+    beforeAfterItems,
+    addBeforeAfter,
+    deleteBeforeAfter,
+    skinLeads,
+    fetchSkinLeads,
+    deleteSkinLead,
+    updateSkinLeadStatus,
     totalPages: serverTotalPages,
     totalRecords
   } = useApp();
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'schedule' | 'gallery' | 'insights' | 'settings'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'schedule' | 'gallery' | 'beforeafter' | 'skinleads' | 'insights' | 'settings'>(() => {
     const hash = window.location.hash.replace('#', '');
-    if (['dashboard', 'appointments', 'schedule', 'gallery', 'insights', 'settings'].includes(hash)) {
+    if (['dashboard', 'appointments', 'schedule', 'gallery', 'beforeafter', 'skinleads', 'insights', 'settings'].includes(hash)) {
       return hash as any;
     }
     return 'dashboard';
@@ -126,10 +138,20 @@ export const AdminView: React.FC = () => {
     }
   }, [activeTab, currentPage, statusFilter, adminSearchQuery]);
 
+  useEffect(() => {
+    if (activeTab === 'skinleads') {
+      fetchSkinLeads();
+    }
+  }, [activeTab]);
+
   // Modal States
   const [showNewApptModal, setShowNewApptModal] = useState(false);
   const [showNewGalleryModal, setShowNewGalleryModal] = useState(false);
+  const [showEditGalleryModal, setShowEditGalleryModal] = useState(false);
+  const [editingGalleryItem, setEditingGalleryItem] = useState<{ _id?: string, title: string, url: string } | null>(null);
   const [showNewReelModal, setShowNewReelModal] = useState(false);
+  const [showEditReelModal, setShowEditReelModal] = useState(false);
+  const [editingReel, setEditingReel] = useState<{ _id?: string, title: string, coverImage: string, videoUrl: string, type: 'photo_camera' | 'smart_display' } | null>(null);
   const [showToast, setShowToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
 
   // Form States
@@ -137,8 +159,9 @@ export const AdminView: React.FC = () => {
     name: '',
     treatment: 'Acne Therapy',
     time: '10:00 AM',
-    date: 'Oct 15',
+    date: new Date().toISOString().split('T')[0],
     mobile: '',
+    email: '',
     age: '25'
   });
 
@@ -190,12 +213,14 @@ export const AdminView: React.FC = () => {
           </div>
         </div>
 
-        <nav className="flex-1 px-4 space-y-2">
+        <nav className="flex-1 px-4 space-y-2 overflow-y-auto hide-scrollbar">
           {[
             { id: 'dashboard', icon: LayoutDashboard, label: 'Overview' },
             { id: 'appointments', icon: Users, label: 'Patient Registry' },
             { id: 'schedule', icon: Calendar, label: 'Schedule Hub' },
             { id: 'gallery', icon: ImageIcon, label: 'Digital Gallery' },
+            { id: 'beforeafter', icon: Columns, label: 'Before & After' },
+            { id: 'skinleads', icon: Sparkles, label: 'Skin Scan Leads' },
             { id: 'insights', icon: Video, label: 'Clinical Insights' },
             { id: 'settings', icon: Settings, label: 'Clinic Config' },
           ].map((item) => (
@@ -240,7 +265,10 @@ export const AdminView: React.FC = () => {
         <header className="h-20 bg-white/80 backdrop-blur-md border-b border-neutral-200 px-10 flex items-center justify-between sticky top-0 z-30">
           <div className="flex items-center gap-4">
             <h2 className="text-xl font-serif font-bold text-neutral-900 capitalize">
-              {activeTab === 'dashboard' ? 'Practice Overview' : activeTab === 'insights' ? 'Clinical Insights' : activeTab}
+              {activeTab === 'dashboard' ? 'Practice Overview' : 
+               activeTab === 'insights' ? 'Clinical Insights' : 
+               activeTab === 'beforeafter' ? 'Before & After Gallery' :
+               activeTab === 'skinleads' ? 'Skin Scan Leads' : activeTab}
             </h2>
             <div className="h-4 w-[1px] bg-neutral-200 mx-2" />
             <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
@@ -557,7 +585,18 @@ export const AdminView: React.FC = () => {
                               </div>
                               <div>
                                 <p className="font-bold text-sm text-neutral-900">{appt.patientName || 'Incognito Guest'}</p>
-                                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{appt.patientId || 'NO-ID'}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{appt.patientId || 'NO-ID'}</span>
+                                  {appt.consultationType === 'ONLINE' ? (
+                                    <span className="text-[8px] font-extrabold tracking-widest bg-blue-50 text-blue-600 px-2 py-0.5 rounded-md border border-blue-100 flex items-center gap-1">
+                                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" /> ONLINE
+                                    </span>
+                                  ) : (
+                                    <span className="text-[8px] font-extrabold tracking-widest bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md border border-emerald-100">
+                                      IN-CLINIC
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </div>
                           </td>
@@ -584,6 +623,17 @@ export const AdminView: React.FC = () => {
                           </td>
                           <td className="px-8 py-6 text-right">
                             <div className="flex items-center justify-end gap-2">
+                                {appt.consultationType === 'ONLINE' && (
+                                  <button 
+                                    onClick={() => {
+                                      setView('video-room');
+                                    }}
+                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors animate-pulse"
+                                    title="Join Video Consultation"
+                                  >
+                                    <Video className="w-5 h-5" />
+                                  </button>
+                                )}
                                 <button 
                                   onClick={() => {
                                     updateAppointmentStatus(appt._id!, 'CONFIRMED');
@@ -810,15 +860,32 @@ export const AdminView: React.FC = () => {
                           <p className="font-bold text-xs text-neutral-900">{item.title}</p>
                           <p className="text-[9px] text-neutral-400 uppercase font-extrabold tracking-widest mt-1">Live Portfolio</p>
                         </div>
-                        <button 
-                          onClick={() => {
-                            removeGalleryItem(item._id);
-                            triggerToast('Asset removed from portfolio.');
-                          }}
-                          className="p-2 hover:bg-rose-50 rounded-xl text-neutral-400 hover:text-rose-600 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex gap-1">
+                          <button 
+                            onClick={() => {
+                              setEditingGalleryItem({
+                                _id: item._id,
+                                title: item.title,
+                                url: item.url
+                              });
+                              setShowEditGalleryModal(true);
+                            }}
+                            className="p-2 hover:bg-emerald-50 rounded-xl text-neutral-400 hover:text-emerald-700 transition-colors"
+                            title="Edit Photo"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button 
+                            onClick={() => {
+                              removeGalleryItem(item._id);
+                              triggerToast('Asset removed from portfolio.');
+                            }}
+                            className="p-2 hover:bg-rose-50 rounded-xl text-neutral-400 hover:text-rose-600 transition-colors"
+                            title="Delete Photo"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                       <div className="absolute inset-0 bg-emerald-900/0 group-hover:bg-emerald-900/10 transition-colors pointer-events-none" />
                     </div>
@@ -877,15 +944,34 @@ export const AdminView: React.FC = () => {
                             <p className="font-bold text-xs text-neutral-900 line-clamp-1">{reel.title}</p>
                             <p className="text-[9px] text-neutral-400 uppercase font-extrabold tracking-widest mt-1">Insights Reel</p>
                           </div>
-                          <button 
-                            onClick={() => {
-                              removeReel(reel._id!);
-                              triggerToast('Video content removed.');
-                            }}
-                            className="p-1.5 hover:bg-rose-50 rounded-lg text-neutral-400 hover:text-rose-600 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          <div className="flex gap-1">
+                            <button 
+                              onClick={() => {
+                                setEditingReel({
+                                  _id: reel._id,
+                                  title: reel.title,
+                                  coverImage: reel.coverImage,
+                                  videoUrl: reel.videoUrl,
+                                  type: reel.type
+                                });
+                                setShowEditReelModal(true);
+                              }}
+                              className="p-1.5 hover:bg-emerald-50 rounded-lg text-neutral-400 hover:text-emerald-700 transition-colors"
+                              title="Edit Insight"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => {
+                                removeReel(reel._id!);
+                                triggerToast('Video content removed.');
+                              }}
+                              className="p-1.5 hover:bg-rose-50 rounded-lg text-neutral-400 hover:text-rose-600 transition-colors"
+                              title="Delete Insight"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1009,6 +1095,218 @@ export const AdminView: React.FC = () => {
                 </div>
               </motion.div>
             )}
+
+            {activeTab === 'beforeafter' && (
+              <motion.div 
+                key="beforeafter"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-8"
+              >
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold">Transformation Gallery</h3>
+                    <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest mt-2">Manage Before & After Clinical Results</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                  
+                  {/* Upload Form */}
+                  <div className="bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm space-y-6">
+                    <h4 className="font-serif text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-3">Upload New Transformation</h4>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      const form = e.currentTarget;
+                      const fd = new FormData(form);
+                      const title = fd.get('title') as string;
+                      const treatment = fd.get('treatment') as string;
+                      const beforeUrl = fd.get('beforeUrl') as string;
+                      const afterUrl = fd.get('afterUrl') as string;
+
+                      if (!title || !treatment || !beforeUrl || !afterUrl) {
+                        return triggerToast('Please fill all fields', 'error');
+                      }
+
+                      const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                      if (!isValidUrl(beforeUrl) || !isValidUrl(afterUrl)) {
+                        return triggerToast('Before and After images must be valid URLs starting with http:// or https://', 'error');
+                      }
+
+                      await addBeforeAfter({ title, treatment, beforeUrl, afterUrl });
+                      form.reset();
+                      triggerToast('Transformation added successfully!');
+                    }} className="space-y-4">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Case Title</label>
+                        <input type="text" name="title" required className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5" placeholder="e.g. 4 Weeks Acne Treatment" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Treatment Category</label>
+                        <select name="treatment" required className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5 cursor-pointer">
+                          <option value="Acne Therapy">Acne Therapy</option>
+                          <option value="Laser Resurfacing">Laser Resurfacing</option>
+                          <option value="Hair Restoration">Hair Restoration</option>
+                          <option value="Medical Consult">Medical Consult</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Before Image URL</label>
+                        <input type="url" name="beforeUrl" required className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5" placeholder="https://..." />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">After Image URL</label>
+                        <input type="url" name="afterUrl" required className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5" placeholder="https://..." />
+                      </div>
+                      <button type="submit" className="w-full bg-emerald-900 text-white py-3.5 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-emerald-950 transition-all cursor-pointer">
+                        Add to Gallery
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* List Grid - 2 columns */}
+                  <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                    {beforeAfterItems.map((item) => (
+                      <div key={item._id} className="bg-white rounded-[24px] border border-neutral-100 shadow-sm overflow-hidden flex flex-col justify-between">
+                        <div className="grid grid-cols-2 aspect-[4/3] relative bg-neutral-50">
+                          <img src={item.beforeUrl} alt="Before" className="w-full h-full object-cover border-r border-white" />
+                          <img src={item.afterUrl} alt="After" className="w-full h-full object-cover" />
+                          <div className="absolute bottom-2 left-2 bg-emerald-950/80 text-white text-[8px] font-bold uppercase tracking-wider px-2 py-1 rounded">Before</div>
+                          <div className="absolute bottom-2 right-2 bg-emerald-500/80 text-white text-[8px] font-bold uppercase tracking-wider px-2 py-1 rounded">After</div>
+                        </div>
+                        <div className="p-5 flex items-center justify-between">
+                          <div>
+                            <h5 className="font-serif font-bold text-neutral-900 text-sm truncate max-w-[150px]" title={item.title}>{item.title}</h5>
+                            <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider mt-0.5">{item.treatment}</p>
+                          </div>
+                          <button 
+                            onClick={async () => {
+                              if (confirm('Delete this transformation record?')) {
+                                await deleteBeforeAfter(item._id!);
+                                triggerToast('Transformation deleted.', 'error');
+                              }
+                            }}
+                            className="p-2 text-neutral-300 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {beforeAfterItems.length === 0 && (
+                      <div className="sm:col-span-2 p-12 text-center text-neutral-400 font-bold text-xs uppercase bg-white border border-neutral-100 rounded-[24px]">
+                        No transformations loaded in the clinic database.
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'skinleads' && (
+              <motion.div 
+                key="skinleads"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="space-y-8"
+              >
+                <div>
+                  <h3 className="font-serif text-3xl font-bold">Skin Scan Leads</h3>
+                  <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest mt-2">{skinLeads.length} leads generated from AI Scanner</p>
+                </div>
+
+                <div className="bg-white rounded-[32px] border border-neutral-100 shadow-sm overflow-hidden whitespace-nowrap">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-neutral-50/50 border-b border-neutral-100">
+                        <th className="px-8 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Lead Details</th>
+                        <th className="px-8 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-center">Skin Type & Concern</th>
+                        <th className="px-8 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-center">Overall Score & Diagnostics</th>
+                        <th className="px-8 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-center">Status</th>
+                        <th className="px-8 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-neutral-50">
+                      {skinLeads.map((lead) => (
+                        <tr key={lead._id} className="group hover:bg-neutral-50/50 transition-colors">
+                          <td className="px-8 py-6">
+                            <div className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-900 flex items-center justify-center font-extrabold text-xs">
+                                {lead.name.charAt(0)}
+                              </div>
+                              <div>
+                                <p className="font-bold text-sm text-neutral-900">{lead.name}</p>
+                                <p className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{lead.email} &bull; {lead.mobile} &bull; Age {lead.age || 'N/A'}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-center">
+                            <div>
+                              <span className="text-xs font-bold text-neutral-600 bg-neutral-100 px-3 py-1 rounded-lg inline-block">
+                                {lead.skinType || 'Combination'}
+                              </span>
+                              <p className="text-[9px] text-emerald-800 font-bold uppercase mt-1">Concern: {lead.primaryConcern || 'None'}</p>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-center">
+                            <div className="inline-flex flex-col items-center">
+                              <span className="text-sm font-extrabold text-emerald-950 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1">
+                                Score: {lead.scanResults.overallScore}%
+                              </span>
+                              <p className="text-[8px] text-neutral-400 font-bold uppercase tracking-widest mt-1">
+                                H:{lead.scanResults.hydration}% &bull; R:{lead.scanResults.redness}% &bull; P:{lead.scanResults.pores}% &bull; S:{lead.scanResults.spots}%
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-8 py-6 text-center">
+                            <select 
+                              value={lead.status}
+                              onChange={(e) => {
+                                updateSkinLeadStatus(lead._id!, e.target.value);
+                                triggerToast(`Lead status updated to ${e.target.value}.`);
+                              }}
+                              className={`text-xs font-bold border rounded-lg px-2 py-1.5 cursor-pointer outline-none ${
+                                lead.status === 'NEW' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                                lead.status === 'CONTACTED' ? 'bg-amber-50 text-amber-700 border-amber-100' :
+                                'bg-neutral-100 text-neutral-500 border-neutral-200'
+                              }`}
+                            >
+                              <option value="NEW">NEW</option>
+                              <option value="CONTACTED">CONTACTED</option>
+                              <option value="CONVERTED">CONVERTED</option>
+                            </select>
+                          </td>
+                          <td className="px-8 py-6 text-right">
+                            <button 
+                              onClick={async () => {
+                                if (confirm('Purge this lead record permanently?')) {
+                                  await deleteSkinLead(lead._id!);
+                                  triggerToast('Lead record purged.', 'error');
+                                }
+                              }}
+                              className="p-2 text-neutral-300 hover:text-rose-600 rounded-xl transition-colors animate-pulse"
+                              title="Purge Lead"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {skinLeads.length === 0 && (
+                        <tr>
+                          <td colSpan={5} className="px-8 py-20 text-center text-neutral-400 font-bold text-sm bg-neutral-50/30">
+                            No skin diagnostic scan leads generated yet.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </main>
@@ -1058,15 +1356,46 @@ export const AdminView: React.FC = () => {
 
                 <form className="space-y-6" onSubmit={(e) => {
                   e.preventDefault();
+
+                  // Name validation
+                  if (newAppt.name.trim().length < 2 || !/^[A-Za-z\s]+$/.test(newAppt.name.trim())) {
+                    return triggerToast('Name must contain only letters and be at least 2 characters', 'error');
+                  }
+                  
+                  // Age validation
+                  const ageVal = parseInt(newAppt.age, 10);
+                  if (isNaN(ageVal) || ageVal < 1 || ageVal > 120) {
+                    return triggerToast('Age must be between 1 and 120', 'error');
+                  }
+
+                  // Mobile validation
+                  if (!/^[6-9]\d{9}$/.test(newAppt.mobile.trim())) {
+                    return triggerToast('Mobile number must be a valid 10-digit number starting with 6-9', 'error');
+                  }
+
+                  // Email validation
+                  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newAppt.email.trim())) {
+                    return triggerToast('Email address must be a valid email format', 'error');
+                  }
+
                   addAppointment({
                     patientName: newAppt.name,
                     patientAvatar: '',
                     treatment: newAppt.treatment,
                     time: newAppt.time,
                     date: newAppt.date,
-                    mobile: newAppt.mobile || '+91 91100 22334',
-                    email: 'walkin@dermelixir.com',
-                    age: parseInt(newAppt.age)
+                    mobile: newAppt.mobile.trim(),
+                    email: newAppt.email.trim().toLowerCase(),
+                    age: ageVal
+                  });
+                  setNewAppt({
+                    name: '',
+                    treatment: 'Acne Therapy',
+                    time: '10:00 AM',
+                    date: new Date().toISOString().split('T')[0],
+                    mobile: '',
+                    email: '',
+                    age: '25'
                   });
                   setShowNewApptModal(false);
                   triggerToast('Patient registered and slot assigned.');
@@ -1094,17 +1423,33 @@ export const AdminView: React.FC = () => {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Involved Service</label>
-                      <select 
-                        value={newAppt.treatment}
-                        onChange={(e) => setNewAppt({...newAppt, treatment: e.target.value})}
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Mobile Contact</label>
+                      <input 
+                        required type="text" value={newAppt.mobile}
+                        onChange={(e) => setNewAppt({...newAppt, mobile: e.target.value})}
+                        placeholder="10-digit number"
                         className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
-                      >
-                        <option>Acne Therapy</option>
-                        <option>Laser Resurfacing</option>
-                        <option>Hair Restoration</option>
-                        <option>Hydrafacial Deluxe</option>
-                      </select>
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Email Address</label>
+                      <input 
+                        required type="email" value={newAppt.email}
+                        onChange={(e) => setNewAppt({...newAppt, email: e.target.value})}
+                        placeholder="patient@domain.com"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Assigned Date</label>
+                      <input 
+                        required type="date" value={newAppt.date}
+                        onChange={(e) => setNewAppt({...newAppt, date: e.target.value})}
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
                     </div>
                     <div className="space-y-2">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Assigned Time Slot</label>
@@ -1115,6 +1460,21 @@ export const AdminView: React.FC = () => {
                         className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Involved Service</label>
+                    <select 
+                      value={newAppt.treatment}
+                      onChange={(e) => setNewAppt({...newAppt, treatment: e.target.value})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer"
+                    >
+                      <option>Acne Therapy</option>
+                      <option>Laser Resurfacing</option>
+                      <option>Hair Restoration</option>
+                      <option>Hydrafacial Deluxe</option>
+                      <option>Medical Consult</option>
+                    </select>
                   </div>
 
                   <button 
@@ -1158,6 +1518,10 @@ export const AdminView: React.FC = () => {
 
                 <form className="space-y-6" onSubmit={(e) => {
                   e.preventDefault();
+                  const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                  if (!isValidUrl(newGallery.url)) {
+                    return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                  }
                   addGalleryItem(newGallery);
                   setNewGallery({ title: '', url: '' });
                   setShowNewGalleryModal(false);
@@ -1195,6 +1559,80 @@ export const AdminView: React.FC = () => {
         )}
       </AnimatePresence>
 
+      {/* Edit Gallery Item Modal */}
+      <AnimatePresence>
+        {showEditGalleryModal && editingGalleryItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => { setShowEditGalleryModal(false); setEditingGalleryItem(null); }}
+              className="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-xl rounded-[40px] overflow-hidden shadow-2xl relative z-10"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-start mb-10">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Edit Portfolio Item</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Clinic Showcase Update</p>
+                  </div>
+                  <button onClick={() => { setShowEditGalleryModal(false); setEditingGalleryItem(null); }} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-6" onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingGalleryItem && editingGalleryItem._id) {
+                    const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                    if (!isValidUrl(editingGalleryItem.url)) {
+                      return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                    }
+                    updateGalleryItem(editingGalleryItem._id, {
+                      title: editingGalleryItem.title,
+                      url: editingGalleryItem.url
+                    });
+                    setShowEditGalleryModal(false);
+                    setEditingGalleryItem(null);
+                    triggerToast('Showcase item updated.');
+                  }
+                }}>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Asset Title</label>
+                    <input 
+                      required type="text" value={editingGalleryItem.title}
+                      onChange={(e) => setEditingGalleryItem({...editingGalleryItem, title: e.target.value})}
+                      placeholder="e.g. VIP Treatment Wing"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Image Endpoint (URL)</label>
+                    <input 
+                      required type="url" value={editingGalleryItem.url}
+                      onChange={(e) => setEditingGalleryItem({...editingGalleryItem, url: e.target.value})}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
+                  >
+                    Save Changes
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* New Insight Reel Modal */}
       <AnimatePresence>
         {showNewReelModal && (
@@ -1223,6 +1661,10 @@ export const AdminView: React.FC = () => {
 
                 <form className="space-y-6" onSubmit={(e) => {
                   e.preventDefault();
+                  const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                  if (!isValidUrl(newReel.coverImage) || !isValidUrl(newReel.videoUrl)) {
+                    return triggerToast('Cover and Video links must be valid URLs starting with http:// or https://', 'error');
+                  }
                   addReel(newReel);
                   setNewReel({ title: '', coverImage: '', videoUrl: '', type: 'smart_display' });
                   setShowNewReelModal(false);
@@ -1272,6 +1714,102 @@ export const AdminView: React.FC = () => {
                     className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
                   >
                     Dispatch to Live Channel
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Insight Reel Modal */}
+      <AnimatePresence>
+        {showEditReelModal && editingReel && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => { setShowEditReelModal(false); setEditingReel(null); }}
+              className="absolute inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-xl rounded-[40px] overflow-hidden shadow-2xl relative z-10"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-start mb-10">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Edit Clinical Insight</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Dermatological Video Channel</p>
+                  </div>
+                  <button onClick={() => { setShowEditReelModal(false); setEditingReel(null); }} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-6" onSubmit={(e) => {
+                  e.preventDefault();
+                  if (editingReel && editingReel._id) {
+                    const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                    if (!isValidUrl(editingReel.coverImage) || !isValidUrl(editingReel.videoUrl)) {
+                      return triggerToast('Cover and Video links must be valid URLs starting with http:// or https://', 'error');
+                    }
+                    updateReel(editingReel._id, {
+                      title: editingReel.title,
+                      coverImage: editingReel.coverImage,
+                      videoUrl: editingReel.videoUrl,
+                      type: editingReel.type
+                    });
+                    setShowEditReelModal(false);
+                    setEditingReel(null);
+                    triggerToast('Insight updated successfully.');
+                  }
+                }}>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Reel Title</label>
+                    <input 
+                      required type="text" value={editingReel.title}
+                      onChange={(e) => setEditingReel({...editingReel, title: e.target.value})}
+                      placeholder="e.g. PRP Therapy Benefits"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Asset (URL)</label>
+                    <input 
+                      required type="url" value={editingReel.coverImage}
+                      onChange={(e) => setEditingReel({...editingReel, coverImage: e.target.value})}
+                      placeholder="YouTube Thumbnail or Source Image"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Video Link (YouTube/Instagram)</label>
+                    <input 
+                      required type="url" value={editingReel.videoUrl}
+                      onChange={(e) => setEditingReel({...editingReel, videoUrl: e.target.value})}
+                      placeholder="https://www.youtube.com/shorts/... or Insta reel link"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Interaction Type</label>
+                    <select 
+                      value={editingReel.type}
+                      onChange={(e) => setEditingReel({...editingReel, type: e.target.value as any})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    >
+                      <option value="smart_display">Video Playback (YouTube Short/Instagram)</option>
+                      <option value="photo_camera">Clinical Snapshot</option>
+                    </select>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
+                  >
+                    Save Changes
                   </button>
                 </form>
               </div>

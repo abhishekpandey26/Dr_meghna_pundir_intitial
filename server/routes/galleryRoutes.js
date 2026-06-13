@@ -22,6 +22,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Update
+router.put('/:id', async (req, res) => {
+  try {
+    const updated = await GalleryItem.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) {
+      return res.status(404).json({ error: 'Gallery item not found' });
+    }
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Delete
 router.delete('/:id', async (req, res) => {
   try {

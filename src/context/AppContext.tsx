@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Appointment, ClinicConfig, ReelInsight } from '../types';
+import { Appointment, ClinicConfig, ReelInsight, BeforeAfterItem, SkinLead, Patient } from '../types';
 
-export type AppView = 'landing' | 'booking' | 'admin' | 'admin-login';
+export type AppView = 'landing' | 'booking' | 'admin' | 'admin-login' | 'skin-analyzer' | 'video-room' | 'patient-portal';
 
 export interface FetchAppointmentsParams {
   page?: number;
@@ -38,14 +38,31 @@ interface AppContextProps {
   galleryItems: { _id: string, title: string, url: string }[];
   addGalleryItem: (item: { title: string, url: string }) => Promise<void>;
   removeGalleryItem: (id: string) => Promise<void>;
+  updateGalleryItem: (id: string, item: { title: string, url: string }) => Promise<void>;
   reels: ReelInsight[];
   addReel: (reel: { title: string, coverImage: string, videoUrl: string, type: 'photo_camera' | 'smart_display' }) => Promise<void>;
   removeReel: (id: string) => Promise<void>;
+  updateReel: (id: string, reel: { title: string, coverImage: string, videoUrl: string, type: 'photo_camera' | 'smart_display' }) => Promise<void>;
   lockSlot: (date: string, startTime: string) => Promise<any>;
   initiatePayment: (data: any) => Promise<any>;
   verifyPayment: (paymentId: string, paymentRequestId: string, appointmentId: string) => Promise<any>;
+  beforeAfterItems: BeforeAfterItem[];
+  addBeforeAfter: (item: Omit<BeforeAfterItem, '_id'>) => Promise<void>;
+  deleteBeforeAfter: (id: string) => Promise<void>;
+  skinLeads: SkinLead[];
+  fetchSkinLeads: () => Promise<void>;
+  submitSkinLead: (lead: Omit<SkinLead, '_id' | 'status'>) => Promise<any>;
+  deleteSkinLead: (id: string) => Promise<void>;
+  updateSkinLeadStatus: (id: string, status: string) => Promise<void>;
   totalPages: number;
   totalRecords: number;
+  patientToken: string | null;
+  currentPatient: Patient | null;
+  patientAppointments: Appointment[];
+  loginPatientWithGoogle: (email: string, name: string) => Promise<{ success: boolean; message?: string }>;
+  logoutPatient: () => void;
+  loadPatientProfile: () => Promise<void>;
+  updatePatientProfile: (name: string, mobile: string, age?: number) => Promise<{ success: boolean; message?: string }>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -68,6 +85,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
   const [reels, setReels] = useState<ReelInsight[]>([]);
+  const [beforeAfterItems, setBeforeAfterItems] = useState<BeforeAfterItem[]>([]);
+  const [skinLeads, setSkinLeads] = useState<SkinLead[]>([]);
+  
+  const [patientToken, setPatientToken] = useState<string | null>(() => {
+    return localStorage.getItem('dermelixir_patient_token');
+  });
+  const [currentPatient, setCurrentPatient] = useState<Patient | null>(null);
+  const [patientAppointments, setPatientAppointments] = useState<Appointment[]>([]);
   
   const [emergencyClosed, setEmergencyClosedState] = useState<boolean>(() => {
     return localStorage.getItem('dermelixir_emergency_closed') === 'true';
@@ -90,17 +115,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const fetchInitialData = async () => {
     try {
-      const [configRes, apptsRes, galleryRes, reelsRes] = await Promise.all([
+      const [configRes, apptsRes, galleryRes, reelsRes, beforeAfterRes] = await Promise.all([
         fetch(`${API_BASE}/config`),
         fetch(`${API_BASE}/appointments`),
         fetch(`${API_BASE}/gallery`),
-        fetch(`${API_BASE}/reels`)
+        fetch(`${API_BASE}/reels`),
+        fetch(`${API_BASE}/beforeafter`)
       ]);
 
       const configData = await configRes.json();
       const apptsData = await apptsRes.json();
       const galleryData = await galleryRes.json();
       const reelsData = await reelsRes.json();
+      const beforeAfterData = await beforeAfterRes.json();
 
       setClinicConfig(configData);
       setAppointments(apptsData.appointments ?? (Array.isArray(apptsData) ? apptsData : []));
@@ -108,6 +135,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (apptsData.totalRecords) setTotalRecords(apptsData.totalRecords);
       setGalleryItems(galleryData);
       setReels(reelsData);
+      setBeforeAfterItems(beforeAfterData);
     } catch (err) {
       console.error('Failed to sync with Medical Hub:', err);
     }
@@ -240,6 +268,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setGalleryItems(await res.json());
   };
 
+  const updateGalleryItem = async (id: string, item: { title: string, url: string }) => {
+    await fetch(`${API_BASE}/gallery/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+    const res = await fetch(`${API_BASE}/gallery`);
+    setGalleryItems(await res.json());
+  };
+
   const addReel = async (reel: { title: string, coverImage: string, videoUrl: string, type: string }) => {
     await fetch(`${API_BASE}/reels`, {
       method: 'POST',
@@ -252,6 +290,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const removeReel = async (id: string) => {
     await fetch(`${API_BASE}/reels/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/reels`);
+    setReels(await res.json());
+  };
+
+  const updateReel = async (id: string, reel: { title: string, coverImage: string, videoUrl: string, type: 'photo_camera' | 'smart_display' }) => {
+    await fetch(`${API_BASE}/reels/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(reel)
+    });
     const res = await fetch(`${API_BASE}/reels`);
     setReels(await res.json());
   };
@@ -274,6 +322,128 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setEmergencyClosedState(closed);
     localStorage.setItem('dermelixir_emergency_closed', String(closed));
   };
+
+  const addBeforeAfter = async (item: Omit<BeforeAfterItem, '_id'>) => {
+    await fetch(`${API_BASE}/beforeafter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item)
+    });
+    const res = await fetch(`${API_BASE}/beforeafter`);
+    setBeforeAfterItems(await res.json());
+  };
+
+  const deleteBeforeAfter = async (id: string) => {
+    await fetch(`${API_BASE}/beforeafter/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/beforeafter`);
+    setBeforeAfterItems(await res.json());
+  };
+
+  const fetchSkinLeads = async () => {
+    const res = await fetch(`${API_BASE}/skinleads`);
+    setSkinLeads(await res.json());
+  };
+
+  const submitSkinLead = async (lead: Omit<SkinLead, '_id' | 'status'>) => {
+    const res = await fetch(`${API_BASE}/skinleads`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(lead)
+    });
+    const data = await res.json();
+    return data;
+  };
+
+  const deleteSkinLead = async (id: string) => {
+    await fetch(`${API_BASE}/skinleads/${id}`, { method: 'DELETE' });
+    await fetchSkinLeads();
+  };
+
+  const updateSkinLeadStatus = async (id: string, status: string) => {
+    await fetch(`${API_BASE}/skinleads/${id}/status`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
+    });
+    await fetchSkinLeads();
+  };
+
+  const loginPatientWithGoogle = async (email: string, name: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/auth/google-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name })
+      });
+      const data = await res.json();
+      if (data.success && data.token) {
+        setPatientToken(data.token);
+        localStorage.setItem('dermelixir_patient_token', data.token);
+        setCurrentPatient(data.patient);
+        setPatientAppointments(data.appointments || []);
+      }
+      return data;
+    } catch (err) {
+      console.error('Google login error:', err);
+      return { success: false, message: 'Failed to connect to authentication server' };
+    }
+  };
+
+  const logoutPatient = () => {
+    setPatientToken(null);
+    localStorage.removeItem('dermelixir_patient_token');
+    setCurrentPatient(null);
+    setPatientAppointments([]);
+    setView('landing');
+  };
+
+  const loadPatientProfile = async () => {
+    if (!patientToken) return;
+    try {
+      const res = await fetch(`${API_BASE}/auth/patient-profile`, {
+        headers: {
+          'Authorization': `Bearer ${patientToken}`
+        }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentPatient(data.patient);
+        setPatientAppointments(data.appointments || []);
+      } else {
+        logoutPatient();
+      }
+    } catch (error) {
+      console.error('Error loading patient profile:', error);
+    }
+  };
+
+  const updatePatientProfile = async (name: string, mobile: string, age?: number) => {
+    if (!patientToken) return { success: false, message: 'Not authenticated' };
+    try {
+      const res = await fetch(`${API_BASE}/auth/update-profile`, {
+        method: 'PUT',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${patientToken}`
+        },
+        body: JSON.stringify({ name, mobile, age })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentPatient(data.patient);
+      }
+      return data;
+    } catch (error) {
+      console.error('Error updating patient profile:', error);
+      return { success: false, message: 'Failed to update profile' };
+    }
+  };
+
+  useEffect(() => {
+    if (patientToken) {
+      loadPatientProfile();
+    }
+  }, [patientToken]);
 
   return (
     <AppContext.Provider value={{
@@ -301,14 +471,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       galleryItems,
       addGalleryItem,
       removeGalleryItem,
+      updateGalleryItem,
       reels,
       addReel,
       removeReel,
+      updateReel,
       lockSlot,
       initiatePayment,
       verifyPayment,
+      beforeAfterItems,
+      addBeforeAfter,
+      deleteBeforeAfter,
+      skinLeads,
+      fetchSkinLeads,
+      submitSkinLead,
+      deleteSkinLead,
+      updateSkinLeadStatus,
       totalPages,
-      totalRecords
+      totalRecords,
+      patientToken,
+      currentPatient,
+      patientAppointments,
+      loginPatientWithGoogle,
+      logoutPatient,
+      loadPatientProfile,
+      updatePatientProfile
     }}>
       {children}
     </AppContext.Provider>

@@ -10,6 +10,12 @@ const appointmentSchema = new mongoose.Schema({
   email: { type: String, required: true },
   age: { type: Number },
   concern: { type: String },
+  consultationType: { 
+    type: String, 
+    enum: ['IN_CLINIC', 'ONLINE'], 
+    default: 'IN_CLINIC' 
+  },
+  meetLink: { type: String },
   status: { 
     type: String, 
     enum: ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW', 'RESCHEDULED', 'PAYMENT_PENDING', 'PAYMENT_FAILED'],

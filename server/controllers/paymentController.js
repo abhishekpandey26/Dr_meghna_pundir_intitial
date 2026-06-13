@@ -2,6 +2,7 @@ const axios = require('axios');
 const Appointment = require('../models/Appointment');
 const SlotLock = require('../models/SlotLock');
 const dotenv = require('dotenv');
+const { sendBookingEmail } = require('../utils/emailService');
 dotenv.config();
 
 const API_KEY = process.env.INSTAMOJO_API_KEY;
@@ -47,11 +48,11 @@ exports.createPaymentRequest = async (req, res) => {
     // 2. Prepare Instamojo data
     const payload = {
       purpose: `Consultation Fee - ${patientData.patientName}`,
-      amount: '50.00',
+      amount: '11.00',
       buyer_name: patientData.patientName,
       email: patientData.email,
       phone: patientData.mobile,
-      redirect_url: `http://localhost:3002/?view=booking&payment_status=check&appointmentId=${appointment._id}`,
+      redirect_url: `http://localhost:3000/?view=booking&payment_status=check&appointmentId=${appointment._id}`,
       send_email: false,
       send_sms: false,
       allow_repeated_payments: false
@@ -119,6 +120,11 @@ exports.verifyPayment = async (req, res) => {
 
         // Remove slot lock
         await SlotLock.findOneAndDelete({ date: appt.date, startTime: appt.startTime });
+
+        // Dispatch confirmation email asynchronously (does not block HTTP response)
+        sendBookingEmail(appt).catch((emailErr) => {
+          console.error('Asynchronous email trigger failure:', emailErr.message);
+        });
       }
 
       return res.json({ success: true, message: 'Payment verified and appointment confirmed.' });

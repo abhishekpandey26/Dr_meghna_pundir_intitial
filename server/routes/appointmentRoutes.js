@@ -57,6 +57,15 @@ router.patch('/:id/status', async (req, res) => {
   try {
     const { status } = req.body;
     const updated = await Appointment.findByIdAndUpdate(req.params.id, { status }, { new: true });
+    
+    // Asynchronously dispatch email receipt if status is set to CONFIRMED or Approved
+    if (updated && (status === 'CONFIRMED' || status === 'Approved')) {
+      const { sendBookingEmail } = require('../utils/emailService');
+      sendBookingEmail(updated).catch((emailErr) => {
+        console.error('Manual confirmation email dispatch fail:', emailErr.message);
+      });
+    }
+
     res.json(updated);
   } catch (err) {
     res.status(500).json({ error: err.message });

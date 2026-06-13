@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 export const BookingView: React.FC = () => {
   const {
@@ -11,18 +13,43 @@ export const BookingView: React.FC = () => {
     setSelectedTreatmentForBooking,
     lockSlot,
     initiatePayment,
-    verifyPayment
+    verifyPayment,
+    patientToken,
+    currentPatient,
+    loginPatientWithGoogle,
+    updatePatientProfile
   } = useApp();
 
   const [step, setStep] = useState<number>(1);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
-  const [selectedTreatment, setSelectedTreatment] = useState<string>(initialTreatment || '');
-  const [formData, setFormData] = useState({ name: '', mobile: '', email: '', age: '', concern: '' });
+  const [selectedTreatment, setSelectedTreatment] = useState<string>(initialTreatment || 'Medical Consult');
+  const [formData, setFormData] = useState({
+    name: '',
+    mobile: '',
+    email: '',
+    age: '',
+    concern: '',
+    consultationType: 'IN_CLINIC' as 'IN_CLINIC' | 'ONLINE'
+  });
   const [formErrors, setFormErrors] = useState<string>('');
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [isVerifyingPayment, setIsVerifyingPayment] = useState<boolean>(false);
 
-  const stepTitles = ['Select Date', 'Select Time', 'Select Domain', 'Patient Details', 'Summary'];
+  // Pre-populate formData from currentPatient profile details
+  useEffect(() => {
+    if (currentPatient) {
+      setFormData(prev => ({
+        ...prev,
+        name: currentPatient.name || prev.name,
+        mobile: currentPatient.mobile || prev.mobile,
+        email: currentPatient.email || prev.email,
+        age: currentPatient.age ? String(currentPatient.age) : prev.age
+      }));
+    }
+  }, [currentPatient]);
+
+  const stepTitles = ['Select Date', 'Select Time', 'Patient Details', 'Summary'];
 
   const calendarDays = useMemo(() => {
     const days = [];
@@ -48,7 +75,7 @@ export const BookingView: React.FC = () => {
         setIsVerifyingPayment(true);
         try {
           const res = await verifyPayment(paymentId, requestId, appointmentId);
-          if (res.success) setStep(6);
+          if (res.success) setStep(5);
           else alert('Verification failed: ' + res.message);
         } catch (err) {
           alert('Network encryption error.');
@@ -84,22 +111,86 @@ export const BookingView: React.FC = () => {
     const res = await lockSlot(selectedDate, time);
     if (res.error) return alert(res.message);
     setSelectedTime(time);
-    setStep(3);
+    
+    // Check if returning user has complete profile details
+    const isProfileComplete = currentPatient && 
+      currentPatient.name && 
+      currentPatient.mobile && 
+      currentPatient.email && 
+      currentPatient.age;
+
+    if (isProfileComplete) {
+      setStep(4);
+    } else {
+      setStep(3);
+    }
   };
 
-  const validateAndReview = () => {
-    if (!formData.name || !formData.mobile || !formData.email || !formData.age) return setFormErrors('Required medical fields missing');
-    setStep(5);
+  const validateFields = () => {
+    const errs: { [key: string]: string } = {};
+
+    // Name validation
+    if (!formData.name.trim()) {
+      errs.name = 'Patient name is required';
+    } else if (formData.name.trim().length < 2) {
+      errs.name = 'Name must be at least 2 characters';
+    } else if (!/^[A-Za-z\s]+$/.test(formData.name.trim())) {
+      errs.name = 'Name can only contain letters and spaces';
+    }
+
+    // Phone validation
+    if (!formData.mobile.trim()) {
+      errs.mobile = 'Mobile number is required';
+    } else if (!/^[6-9]\d{9}$/.test(formData.mobile.trim())) {
+      errs.mobile = 'Enter a valid 10-digit mobile number';
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      errs.email = 'Email address is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      errs.email = 'Enter a valid email address';
+    }
+
+    // Age validation
+    const ageNum = parseInt(formData.age, 10);
+    if (!formData.age) {
+      errs.age = 'Age is required';
+    } else if (isNaN(ageNum) || ageNum < 1 || ageNum > 120) {
+      errs.age = 'Enter a valid age between 1 and 120';
+    }
+
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  };
+
+  const validateAndReview = async () => {
+    if (validateFields()) {
+      setFormErrors('');
+      try {
+        // Sync & save user profile details (name, mobile, age) to DB
+        const res = await updatePatientProfile(formData.name, formData.mobile, parseInt(formData.age, 10));
+        if (res.success) {
+          setStep(4);
+        } else {
+          setFormErrors(res.message || 'Failed to update patient profile.');
+        }
+      } catch (err) {
+        setFormErrors('Failed to connect to profile server.');
+      }
+    } else {
+      setFormErrors('Please correct the validation errors in your profile.');
+    }
   };
 
   const handleCompleteBooking = async () => {
     const res = await initiatePayment({
       date: selectedDate, startTime: selectedTime,
-      patientData: { 
-        ...formData, 
+      patientData: {
+        ...formData,
         patientName: formData.name,
-        age: parseInt(formData.age), 
-        treatment: selectedTreatment 
+        age: parseInt(formData.age),
+        treatment: selectedTreatment
       }
     });
     if (res.success && res.longurl) window.location.href = res.longurl;
@@ -120,20 +211,48 @@ export const BookingView: React.FC = () => {
       </nav>
 
       <main className="pt-24 pb-20 px-4 md:px-6 overflow-x-hidden">
-        {step < 5 && (
-          <div className="max-w-xl mx-auto mb-10 md:mb-16">
-            <div className="flex justify-between items-end mb-3">
-              <div className="space-y-0.5">
-                <p className="text-[9px] uppercase font-bold tracking-[0.4em] text-emerald-900/30">Medical Path</p>
-                <h2 className="font-serif text-lg md:text-xl font-bold text-emerald-950 leading-none">{stepTitles[step - 1]}</h2>
-              </div>
-              <p className="text-[9px] font-bold text-emerald-900/40 uppercase tracking-widest">{step} / 5</p>
-            </div>
-            <div className="h-px bg-emerald-900/5 rounded-full overflow-hidden">
-              <motion.div animate={{ width: `${(step / 5) * 100}%` }} className="h-full bg-emerald-900" transition={{ type: 'spring', damping: 20 }} />
+        {!patientToken ? (
+          <div className="max-w-md mx-auto my-12 md:my-20">
+            <div className="glass-card bg-white/60 p-8 md:p-12 rounded-[32px] md:rounded-[50px] shadow-2xl shadow-emerald-900/5 text-center border border-white">
+              <span className="material-symbols-outlined text-emerald-950 text-5xl mb-6">lock</span>
+              <h2 className="font-serif text-2xl md:text-3xl font-bold text-emerald-950 mb-3 tracking-tight">Secure Booking</h2>
+              <p className="text-neutral-500 text-xs leading-relaxed mb-8 max-w-xs mx-auto">
+                Please sign in with Google to confirm your diagnostic slot, manage appointments, and access your private health records.
+              </p>
+              <button 
+                onClick={async () => {
+                  try {
+                    const result = await signInWithPopup(auth, googleProvider);
+                    const user = result.user;
+                    if (user && user.email) {
+                      await loginPatientWithGoogle(user.email, user.displayName || '');
+                    }
+                  } catch (err: any) {
+                    alert('Google login failed: ' + err.message);
+                  }
+                }}
+                className="w-full bg-emerald-950 text-white hover:bg-black py-4.5 px-6 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] shadow-lg flex items-center justify-center gap-2.5 transition-all cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-sm">login</span> Sign In with Google
+              </button>
             </div>
           </div>
-        )}
+        ) : (
+          <>
+            {step <= stepTitles.length && (
+              <div className="max-w-xl mx-auto mb-10 md:mb-16">
+                <div className="flex justify-between items-end mb-3">
+                  <div className="space-y-0.5">
+                    <p className="text-[9px] uppercase font-bold tracking-[0.4em] text-emerald-900/30">Medical Path</p>
+                    <h2 className="font-serif text-lg md:text-xl font-bold text-emerald-950 leading-none">{stepTitles[step - 1]}</h2>
+                  </div>
+                  <p className="text-[9px] font-bold text-emerald-900/40 uppercase tracking-widest">{step} / {stepTitles.length}</p>
+                </div>
+                <div className="h-px bg-emerald-900/5 rounded-full overflow-hidden">
+                  <motion.div animate={{ width: `${(step / stepTitles.length) * 100}%` }} className="h-full bg-emerald-900" transition={{ type: 'spring', damping: 20 }} />
+                </div>
+              </div>
+            )}
 
         <AnimatePresence mode="wait">
           {step === 1 && (
@@ -188,22 +307,7 @@ export const BookingView: React.FC = () => {
           )}
 
           {step === 3 && (
-            <motion.div key="s3" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-5xl mx-auto text-center">
-              <h1 className="font-serif text-4xl md:text-6xl font-bold text-emerald-950 mb-10 md:mb-16 tracking-tighter">Clinical Domain</h1>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                {['Acne Therapy', 'Laser Resurfacing', 'Hair Restoration', 'Medical Consult'].map(t => (
-                  <button key={t} onClick={() => { setSelectedTreatment(t); setStep(4); }} className="glass-card bg-white/60 p-8 md:p-12 rounded-[32px] md:rounded-[40px] text-left border border-white shadow-xl shadow-emerald-900/5 hover:border-emerald-900/20 group transition-all">
-                    <p className="font-serif text-2xl md:text-3xl font-bold text-emerald-950 mb-2 group-hover:italic transition-all">{t}</p>
-                    <p className="text-[9px] font-bold text-emerald-900/40 uppercase tracking-[0.3em]">Specialized Diagnostic Session</p>
-                  </button>
-                ))}
-              </div>
-              <button onClick={() => setStep(2)} className="mt-12 text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest underline">Adjust Time Slot</button>
-            </motion.div>
-          )}
-
-          {step === 4 && (
-            <motion.div key="s4" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto">
+            <motion.div key="s3" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto">
               <h1 className="font-serif text-4xl md:text-6xl font-bold text-emerald-950 text-center mb-8 md:mb-12 tracking-tighter">Patient Profile</h1>
               <div className="glass-card bg-white/60 p-6 md:p-12 rounded-[32px] md:rounded-[50px] border border-white shadow-2xl shadow-emerald-900/5 space-y-8 md:space-y-10">
                 {formErrors && <div className="p-4 bg-rose-50 text-rose-800 rounded-2xl text-[10px] font-bold uppercase tracking-widest border border-rose-100">{formErrors}</div>}
@@ -211,32 +315,88 @@ export const BookingView: React.FC = () => {
                   {['name', 'mobile', 'email', 'age'].map(f => (
                     <div key={f} className="space-y-3">
                       <label className="text-[9px] uppercase font-bold tracking-[0.4em] text-emerald-900/30 ml-2">{f === 'name' ? 'Legal Name' : f}</label>
-                      <input type={f === 'age' ? 'number' : 'text'} name={f} value={(formData as any)[f]} onChange={e => setFormData({ ...formData, [f]: e.target.value })} className="w-full bg-white/50 border border-emerald-900/5 rounded-[24px] py-5 px-8 text-[13px] font-medium text-emerald-950 focus:border-emerald-900 transition-all outline-none" placeholder={`Patient ${f}...`} />
+                      <input
+                        type={f === 'age' ? 'number' : 'text'}
+                        name={f}
+                        value={(formData as any)[f]}
+                        onChange={e => {
+                          setFormData({ ...formData, [f]: e.target.value });
+                          if (fieldErrors[f]) {
+                            setFieldErrors(prev => ({ ...prev, [f]: '' }));
+                          }
+                        }}
+                        className={`w-full bg-white/50 border rounded-[24px] py-5 px-8 text-[13px] font-medium text-emerald-950 focus:border-emerald-900 transition-all outline-none ${fieldErrors[f] ? 'border-rose-400 focus:border-rose-500' : 'border-emerald-900/5'
+                          }`}
+                        placeholder={`Patient ${f}...`}
+                      />
+                      {fieldErrors[f] && (
+                        <p className="text-[10px] text-rose-500 font-bold ml-3 mt-1 uppercase tracking-wider">{fieldErrors[f]}</p>
+                      )}
                     </div>
                   ))}
+
+                  <div className="md:col-span-2 space-y-3">
+                    <label className="text-[9px] uppercase font-bold tracking-[0.4em] text-emerald-900/30 ml-2">Consultation Mode</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, consultationType: 'IN_CLINIC' })}
+                        className={`flex items-center justify-between p-5 rounded-[24px] border text-left cursor-pointer transition-all ${formData.consultationType === 'IN_CLINIC'
+                            ? 'bg-emerald-900 text-white border-emerald-900 shadow-md shadow-emerald-900/20'
+                            : 'bg-white/50 border-emerald-900/5 text-emerald-950 hover:bg-emerald-50'
+                          }`}
+                      >
+                        <div>
+                          <p className="font-serif text-sm font-bold">In-Clinic Visit</p>
+                          <p className={`text-[9px] uppercase font-medium tracking-wider mt-1 ${formData.consultationType === 'IN_CLINIC' ? 'text-emerald-200' : 'text-neutral-400'}`}>Physical check-up in Varanasi</p>
+                        </div>
+                        <span className="material-symbols-outlined text-lg">location_on</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, consultationType: 'ONLINE' })}
+                        className={`flex items-center justify-between p-5 rounded-[24px] border text-left cursor-pointer transition-all ${formData.consultationType === 'ONLINE'
+                            ? 'bg-emerald-900 text-white border-emerald-900 shadow-md shadow-emerald-950/20'
+                            : 'bg-white/50 border-emerald-900/5 text-emerald-950 hover:bg-emerald-50'
+                          }`}
+                      >
+                        <div>
+                          <p className="font-serif text-sm font-bold">Online Video Consultation</p>
+                          <p className={`text-[9px] uppercase font-medium tracking-wider mt-1 ${formData.consultationType === 'ONLINE' ? 'text-emerald-200' : 'text-neutral-400'}`}>Secure video call with Dr. Megha</p>
+                        </div>
+                        <span className="material-symbols-outlined text-lg">videocam</span>
+                      </button>
+                    </div>
+                  </div>
+
                   <div className="md:col-span-2 space-y-3">
                     <label className="text-[9px] uppercase font-bold tracking-[0.4em] text-emerald-900/30 ml-2">Clinical Concern</label>
                     <textarea value={formData.concern} onChange={e => setFormData({ ...formData, concern: e.target.value })} className="w-full bg-white/50 border border-emerald-900/5 rounded-[32px] py-6 px-8 text-[13px] font-medium text-emerald-950 focus:border-emerald-900 transition-all outline-none resize-none" rows={4} placeholder="Describe your skin aspirations..." />
                   </div>
                 </div>
                 <button onClick={validateAndReview} className="w-full bg-emerald-950 text-white py-6 rounded-3xl font-bold text-[11px] uppercase tracking-[0.4em] shadow-2xl hover:bg-black transition-all">Proceed to Summary</button>
+                <div className="flex justify-center mt-6">
+                  <button type="button" onClick={() => setStep(2)} className="text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest underline">Adjust Date & Time</button>
+                </div>
               </div>
             </motion.div>
-          )}          {step === 5 && (
-            <motion.div key="s5" initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-5xl mx-auto px-4 relative">
+          )}
+
+          {step === 4 && (
+            <motion.div key="s4" initial={{ opacity: 0, y: 25 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-5xl mx-auto px-4 relative">
               {/* Ambient Background Glows */}
               <div className="absolute top-10 left-10 w-72 h-72 bg-emerald-100/30 rounded-full blur-3xl -z-10 pointer-events-none" />
               <div className="absolute bottom-10 right-10 w-72 h-72 bg-pink-100/20 rounded-full blur-3xl -z-10 pointer-events-none" />
 
               <div className="text-center mb-6">
-                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-emerald-800 bg-emerald-100/40 px-3 py-1.5 rounded-full border border-emerald-900/5">Step 5 of 5</span>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-emerald-800 bg-emerald-100/40 px-3 py-1.5 rounded-full border border-emerald-900/5">Step 4 of 4</span>
                 <h1 className="font-serif text-3xl md:text-4xl font-bold text-emerald-950 mt-3 tracking-tighter">Finalize Visit</h1>
                 <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-900/40 mt-1">Verify Details & Confirm Booking</p>
               </div>
 
               {/* Main Container - Split Layout - Center Aligned Vertically */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 items-center relative z-10">
-                
+
                 {/* Left Side: Summary Card (Ticket style) - 3 cols */}
                 <div className="lg:col-span-3 glass-card bg-white/70 border border-white rounded-[32px] shadow-2xl shadow-emerald-950/5 overflow-hidden">
                   {/* Card Header */}
@@ -250,7 +410,7 @@ export const BookingView: React.FC = () => {
                   {/* Card Body - Details */}
                   <div className="p-6 space-y-4">
                     <div className="grid grid-cols-2 gap-4">
-                      
+
                       <div className="flex gap-3 items-center p-3 rounded-xl bg-white/40 border border-emerald-900/5 backdrop-blur-sm">
                         <span className="material-symbols-outlined text-emerald-800 bg-emerald-100/60 p-2 rounded-lg text-lg">medical_services</span>
                         <div className="min-w-0">
@@ -260,10 +420,16 @@ export const BookingView: React.FC = () => {
                       </div>
 
                       <div className="flex gap-3 items-center p-3 rounded-xl bg-white/40 border border-emerald-900/5 backdrop-blur-sm">
-                        <span className="material-symbols-outlined text-emerald-800 bg-emerald-100/60 p-2 rounded-lg text-lg">location_on</span>
+                        <span className="material-symbols-outlined text-emerald-800 bg-emerald-100/60 p-2 rounded-lg text-lg">
+                          {formData.consultationType === 'ONLINE' ? 'videocam' : 'location_on'}
+                        </span>
                         <div className="min-w-0">
-                          <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">Location</p>
-                          <p className="font-serif font-bold text-sm text-emerald-950 mt-0.5 truncate">Varanasi Clinic</p>
+                          <p className="text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                            {formData.consultationType === 'ONLINE' ? 'Mode' : 'Location'}
+                          </p>
+                          <p className="font-serif font-bold text-sm text-emerald-950 mt-0.5 truncate">
+                            {formData.consultationType === 'ONLINE' ? 'Online Video' : 'Varanasi Clinic'}
+                          </p>
                         </div>
                       </div>
 
@@ -293,7 +459,7 @@ export const BookingView: React.FC = () => {
                     )}
 
                     <div className="flex justify-end pt-1">
-                      <button onClick={() => setStep(4)} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800 hover:text-emerald-950 hover:underline transition-all cursor-pointer">
+                      <button onClick={() => setStep(3)} className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-800 hover:text-emerald-950 hover:underline transition-all cursor-pointer">
                         <span className="material-symbols-outlined text-[13px]">edit</span> Edit Details
                       </button>
                     </div>
@@ -304,20 +470,20 @@ export const BookingView: React.FC = () => {
                 <div className="lg:col-span-2 space-y-6">
                   <div className="glass-card bg-white/70 border border-white rounded-[32px] p-6 shadow-2xl shadow-emerald-950/5 space-y-4">
                     <h3 className="font-serif text-lg font-bold text-emerald-950 border-b border-emerald-900/5 pb-3">Payment Summary</h3>
-                    
+
                     <div className="space-y-3">
                       <div className="flex justify-between text-xs">
                         <span className="text-neutral-500">Consultation Deposit</span>
-                        <span className="font-semibold text-neutral-800">₹50.00</span>
+                        <span className="font-semibold text-neutral-800">₹11.00</span>
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-neutral-500">GST / Taxes</span>
-                        <span className="text-neutral-400 italic">Inclusive</span>
+                        <span className="font-neutral-400 italic">Inclusive</span>
                       </div>
                       <div className="h-px bg-emerald-900/5 my-1" />
                       <div className="flex justify-between items-baseline">
                         <span className="font-serif font-bold text-sm text-emerald-950">Total Amount</span>
-                        <span className="font-serif font-extrabold text-xl text-emerald-950">₹50.00</span>
+                        <span className="font-serif font-extrabold text-xl text-emerald-950">₹11.00</span>
                       </div>
                     </div>
 
@@ -328,7 +494,7 @@ export const BookingView: React.FC = () => {
                     </div>
 
                     <p className="text-[9px] text-neutral-400 text-center leading-relaxed font-medium">
-                      By proceeding, you agree to secure your booking with a ₹50 refundable consultation deposit. Transactions are fully encrypted and secure.
+                      By proceeding, you agree to secure your booking with a ₹11 refundable consultation deposit. Transactions are fully encrypted and secure.
                     </p>
                   </div>
                 </div>
@@ -337,8 +503,8 @@ export const BookingView: React.FC = () => {
             </motion.div>
           )}
 
-          {step === 6 && (
-            <motion.div key="s6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto text-center py-6 md:py-16 space-y-10">
+          {step === 5 && (
+            <motion.div key="s5" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto text-center py-6 md:py-16 space-y-10">
               <div className="flex justify-center"><div className="w-24 h-24 md:w-32 md:h-32 bg-emerald-900 text-white rounded-full flex items-center justify-center animate-pulse shadow-2xl"><CheckCircle2 size={48} /></div></div>
               <div className="space-y-4">
                 <h1 className="font-serif text-3xl md:text-7xl font-bold text-emerald-950 tracking-tighter">Clinical Success</h1>
@@ -348,6 +514,8 @@ export const BookingView: React.FC = () => {
             </motion.div>
           )}
         </AnimatePresence>
+          </>
+        )}
       </main>
 
       <footer className="py-20 border-t border-emerald-950/5 text-center opacity-30 select-none">

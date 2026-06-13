@@ -14,6 +14,8 @@ export interface Appointment {
   email: string;
   age: number;
   concern?: string;
+  consultationType?: 'IN_CLINIC' | 'ONLINE';
+  meetLink?: string;
   createdAt: string;
 }
 
@@ -49,3 +51,39 @@ export interface ReelInsight {
   videoUrl: string;
   type: 'photo_camera' | 'smart_display';
 }
+
+export interface BeforeAfterItem {
+  _id?: string;
+  title: string;
+  treatment: string;
+  beforeUrl: string;
+  afterUrl: string;
+}
+
+export interface SkinLead {
+  _id?: string;
+  name: string;
+  email: string;
+  mobile: string;
+  age?: number;
+  skinType?: string;
+  scanResults: {
+    overallScore: number;
+    hydration: number;
+    redness: number;
+    pores: number;
+    spots: number;
+  };
+  primaryConcern?: string;
+  status: 'NEW' | 'CONTACTED' | 'CONVERTED';
+  createdAt?: string;
+}
+
+export interface Patient {
+  id: string;
+  email: string;
+  name?: string;
+  mobile?: string;
+  age?: number;
+}
+

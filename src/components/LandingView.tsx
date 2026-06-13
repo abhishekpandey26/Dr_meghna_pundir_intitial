@@ -2,13 +2,36 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { REVIEWS, TREATMENTS } from '../initialData';
+import { BeforeAfterSlider } from './BeforeAfterSlider';
+import { auth, googleProvider } from '../firebase';
+import { signInWithPopup } from 'firebase/auth';
 
 export const LandingView: React.FC = () => {
-  const { setView, setSelectedTreatmentForBooking, galleryItems, reels } = useApp();
+  const { 
+    setView, 
+    setSelectedTreatmentForBooking, 
+    galleryItems, 
+    reels,
+    loginPatientWithGoogle,
+    patientToken,
+    currentPatient
+  } = useApp();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+
+  const handleGoogleLoginClick = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      if (user && user.email) {
+        await loginPatientWithGoogle(user.email, user.displayName || '');
+      }
+    } catch (err: any) {
+      alert('Google login failed: ' + err.message);
+    }
+  };
 
   const categories = [
     'All',
@@ -46,12 +69,33 @@ export const LandingView: React.FC = () => {
           <nav className="hidden lg:flex items-center space-x-8">
             <a href="#about" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">ABOUT</a>
             <a href="#treatments" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">TREATMENTS</a>
+            <button onClick={() => setView('skin-analyzer')} className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest cursor-pointer">AI SKIN SCAN</button>
             <a href="#gallery" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">GALLERY</a>
             <a href="#reviews" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">REVIEWS</a>
             <a href="#contact" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">CONTACT</a>
           </nav>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
+            {patientToken && currentPatient ? (
+              <>
+                <button
+                  onClick={() => setView('patient-portal')}
+                  className="flex items-center gap-2 border border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-on-primary px-4 py-2 text-xs font-bold uppercase tracking-widest transition-all rounded-full cursor-pointer"
+                >
+                  DashBoard 🚀
+                </button>
+                <div className="w-8 h-8 rounded-full bg-primary text-on-primary font-bold flex items-center justify-center text-xs shadow-md uppercase">
+                  {currentPatient.name ? currentPatient.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : currentPatient.email.slice(0, 2)}
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={handleGoogleLoginClick}
+                className="border border-on-surface-variant/30 text-on-surface hover:bg-primary hover:text-on-primary hover:border-primary px-5 py-2 text-xs font-bold uppercase tracking-widest transition-all cursor-pointer"
+              >
+                LOGIN
+              </button>
+            )}
             <button
               onClick={() => startBooking()}
               className="bg-primary text-on-primary px-5 py-2 text-xs font-bold uppercase tracking-widest hover:bg-on-surface-variant transition-all active:scale-95 ease-in-out duration-300"
@@ -114,10 +158,17 @@ export const LandingView: React.FC = () => {
               <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
                 <button
                   onClick={() => startBooking()}
-                  className="bg-primary text-on-primary px-8 py-4 text-xs font-bold uppercase tracking-widest hover:opacity-85 hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3"
+                  className="bg-primary text-on-primary px-8 py-4 text-xs font-bold uppercase tracking-widest hover:opacity-85 hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-base">calendar_month</span>
                   Book Appointment
+                </button>
+                <button
+                  onClick={() => setView('skin-analyzer')}
+                  className="bg-emerald-900 text-white px-8 py-4 text-xs font-bold uppercase tracking-widest hover:bg-emerald-950 hover:shadow-lg transition-all active:scale-95 flex items-center justify-center gap-3 cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">spa</span>
+                  AI Skin Analyzer
                 </button>
                 <a
                   href="https://api.whatsapp.com/send/?phone=917905587609&text=Hello%21+I+would+like+to+discuss+a+clinical+treatment+with+XELIX+Clinical+Concierge.&type=phone_number&app_absent=0"
@@ -251,16 +302,14 @@ export const LandingView: React.FC = () => {
                   <img
                     alt="HydraFacial procedure"
                     className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                    src="https://lh3.googleusercontent.com/aida/AP1WRLtBWl2bDmP-mTYePUhqADFwq7j1Bx8vNdCih1vGID2BPt2hm-0w2y6rJM67aUstH4PvPvgdo4R3bDiR5YuOERUw-5xg04DqVKq6HcsnNaq5b541bovuy7CukvH0ASGQT-mcXhDvYQpCW0s0Jbi3gDJeK-TwostFPfOPdnvmRQ8hUBAuT-IKudL7ITFiQ5psJOhYvHWPL3s6sIKz8k6G6582zXRg-zoN_tvPehoDeb1n-_3jnujI7qZVguI"
+                    src="/hydrafacial_procedure.png"
                   />
                 </div>
                 <div className="absolute -bottom-10 -left-10 w-2/3 aspect-[1.79] rounded-[40px] overflow-hidden shadow-2xl z-30 border-8 border-surface-container-lowest hidden sm:block">
                   <img
                     alt="Clinic interior"
                     className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                    src="https://lh3.googleusercontent.com/aida/AP1WRLulJUHlZD2XMBa-9iJrDskHOD7oKqnekW2kRGPjLoBShx1pOd-ai1BonSYRpfNPiOaxFwRz2jMU6p4Mmxz93vUApIygPCtuxEYgV6cWw-3vTlQQYxGKkp8KMnhrgUTB9iQor8qVyn_U50QiR86vsa4ASwegnq9BgsK7dSlMzxTCQ4biREuxOAj2Ok1prg7dw9_Vpp3mSB_GeUq2rG9SgybF6B5kPALBZvAyLYh6MBhGnriOZP089cHxMA"
+                    src="/clinic_interior.png"
                   />
                 </div>
               </div>
@@ -343,6 +392,11 @@ export const LandingView: React.FC = () => {
         </div>
       </section>
 
+      {/* Before & After Transformations Slider */}
+      <section className="py-20 bg-surface-container-lowest border-t border-on-surface/5" id="transformations">
+        <BeforeAfterSlider />
+      </section>
+
       {/* Insights Reels Section */}
       <section className="py-20 bg-surface overflow-hidden" id="insights">
         <div className="max-w-7xl mx-auto px-5 md:px-16 mb-12 space-y-12">
@@ -361,8 +415,8 @@ export const LandingView: React.FC = () => {
                 key={cat}
                 onClick={() => setSelectedCategory(cat)}
                 className={`flex-none px-6 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all border ${selectedCategory === cat
-                    ? 'bg-secondary text-white border-secondary shadow-lg shadow-secondary/20'
-                    : 'bg-white text-on-surface-variant border-outline-variant/30 hover:border-secondary'
+                  ? 'bg-secondary text-white border-secondary shadow-lg shadow-secondary/20'
+                  : 'bg-white text-on-surface-variant border-outline-variant/30 hover:border-secondary'
                   }`}
               >
                 {cat}
@@ -423,13 +477,13 @@ export const LandingView: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/60" />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <div className="w-16 h-16 bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white rounded-2xl flex items-center justify-center shadow-[0_15px_30px_rgba(238,42,123,0.4)] group-hover:scale-110 transition-transform duration-500 border-2 border-white/50">
-                            <svg 
-                              viewBox="0 0 24 24" 
-                              fill="none" 
-                              stroke="currentColor" 
-                              strokeWidth="2" 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round" 
+                            <svg
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
                               className="w-8 h-8"
                             >
                               <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
@@ -535,7 +589,7 @@ export const LandingView: React.FC = () => {
                       <span className="material-symbols-outlined text-secondary-fixed bg-white/10 p-2.5 rounded-full">call</span>
                       <div>
                         <h4 className="text-[10px] text-white/60 uppercase font-bold tracking-widest mb-1">Phone Helpline</h4>
-                        <p className="text-base font-medium">+91 79055 87609</p>
+                        <p className="text-base font-medium">+91 9453238699</p>
                       </div>
                     </div>
 
@@ -602,6 +656,7 @@ export const LandingView: React.FC = () => {
         <nav className="flex flex-wrap justify-center gap-x-10 gap-y-4 text-xs font-bold uppercase tracking-widest">
           <a href="#about" className="text-on-surface-variant/70 hover:text-primary transition-opacity">Philosophy</a>
           <a href="#treatments" className="text-on-surface-variant/70 hover:text-primary transition-opacity">Treatments</a>
+          <button onClick={() => setView('patient-portal')} className="text-on-surface-variant/70 hover:text-primary transition-opacity uppercase cursor-pointer font-bold tracking-widest text-xs">Patient Portal</button>
           <a href="#gallery" className="text-on-surface-variant/70 hover:text-primary transition-opacity">Gallery</a>
           <a href="#reviews" className="text-on-surface-variant/70 hover:text-primary transition-opacity">Reviews</a>
           <a href="#contact" className="text-on-surface-variant/70 hover:text-primary transition-opacity">Directions Map</a>

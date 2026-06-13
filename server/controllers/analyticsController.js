@@ -1,7 +1,28 @@
 const Appointment = require('../models/Appointment');
 
-// Helper: format date as YYYY-MM-DD
-const formatDate = (d) => d.toISOString().split('T')[0];
+// Helper: format date as YYYY-MM-DD in local time
+const formatDate = (d) => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+};
+
+// Helper: convert MMM DD (e.g. "Jun 13") to YYYY-MM-DD
+const convertToYYYYMMDD = (dateStr) => {
+  if (!dateStr) return '';
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  let date = new Date(`${dateStr} ${currentYear}`);
+  if (isNaN(date.getTime())) return '';
+  
+  if (now.getMonth() === 0 && date.getMonth() === 11) {
+    date.setFullYear(currentYear - 1);
+  } else if (now.getMonth() === 11 && date.getMonth() === 0) {
+    date.setFullYear(currentYear + 1);
+  }
+  return formatDate(date);
+};
 
 // GET /api/analytics/overview
 // Returns: today income, month income, total appointments, etc.
@@ -16,12 +37,22 @@ const getOverview = async (req, res) => {
     const monthEndStr = formatDate(monthEnd);
 
     const all = await Appointment.find({});
-    const confirmed = all.filter(a => ['CONFIRMED', 'COMPLETED'].includes(a.status));
+    
+    // Map database date format ("Jun 13") to "YYYY-MM-DD" for accurate analytics filtering
+    const allMapped = all.map(a => {
+      const formattedDate = convertToYYYYMMDD(a.date);
+      return {
+        ...a.toObject(),
+        formattedDate
+      };
+    });
+
+    const confirmed = allMapped.filter(a => ['CONFIRMED', 'COMPLETED'].includes(a.status));
     
     // Income calculations (₹500 per consultation as default)
     const CONSULTATION_FEE = 500;
-    const todayAppts = confirmed.filter(a => a.date === todayStr);
-    const monthAppts = confirmed.filter(a => a.date >= monthStartStr && a.date <= monthEndStr);
+    const todayAppts = confirmed.filter(a => a.formattedDate === todayStr);
+    const monthAppts = confirmed.filter(a => a.formattedDate >= monthStartStr && a.formattedDate <= monthEndStr);
 
     // Daily income for current month (for sparkline chart)
     const dailyIncomeMap = {};
@@ -30,8 +61,8 @@ const getOverview = async (req, res) => {
       dailyIncomeMap[key] = 0;
     }
     monthAppts.forEach(a => {
-      if (dailyIncomeMap[a.date] !== undefined) {
-        dailyIncomeMap[a.date] += CONSULTATION_FEE;
+      if (dailyIncomeMap[a.formattedDate] !== undefined) {
+        dailyIncomeMap[a.formattedDate] += CONSULTATION_FEE;
       }
     });
 
@@ -60,7 +91,7 @@ const getOverview = async (req, res) => {
     const weeklyData = [];
     for (let d = new Date(sevenDaysAgo); d <= now; d.setDate(d.getDate() + 1)) {
       const key = formatDate(new Date(d));
-      const dayAppts = all.filter(a => a.date === key);
+      const dayAppts = allMapped.filter(a => a.formattedDate === key);
       weeklyData.push({
         day: new Date(key).toLocaleDateString('en-US', { weekday: 'short' }),
         bookings: dayAppts.length,

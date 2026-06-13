@@ -25,6 +25,9 @@ app.use('/api/gallery', require('./routes/galleryRoutes'));
 app.use('/api/reels', require('./routes/reelRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/beforeafter', require('./routes/beforeAfterRoutes'));
+app.use('/api/skinleads', require('./routes/skinLeadRoutes'));
+app.use('/api/auth', require('./routes/authRoutes'));
 
 app.listen(PORT, () => {
   console.log(`🚀 Server navigating at http://localhost:${PORT}`);

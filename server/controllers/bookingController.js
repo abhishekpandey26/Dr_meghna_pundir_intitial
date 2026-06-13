@@ -49,12 +49,22 @@ const confirmBooking = async (req, res) => {
       return res.status(400).json({ message: 'Lock expired or invalid. Please try again.' });
     }
 
+    // Generate mock Meet link if consultation mode is Online
+    let meetLink = undefined;
+    if (patientData && patientData.consultationType === 'ONLINE') {
+      const code = Math.random().toString(36).substring(2, 5) + '-' + 
+                   Math.random().toString(36).substring(2, 6) + '-' + 
+                   Math.random().toString(36).substring(2, 5);
+      meetLink = `https://meet.google.com/${code}`;
+    }
+
     // 2. Create Appointment
     const appointment = await Appointment.create({
       ...patientData,
       date,
       startTime,
-      status: 'PENDING'
+      status: 'PENDING',
+      meetLink
     });
 
     // 3. Remove the lock

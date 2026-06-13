@@ -10,6 +10,9 @@ import { BookingView } from './components/BookingView';
 import { AdminView } from './components/AdminView';
 import { AdminLogin } from './components/AdminLogin';
 import { ChatAgent } from './components/ChatAgent';
+import { SkinAnalyzer } from './components/SkinAnalyzer';
+import { VideoRoom } from './components/VideoRoom';
+import { PatientPortal } from './components/PatientPortal';
 
 function ViewDispatcher() {
   const { view, isAuthenticated, setView } = useApp();
@@ -34,7 +37,7 @@ function ViewDispatcher() {
       }
 
       // Priority 2: Query param based (?view=admin)
-      if (viewParam && ['landing', 'booking', 'admin', 'admin-login'].includes(viewParam)) {
+      if (viewParam && ['landing', 'booking', 'admin', 'admin-login', 'skin-analyzer', 'video-room', 'patient-portal'].includes(viewParam)) {
         if (!isAuthenticated && (viewParam === 'admin' || viewParam === 'admin-login')) {
           setView('admin-login');
         } else if (isAuthenticated && viewParam === 'admin-login') {
@@ -71,10 +74,16 @@ function ViewDispatcher() {
           switch (view) {
             case 'booking':
               return <BookingView />;
+            case 'skin-analyzer':
+              return <SkinAnalyzer />;
             case 'admin':
               return <AdminView />;
             case 'admin-login':
               return <AdminLogin />;
+            case 'video-room':
+              return <VideoRoom />;
+            case 'patient-portal':
+              return <PatientPortal />;
             case 'landing':
             default:
               return <LandingView />;
