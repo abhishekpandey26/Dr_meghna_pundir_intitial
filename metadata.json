@@ -1,0 +1,6 @@
+{
+  "name": "Dermelixir Wellness",
+  "description": "Premium Dermatology by Dr. Megha Pundir Singh. Advanced Clinical Skin, Hair & Laser Treatments.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

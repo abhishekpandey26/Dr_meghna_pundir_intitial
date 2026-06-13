@@ -1,0 +1,96 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useEffect } from 'react';
+import { AppProvider, useApp, AppView } from './context/AppContext';
+import { LandingView } from './components/LandingView';
+import { BookingView } from './components/BookingView';
+import { AdminView } from './components/AdminView';
+import { AdminLogin } from './components/AdminLogin';
+import { ChatAgent } from './components/ChatAgent';
+
+function ViewDispatcher() {
+  const { view, isAuthenticated, setView } = useApp();
+
+  // Initial URL Routing Logic
+  useEffect(() => {
+    const handleUrlRouting = () => {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      const viewParam = params.get('view') as AppView;
+
+      // Priority 1: Path based (/admin/login)
+      if (path === '/admin/login') {
+        if (!isAuthenticated) {
+          setView('admin-login');
+        } else {
+          setView('admin');
+        }
+        // Clean up URL to standard SPA format
+        window.history.replaceState({}, '', '/?view=' + (isAuthenticated ? 'admin' : 'admin-login'));
+        return;
+      }
+
+      // Priority 2: Query param based (?view=admin)
+      if (viewParam && ['landing', 'booking', 'admin', 'admin-login'].includes(viewParam)) {
+        if (!isAuthenticated && (viewParam === 'admin' || viewParam === 'admin-login')) {
+          setView('admin-login');
+        } else if (isAuthenticated && viewParam === 'admin-login') {
+          setView('admin');
+        } else {
+          setView(viewParam);
+        }
+      }
+    };
+
+    handleUrlRouting();
+    // Also listen for back/forward events
+    window.addEventListener('popstate', handleUrlRouting);
+    return () => window.removeEventListener('popstate', handleUrlRouting);
+  }, [isAuthenticated, setView]);
+
+  const isAdminArea = view === 'admin' || view === 'admin-login';
+
+  if (view === 'admin' && !isAuthenticated) {
+    return <AdminLogin />;
+  }
+
+  if (view === 'admin-login' && isAuthenticated) {
+    return <AdminView />;
+  }
+
+  return (
+    <>
+      {!isAdminArea && (
+        <ChatAgent onStartBooking={() => setView('booking')} />
+      )}
+      <div className={isAdminArea ? '' : 'overflow-x-hidden'}>
+        {(() => {
+          switch (view) {
+            case 'booking':
+              return <BookingView />;
+            case 'admin':
+              return <AdminView />;
+            case 'admin-login':
+              return <AdminLogin />;
+            case 'landing':
+            default:
+              return <LandingView />;
+          }
+        })()}
+      </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AppProvider>
+      <ViewDispatcher />
+    </AppProvider>
+  );
+}
+
+///now what you have to create a backend for this frontend ok see what are the api we need when w
