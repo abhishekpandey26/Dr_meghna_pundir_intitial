@@ -87,3 +87,16 @@ export interface Patient {
   age?: number;
 }
 
+export interface BlogPost {
+  _id?: string;
+  title: string;
+  slug: string;
+  content: string;
+  summary: string;
+  image: string;
+  category: string;
+  author: string;
+  dateString: string;
+  createdAt?: string;
+}
+

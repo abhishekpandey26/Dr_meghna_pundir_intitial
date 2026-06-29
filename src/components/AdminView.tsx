@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   useApp 
 } from '../context/AppContext';
+import { BlogPost } from '../types';
 import { 
   LayoutDashboard, 
   Users, 
@@ -32,7 +33,8 @@ import {
   IndianRupee,
   Activity,
   Sparkles,
-  Columns
+  Columns,
+  Newspaper
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -75,13 +77,17 @@ export const AdminView: React.FC = () => {
     deleteSkinLead,
     updateSkinLeadStatus,
     totalPages: serverTotalPages,
-    totalRecords
+    totalRecords,
+    blogs,
+    addBlogPost,
+    deleteBlogPost,
+    updateBlogPost
   } = useApp();
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'schedule' | 'gallery' | 'beforeafter' | 'skinleads' | 'insights' | 'settings'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'schedule' | 'gallery' | 'beforeafter' | 'skinleads' | 'insights' | 'settings' | 'blogs'>(() => {
     const hash = window.location.hash.replace('#', '');
-    if (['dashboard', 'appointments', 'schedule', 'gallery', 'beforeafter', 'skinleads', 'insights', 'settings'].includes(hash)) {
+    if (['dashboard', 'appointments', 'schedule', 'gallery', 'beforeafter', 'skinleads', 'insights', 'settings', 'blogs'].includes(hash)) {
       return hash as any;
     }
     return 'dashboard';
@@ -152,6 +158,29 @@ export const AdminView: React.FC = () => {
   const [showNewReelModal, setShowNewReelModal] = useState(false);
   const [showEditReelModal, setShowEditReelModal] = useState(false);
   const [editingReel, setEditingReel] = useState<{ _id?: string, title: string, coverImage: string, videoUrl: string, type: 'photo_camera' | 'smart_display' } | null>(null);
+  const [showNewBlogModal, setShowNewBlogModal] = useState(false);
+  const [showEditBlogModal, setShowEditBlogModal] = useState(false);
+  const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
+  
+  const [newBlog, setNewBlog] = useState({
+    title: '',
+    slug: '',
+    summary: '',
+    content: '',
+    image: '',
+    category: 'Skincare Treatment',
+    author: 'Dr. Megha Pundir Singh',
+    dateString: ''
+  });
+
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)+/g, '');
+  };
+
   const [showToast, setShowToast] = useState<{msg: string, type: 'success' | 'error'} | null>(null);
 
   // Form States
@@ -222,6 +251,7 @@ export const AdminView: React.FC = () => {
             { id: 'beforeafter', icon: Columns, label: 'Before & After' },
             { id: 'skinleads', icon: Sparkles, label: 'Skin Scan Leads' },
             { id: 'insights', icon: Video, label: 'Clinical Insights' },
+            { id: 'blogs', icon: Newspaper, label: 'Manage Blogs' },
             { id: 'settings', icon: Settings, label: 'Clinic Config' },
           ].map((item) => (
             <button
@@ -1205,6 +1235,103 @@ export const AdminView: React.FC = () => {
               </motion.div>
             )}
 
+            {activeTab === 'blogs' && (
+              <motion.div 
+                key="blogs"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-8"
+              >
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold">Manage Blog Posts</h3>
+                    <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest mt-2">Publish and Edit Clinic Articles</p>
+                  </div>
+                  <button 
+                    onClick={() => {
+                      setNewBlog({
+                        title: '',
+                        slug: '',
+                        summary: '',
+                        content: '',
+                        image: '',
+                        category: 'Skincare Treatment',
+                        author: 'Dr. Megha Pundir Singh',
+                        dateString: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short' })
+                      });
+                      setShowNewBlogModal(true);
+                    }}
+                    className="bg-emerald-900 text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    <Plus className="w-5 h-5" />
+                    New Blog Post
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {blogs.map((post) => (
+                    <div key={post._id} className="bg-white rounded-[24px] overflow-hidden border border-neutral-100 shadow-sm flex flex-col justify-between">
+                      <div>
+                        <div className="aspect-[16/10] overflow-hidden relative bg-neutral-100">
+                          <img 
+                            src={post.image} 
+                            alt={post.title} 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute top-3 left-3 bg-emerald-900 text-white text-[9px] font-bold uppercase tracking-wider px-2 py-1 rounded">
+                            {post.category}
+                          </div>
+                        </div>
+                        <div className="p-6 space-y-3">
+                          <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">{post.dateString} &bull; {post.author}</span>
+                          <h4 className="font-serif font-bold text-neutral-900 text-lg line-clamp-2 leading-snug">{post.title}</h4>
+                          <p className="text-xs text-neutral-500 line-clamp-3 leading-relaxed font-medium">{post.summary}</p>
+                        </div>
+                      </div>
+                      <div className="p-6 pt-0 border-t border-neutral-50 flex justify-between items-center mt-4">
+                        <button
+                          onClick={() => {
+                            setView('blog-detail', post.slug);
+                          }}
+                          className="text-[10px] text-emerald-900 font-bold uppercase tracking-wider flex items-center gap-1 hover:gap-2 transition-all"
+                        >
+                          View Post <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingBlog(post);
+                              setShowEditBlogModal(true);
+                            }}
+                            className="p-2 bg-neutral-50 hover:bg-emerald-50 rounded-xl text-neutral-400 hover:text-emerald-700 transition-colors"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={async () => {
+                              if (confirm('Are you sure you want to delete this blog post?')) {
+                                await deleteBlogPost(post._id!);
+                                triggerToast('Blog post deleted successfully.');
+                              }
+                            }}
+                            className="p-2 bg-neutral-50 hover:bg-rose-50 rounded-xl text-neutral-400 hover:text-rose-600 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {blogs.length === 0 && (
+                    <div className="col-span-full p-16 text-center bg-white border border-neutral-100 rounded-[24px] text-neutral-400 font-bold text-xs uppercase">
+                      No blog posts published in the database.
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
             {activeTab === 'skinleads' && (
               <motion.div 
                 key="skinleads"
@@ -1810,6 +1937,263 @@ export const AdminView: React.FC = () => {
                     className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
                   >
                     Save Changes
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+      {/* New Blog Modal */}
+      <AnimatePresence>
+        {showNewBlogModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowNewBlogModal(false)}
+              className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl relative z-10 my-8"
+            >
+              <div className="p-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Add Blog Post</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Publish a Skincare/Hair Restoration Article</p>
+                  </div>
+                  <button onClick={() => setShowNewBlogModal(false)} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-5" onSubmit={async (e) => {
+                  e.preventDefault();
+                  const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                  if (!isValidUrl(newBlog.image)) {
+                    return triggerToast('Cover Image must be a valid URL starting with http:// or https://', 'error');
+                  }
+                  await addBlogPost(newBlog);
+                  setShowNewBlogModal(false);
+                  triggerToast('Blog post published successfully!');
+                }}>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Article Title</label>
+                    <input 
+                      required type="text" value={newBlog.title}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setNewBlog({...newBlog, title: val, slug: generateSlug(val)});
+                      }}
+                      placeholder="e.g. Exosomes for Hair Loss: Is This the Future?"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">URL Slug</label>
+                      <input 
+                        required type="text" value={newBlog.slug}
+                        onChange={(e) => setNewBlog({...newBlog, slug: generateSlug(e.target.value)})}
+                        placeholder="exosomes-for-hair-loss"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Category</label>
+                      <input 
+                        required type="text" value={newBlog.category}
+                        onChange={(e) => setNewBlog({...newBlog, category: e.target.value})}
+                        placeholder="e.g. Skincare Treatment"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Date Badge (e.g. 17 Jun)</label>
+                      <input 
+                        required type="text" value={newBlog.dateString}
+                        onChange={(e) => setNewBlog({...newBlog, dateString: e.target.value})}
+                        placeholder="17 Jun"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Author Name</label>
+                      <input 
+                        required type="text" value={newBlog.author}
+                        onChange={(e) => setNewBlog({...newBlog, author: e.target.value})}
+                        placeholder="Dr. Megha Pundir Singh"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image URL</label>
+                    <input 
+                      required type="url" value={newBlog.image}
+                      onChange={(e) => setNewBlog({...newBlog, image: e.target.value})}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Short Summary (Preview text)</label>
+                    <textarea 
+                      required value={newBlog.summary} rows={2}
+                      onChange={(e) => setNewBlog({...newBlog, summary: e.target.value})}
+                      placeholder="Enter a brief summary of the article to show in grid..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 resize-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Full Article Content (paragraphs separated by double lines)</label>
+                    <textarea 
+                      required value={newBlog.content} rows={6}
+                      onChange={(e) => setNewBlog({...newBlog, content: e.target.value})}
+                      placeholder="Write your blog content here. Use ### For headings, and double returns for paragraphs..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 resize-y"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                  >
+                    Publish Post
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Blog Modal */}
+      <AnimatePresence>
+        {showEditBlogModal && editingBlog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => { setShowEditBlogModal(false); setEditingBlog(null); }}
+              className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-2xl rounded-[40px] overflow-hidden shadow-2xl relative z-10 my-8"
+            >
+              <div className="p-10 max-h-[85vh] overflow-y-auto custom-scrollbar">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Edit Blog Post</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Modify Published Article Details</p>
+                  </div>
+                  <button onClick={() => { setShowEditBlogModal(false); setEditingBlog(null); }} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-5" onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (editingBlog && editingBlog._id) {
+                    const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                    if (!isValidUrl(editingBlog.image)) {
+                      return triggerToast('Cover Image must be a valid URL starting with http:// or https://', 'error');
+                    }
+                    await updateBlogPost(editingBlog._id, editingBlog);
+                    setShowEditBlogModal(false);
+                    setEditingBlog(null);
+                    triggerToast('Blog post updated successfully.');
+                  }
+                }}>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Article Title</label>
+                    <input 
+                      required type="text" value={editingBlog.title}
+                      onChange={(e) => setEditingBlog({...editingBlog, title: e.target.value, slug: generateSlug(e.target.value)})}
+                      placeholder="e.g. Exosomes for Hair Loss: Is This the Future?"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">URL Slug</label>
+                      <input 
+                        required type="text" value={editingBlog.slug}
+                        onChange={(e) => setEditingBlog({...editingBlog, slug: generateSlug(e.target.value)})}
+                        placeholder="exosomes-for-hair-loss"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Category</label>
+                      <input 
+                        required type="text" value={editingBlog.category}
+                        onChange={(e) => setEditingBlog({...editingBlog, category: e.target.value})}
+                        placeholder="e.g. Skincare Treatment"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Date Badge (e.g. 17 Jun)</label>
+                      <input 
+                        required type="text" value={editingBlog.dateString}
+                        onChange={(e) => setEditingBlog({...editingBlog, dateString: e.target.value})}
+                        placeholder="17 Jun"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Author Name</label>
+                      <input 
+                        required type="text" value={editingBlog.author}
+                        onChange={(e) => setEditingBlog({...editingBlog, author: e.target.value})}
+                        placeholder="Dr. Megha Pundir Singh"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image URL</label>
+                    <input 
+                      required type="url" value={editingBlog.image}
+                      onChange={(e) => setEditingBlog({...editingBlog, image: e.target.value})}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Short Summary (Preview text)</label>
+                    <textarea 
+                      required value={editingBlog.summary} rows={2}
+                      onChange={(e) => setEditingBlog({...editingBlog, summary: e.target.value})}
+                      placeholder="Enter a brief summary of the article to show in grid..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 resize-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Full Article Content (paragraphs separated by double lines)</label>
+                    <textarea 
+                      required value={editingBlog.content} rows={6}
+                      onChange={(e) => setEditingBlog({...editingBlog, content: e.target.value})}
+                      placeholder="Write your blog content here. Use ### For headings, and double returns for paragraphs..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 resize-y"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                  >
+                    Save Post Changes
                   </button>
                 </form>
               </div>

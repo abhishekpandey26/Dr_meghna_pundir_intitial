@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Appointment, ClinicConfig, ReelInsight, BeforeAfterItem, SkinLead, Patient } from '../types';
+import { Appointment, ClinicConfig, ReelInsight, BeforeAfterItem, SkinLead, Patient, BlogPost } from '../types';
 
-export type AppView = 'landing' | 'booking' | 'admin' | 'admin-login' | 'skin-analyzer' | 'video-room' | 'patient-portal';
+export type AppView = 'landing' | 'booking' | 'admin' | 'admin-login' | 'skin-analyzer' | 'video-room' | 'patient-portal' | 'blog-detail';
 
 export interface FetchAppointmentsParams {
   page?: number;
@@ -15,7 +15,7 @@ export interface FetchAppointmentsParams {
 
 interface AppContextProps {
   view: AppView;
-  setView: (view: AppView) => void;
+  setView: (view: AppView, slug?: string) => void;
   isAuthenticated: boolean;
   setIsAuthenticated: (val: boolean) => void;
   appointments: Appointment[];
@@ -63,6 +63,10 @@ interface AppContextProps {
   logoutPatient: () => void;
   loadPatientProfile: () => Promise<void>;
   updatePatientProfile: (name: string, mobile: string, age?: number) => Promise<{ success: boolean; message?: string }>;
+  blogs: BlogPost[];
+  addBlogPost: (post: Omit<BlogPost, '_id'>) => Promise<void>;
+  deleteBlogPost: (id: string) => Promise<void>;
+  updateBlogPost: (id: string, post: Partial<BlogPost>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -87,6 +91,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [reels, setReels] = useState<ReelInsight[]>([]);
   const [beforeAfterItems, setBeforeAfterItems] = useState<BeforeAfterItem[]>([]);
   const [skinLeads, setSkinLeads] = useState<SkinLead[]>([]);
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
   
   const [patientToken, setPatientToken] = useState<string | null>(() => {
     return localStorage.getItem('dermelixir_patient_token');
@@ -115,12 +120,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const fetchInitialData = async () => {
     try {
-      const [configRes, apptsRes, galleryRes, reelsRes, beforeAfterRes] = await Promise.all([
+      const [configRes, apptsRes, galleryRes, reelsRes, beforeAfterRes, blogsRes] = await Promise.all([
         fetch(`${API_BASE}/config`),
         fetch(`${API_BASE}/appointments`),
         fetch(`${API_BASE}/gallery`),
         fetch(`${API_BASE}/reels`),
-        fetch(`${API_BASE}/beforeafter`)
+        fetch(`${API_BASE}/beforeafter`),
+        fetch(`${API_BASE}/blogs`)
       ]);
 
       const configData = await configRes.json();
@@ -128,6 +134,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const galleryData = await galleryRes.json();
       const reelsData = await reelsRes.json();
       const beforeAfterData = await beforeAfterRes.json();
+      const blogsData = await blogsRes.json();
 
       setClinicConfig(configData);
       setAppointments(apptsData.appointments ?? (Array.isArray(apptsData) ? apptsData : []));
@@ -136,15 +143,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setGalleryItems(galleryData);
       setReels(reelsData);
       setBeforeAfterItems(beforeAfterData);
+      setBlogs(blogsData);
     } catch (err) {
       console.error('Failed to sync with Medical Hub:', err);
     }
   };
 
-  const setView = (newView: AppView) => {
+  const setView = (newView: AppView, slug?: string) => {
     setViewState(newView);
     const url = new URL(window.location.href);
     url.searchParams.set('view', newView);
+    if (newView === 'blog-detail' && slug) {
+      url.searchParams.set('slug', slug);
+    } else if (newView !== 'blog-detail') {
+      url.searchParams.delete('slug');
+    }
     window.history.pushState({}, '', url);
   };
 
@@ -439,6 +452,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const addBlogPost = async (post: Omit<BlogPost, '_id'>) => {
+    await fetch(`${API_BASE}/blogs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(post)
+    });
+    const res = await fetch(`${API_BASE}/blogs`);
+    setBlogs(await res.json());
+  };
+
+  const deleteBlogPost = async (id: string) => {
+    await fetch(`${API_BASE}/blogs/${id}`, { method: 'DELETE' });
+    const res = await fetch(`${API_BASE}/blogs`);
+    setBlogs(await res.json());
+  };
+
+  const updateBlogPost = async (id: string, post: Partial<BlogPost>) => {
+    await fetch(`${API_BASE}/blogs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(post)
+    });
+    const res = await fetch(`${API_BASE}/blogs`);
+    setBlogs(await res.json());
+  };
+
   useEffect(() => {
     if (patientToken) {
       loadPatientProfile();
@@ -495,7 +534,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       loginPatientWithGoogle,
       logoutPatient,
       loadPatientProfile,
-      updatePatientProfile
+      updatePatientProfile,
+      blogs,
+      addBlogPost,
+      deleteBlogPost,
+      updateBlogPost
     }}>
       {children}
     </AppContext.Provider>

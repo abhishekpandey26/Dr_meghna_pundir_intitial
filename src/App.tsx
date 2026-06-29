@@ -13,6 +13,7 @@ import { ChatAgent } from './components/ChatAgent';
 import { SkinAnalyzer } from './components/SkinAnalyzer';
 import { VideoRoom } from './components/VideoRoom';
 import { PatientPortal } from './components/PatientPortal';
+import { BlogDetailView } from './components/BlogDetailView';
 
 function ViewDispatcher() {
   const { view, isAuthenticated, setView } = useApp();
@@ -37,13 +38,14 @@ function ViewDispatcher() {
       }
 
       // Priority 2: Query param based (?view=admin)
-      if (viewParam && ['landing', 'booking', 'admin', 'admin-login', 'skin-analyzer', 'video-room', 'patient-portal'].includes(viewParam)) {
+      if (viewParam && ['landing', 'booking', 'admin', 'admin-login', 'skin-analyzer', 'video-room', 'patient-portal', 'blog-detail'].includes(viewParam)) {
         if (!isAuthenticated && (viewParam === 'admin' || viewParam === 'admin-login')) {
           setView('admin-login');
         } else if (isAuthenticated && viewParam === 'admin-login') {
           setView('admin');
         } else {
-          setView(viewParam);
+          const slug = params.get('slug') || undefined;
+          setView(viewParam, slug);
         }
       }
     };
@@ -84,6 +86,8 @@ function ViewDispatcher() {
               return <VideoRoom />;
             case 'patient-portal':
               return <PatientPortal />;
+            case 'blog-detail':
+              return <BlogDetailView />;
             case 'landing':
             default:
               return <LandingView />;

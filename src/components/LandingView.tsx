@@ -14,7 +14,8 @@ export const LandingView: React.FC = () => {
     reels,
     loginPatientWithGoogle,
     patientToken,
-    currentPatient
+    currentPatient,
+    blogs
   } = useApp();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export const LandingView: React.FC = () => {
             <a href="#treatments" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">TREATMENTS</a>
             <button onClick={() => setView('skin-analyzer')} className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest cursor-pointer">AI SKIN SCAN</button>
             <a href="#gallery" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">GALLERY</a>
+            <a href="#blog" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">BLOG</a>
             <a href="#reviews" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">REVIEWS</a>
             <a href="#contact" className="text-on-surface-variant/70 hover:text-primary transition-colors text-xs font-bold uppercase tracking-widest">CONTACT</a>
           </nav>
@@ -511,6 +513,77 @@ export const LandingView: React.FC = () => {
                 </motion.div>
               );
             })}
+        </div>
+      </section>
+
+      {/* News & Blog Section */}
+      <section className="py-20 bg-surface px-5 md:px-16" id="blog">
+        <div className="max-w-7xl mx-auto space-y-12">
+          <div className="text-center space-y-3">
+            <h2 className="font-serif text-3xl md:text-5xl text-primary font-bold text-center">News & Blog</h2>
+            <p className="text-sm text-on-surface-variant/70 text-center max-w-2xl mx-auto font-medium">
+              Explore our insightful articles and expert advice on achieving radiant and healthy skin.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {blogs.map((post) => (
+              <motion.div
+                whileHover={{ y: -8 }}
+                transition={{ duration: 0.3 }}
+                key={post._id}
+                className="bg-surface-container-lowest rounded-3xl border border-outline-variant/30 overflow-hidden flex flex-col justify-between shadow-sm hover:shadow-md"
+              >
+                <div>
+                  <div className="relative aspect-[16/10] overflow-hidden bg-neutral-900">
+                    <img
+                      src={post.image}
+                      alt={post.title}
+                      className="w-full h-full object-cover opacity-90"
+                    />
+                    {/* Floating Date Badge */}
+                    <div
+                      className="absolute bottom-0 left-0 bg-[#C4846A] text-white py-3 px-4 flex flex-col items-center justify-center font-sans"
+                      style={{ borderTopRightRadius: '16px' }}
+                    >
+                      <span className="text-lg font-black leading-none">{post.dateString.split(' ')[0]}</span>
+                      <span className="text-[10px] font-bold uppercase tracking-widest leading-none mt-1">{post.dateString.split(' ')[1]}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-8 space-y-4">
+                    <div className="flex items-center gap-6 text-[11px] font-bold text-on-surface-variant/60 uppercase tracking-wider">
+                      <div className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px]">person</span>
+                        <span>{post.author}</span>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <span className="material-symbols-outlined text-[14px]">folder</span>
+                        <span>{post.category}</span>
+                      </div>
+                    </div>
+
+                    <h3 className="font-serif text-xl font-bold text-primary leading-snug hover:text-[#C4846A] transition-colors cursor-pointer" onClick={() => setView('blog-detail', post.slug)}>
+                      {post.title}
+                    </h3>
+
+                    <p className="text-xs text-on-surface-variant leading-relaxed font-medium">
+                      {post.summary}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="px-8 pb-8">
+                  <button
+                    onClick={() => setView('blog-detail', post.slug)}
+                    className="w-full bg-[#C4846A]/80 hover:bg-[#C4846A] text-white py-3.5 px-6 font-bold rounded-lg text-xs uppercase tracking-wider transition-colors duration-150 cursor-pointer shadow-sm"
+                  >
+                    Read Now
+                  </button>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
