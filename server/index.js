@@ -28,6 +28,7 @@ app.use('/api/analytics', require('./routes/analyticsRoutes'));
 app.use('/api/beforeafter', require('./routes/beforeAfterRoutes'));
 app.use('/api/skinleads', require('./routes/skinLeadRoutes'));
 app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/blogs', require('./routes/blogRoutes'));
 
 app.listen(PORT, () => {
   console.log(`🚀 Server navigating at http://localhost:${PORT}`);
