@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { AnimatedCounter } from './AnimatedCounter';
 import { REVIEWS, TREATMENTS } from '../initialData';
 import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { auth, googleProvider } from '../firebase';
@@ -135,21 +136,27 @@ export const LandingView: React.FC = () => {
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-secondary fill" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                  <span className="font-bold text-lg">4.9 Rating</span>
+                  <span className="font-bold text-lg">
+                    <AnimatedCounter value={4.9} decimals={1} /> Rating
+                  </span>
                 </div>
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Google Reviews</span>
               </div>
               <div className="flex flex-col gap-1 border-l border-outline-variant/30 pl-4 md:pl-6">
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-secondary">group</span>
-                  <span className="font-bold text-lg">1000+</span>
+                  <span className="font-bold text-lg">
+                    <AnimatedCounter value={1000} suffix="+" />
+                  </span>
                 </div>
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Happy Patients</span>
               </div>
               <div className="flex flex-col gap-1 border-l border-outline-variant/30 pl-4 md:pl-6">
                 <div className="flex items-center gap-1.5">
                   <span className="material-symbols-outlined text-secondary">history_edu</span>
-                  <span className="font-bold text-lg">10+ Years</span>
+                  <span className="font-bold text-lg">
+                    <AnimatedCounter value={10} suffix="+" /> Years
+                  </span>
                 </div>
                 <span className="text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Experience</span>
               </div>
