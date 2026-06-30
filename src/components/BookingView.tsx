@@ -21,6 +21,7 @@ export const BookingView: React.FC = () => {
   } = useApp();
 
   const [step, setStep] = useState<number>(1);
+  const [direction, setDirection] = useState<number>(1);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTime, setSelectedTime] = useState<string>('');
   const [selectedTreatment, setSelectedTreatment] = useState<string>('');
@@ -37,18 +38,26 @@ export const BookingView: React.FC = () => {
   const [formErrors, setFormErrors] = useState<string>('');
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [isVerifyingPayment, setIsVerifyingPayment] = useState<boolean>(false);
+  const [isLoadingStep, setIsLoadingStep] = useState<boolean>(false);
 
   // Calendar month/year navigation state
   const [currentMonth, setCurrentMonth] = useState<number>(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState<number>(new Date().getFullYear());
 
-  // Available services list matching the project treatments and screen
+  // Restrict available services to only OPD as requested
   const services = [
-    { name: 'OPD', desc: 'General out-patient skin and hair diagnostics & consult', price: '500.00' },
-    { name: 'Medical Skincare', desc: 'Bespoke medical aesthetic solutions for flawless skin', price: '500.00' },
-    { name: 'Laser Technology', desc: 'US-FDA approved laser therapies calibrated precisely', price: '500.00' },
-    { name: 'Hair Restoration', desc: 'Scalp revitalization using advanced growth factors', price: '500.00' }
+    { name: 'OPD', desc: 'General out-patient skin and hair diagnostics & consult', price: '500.00' }
   ];
+
+  // Generate a random confirmation Order ID slug
+  const orderId = useMemo(() => {
+    const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    let result = '';
+    for (let i = 0; i < 7; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return `ORDER #${result}`;
+  }, []);
 
   // Sync selected treatment from context or set to first step
   useEffect(() => {
@@ -56,6 +65,7 @@ export const BookingView: React.FC = () => {
       setSelectedTreatment(initialTreatment);
       setStep(2);
     } else {
+      setSelectedTreatment('OPD'); // Default to OPD
       setStep(1);
     }
   }, [initialTreatment]);
@@ -110,6 +120,16 @@ export const BookingView: React.FC = () => {
       checkPayment();
     }
   }, [verifyPayment]);
+
+  // Helper function for loaders during step transition
+  const transitionToStep = (nextStep: number) => {
+    setDirection(nextStep > step ? 1 : -1);
+    setIsLoadingStep(true);
+    setTimeout(() => {
+      setStep(nextStep);
+      setIsLoadingStep(false);
+    }, 600);
+  };
 
   // Generate Month View Calendar Days
   const calendarDays = useMemo(() => {
@@ -190,21 +210,32 @@ export const BookingView: React.FC = () => {
   }, [clinicConfig]);
 
   const handleSelectTime = async (time: string) => {
-    const res = await lockSlot(selectedDate, time);
-    if (res.error) return alert(res.message);
     setSelectedTime(time);
+    setDirection(1);
+    setIsLoadingStep(true);
+    try {
+      const res = await lockSlot(selectedDate, time);
+      if (res.error) {
+        alert(res.message);
+        setSelectedTime('');
+        setIsLoadingStep(false);
+        return;
+      }
 
-    // Skip to Step 4 if user profile is already complete
-    const isProfileComplete = currentPatient &&
-      currentPatient.name &&
-      currentPatient.mobile &&
-      currentPatient.email &&
-      currentPatient.age;
+      const isProfileComplete = currentPatient &&
+        currentPatient.name &&
+        currentPatient.mobile &&
+        currentPatient.email &&
+        currentPatient.age;
 
-    if (isProfileComplete) {
-      setStep(4);
-    } else {
-      setStep(3);
+      setTimeout(() => {
+        setStep(isProfileComplete ? 4 : 3);
+        setIsLoadingStep(false);
+      }, 500);
+    } catch (err) {
+      alert('Error locking slot.');
+      setSelectedTime('');
+      setIsLoadingStep(false);
     }
   };
 
@@ -246,15 +277,22 @@ export const BookingView: React.FC = () => {
   const validateAndReview = async () => {
     if (validateFields()) {
       setFormErrors('');
+      setDirection(1);
+      setIsLoadingStep(true);
       try {
         const res = await updatePatientProfile(formData.name, formData.mobile, parseInt(formData.age, 10));
         if (res.success) {
-          setStep(4);
+          setTimeout(() => {
+            setStep(4);
+            setIsLoadingStep(false);
+          }, 500);
         } else {
           setFormErrors(res.message || 'Failed to update patient profile.');
+          setIsLoadingStep(false);
         }
       } catch (err) {
         setFormErrors('Failed to connect to profile server.');
+        setIsLoadingStep(false);
       }
     } else {
       setFormErrors('Please correct the validation errors in your profile.');
@@ -262,18 +300,28 @@ export const BookingView: React.FC = () => {
   };
 
   const handleCompleteBooking = async () => {
-    const res = await initiatePayment({
-      date: selectedDate,
-      startTime: selectedTime,
-      patientData: {
-        ...formData,
-        patientName: formData.name,
-        age: parseInt(formData.age),
-        treatment: selectedTreatment
+    setDirection(1);
+    setIsLoadingStep(true);
+    try {
+      const res = await initiatePayment({
+        date: selectedDate,
+        startTime: selectedTime,
+        patientData: {
+          ...formData,
+          patientName: formData.name,
+          age: parseInt(formData.age),
+          treatment: selectedTreatment
+        }
+      });
+      if (res.success && res.longurl) {
+        window.location.href = res.longurl;
+      } else {
+        alert(res.message || 'Failed to initiate payment gateway.');
+        setIsLoadingStep(false);
       }
-    });
-    if (res.success && res.longurl) {
-      window.location.href = res.longurl;
+    } catch (err) {
+      alert('Failed to connect to payment server.');
+      setIsLoadingStep(false);
     }
   };
 
@@ -314,7 +362,7 @@ export const BookingView: React.FC = () => {
       case 2: return 'Select Date & Time';
       case 3: return 'Enter Your Information';
       case 4: return 'Verify Order Details';
-      case 5: return 'Clinical Success';
+      case 5: return 'Appointment Confirmed';
       default: return 'Booking';
     }
   };
@@ -333,7 +381,7 @@ export const BookingView: React.FC = () => {
     }
   };
 
-  const showSummarySidebar = patientToken && (step === 2 || step === 3);
+  const showSummarySidebar = patientToken && (step === 2 || step === 3) && !isLoadingStep;
 
   if (isVerifyingPayment) {
     return (
@@ -347,12 +395,69 @@ export const BookingView: React.FC = () => {
     );
   }
 
+  // Parse details for Step 5 Date Badge (e.g. "Jul 17" -> "Jul" and "17")
+  const successDateParts = useMemo(() => {
+    if (!selectedDate) return { day: '17', month: 'Jul' };
+    const parts = selectedDate.split(' ');
+    return {
+      month: parts[0] || 'Jul',
+      day: parts[1] || '17'
+    };
+  }, [selectedDate]);
+
+  const stepVariants = {
+    enter: (dir: number) => ({
+      opacity: 0,
+      x: dir > 0 ? 80 : -80,
+      scale: 0.96,
+      filter: 'blur(4px)'
+    }),
+    center: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+      filter: 'blur(0px)',
+      transition: {
+        x: { type: 'spring', stiffness: 280, damping: 26 },
+        opacity: { duration: 0.25 },
+        scale: { duration: 0.25 }
+      }
+    },
+    exit: (dir: number) => ({
+      opacity: 0,
+      x: dir > 0 ? -80 : 80,
+      scale: 0.96,
+      filter: 'blur(4px)',
+      transition: {
+        x: { duration: 0.2 },
+        opacity: { duration: 0.15 },
+        scale: { duration: 0.15 }
+      }
+    })
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 md:p-6 overflow-y-auto font-sans">
-      <div className="bg-white rounded-[2rem] shadow-2xl flex flex-col md:flex-row w-full max-w-5xl overflow-hidden min-h-[500px] md:min-h-[580px] relative animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 overflow-y-auto font-sans">
+      {/* Backdrop */}
+      <motion.div 
+        className="fixed inset-0 bg-black/50 backdrop-blur-md"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={handleCloseModal}
+      />
+
+      {/* Modal Card */}
+      <motion.div 
+        className="bg-white rounded-[2rem] shadow-2xl flex flex-col md:flex-row w-full max-w-5xl overflow-hidden max-h-[95vh] md:max-h-none overflow-y-auto md:overflow-visible relative z-10"
+        initial={{ opacity: 0, y: 40, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 40, scale: 0.95 }}
+        transition={{ type: "spring", stiffness: 300, damping: 25 }}
+      >
         
-        {/* Left Sidebar (Pink) */}
-        <div className="md:w-1/3 flex flex-col justify-between p-8 md:p-10 bg-[#faf0f5] text-[#4a2c52] border-r border-[#f3d9ea]/30">
+        {/* Left Sidebar (Pink) - Hidden on Mobile */}
+        <div className="hidden md:flex md:w-1/3 flex-col justify-between p-8 md:p-10 bg-[#faf0f5] text-[#4a2c52] border-r border-[#f3d9ea]/30">
           <div>
             <div className="w-14 h-14 rounded-full bg-[#f3d9ea] flex items-center justify-center mb-6 shadow-sm">
               <span className="material-symbols-outlined text-[#8c3a72] text-2xl">
@@ -375,22 +480,50 @@ export const BookingView: React.FC = () => {
         </div>
 
         {/* Middle Main Content */}
-        <div className="flex-1 flex flex-col justify-between p-6 md:p-8 relative">
-          {/* Close button X */}
+        <div className="flex-1 flex flex-col justify-between p-5 md:p-8 relative">
+          
+          {/* Close button X - Desktop Only */}
           {step !== 5 && (
             <button 
               onClick={handleCloseModal}
-              className="absolute top-6 right-6 text-neutral-400 hover:text-neutral-600 transition-colors p-1.5 rounded-full hover:bg-neutral-50 cursor-pointer"
+              className="hidden md:block absolute top-6 right-6 text-neutral-400 hover:text-neutral-600 transition-colors p-1.5 rounded-full hover:bg-neutral-50 cursor-pointer"
             >
               <span className="material-symbols-outlined text-xl">close</span>
             </button>
+          )}
+
+          {/* Compact Step Header - Mobile Only */}
+          {patientToken && (
+            <div className="md:hidden border-b border-neutral-100 pb-3.5 mb-3 flex items-center justify-between">
+              <div>
+                {step !== 5 ? (
+                  <>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-[#8c3a72]">
+                      Step {step} of 4
+                    </p>
+                    <h4 className="font-serif text-base font-bold text-neutral-800 mt-0.5">
+                      {getStepTitle()}
+                    </h4>
+                  </>
+                ) : (
+                  <h4 className="font-serif text-base font-bold text-neutral-800">
+                    Appointment Confirmed
+                  </h4>
+                )}
+              </div>
+              {step !== 5 && (
+                <button onClick={handleCloseModal} className="text-neutral-400 hover:text-neutral-600 p-1">
+                  <span className="material-symbols-outlined text-lg">close</span>
+                </button>
+              )}
+            </div>
           )}
 
           {/* Form / Dynamic Section */}
           <div className="flex-1 flex flex-col justify-center">
             {!patientToken ? (
               // Secure Login Step
-              <div className="text-center space-y-6 max-w-sm mx-auto py-10">
+              <div className="text-center space-y-6 max-w-sm mx-auto py-8">
                 <span className="material-symbols-outlined text-5xl text-[#8c3a72]">lock</span>
                 <div className="space-y-2">
                   <h3 className="font-serif text-2xl font-bold text-neutral-800">Secure Booking Portal</h3>
@@ -406,32 +539,41 @@ export const BookingView: React.FC = () => {
                 </button>
               </div>
             ) : (
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="wait" custom={direction}>
                 {step === 1 && (
-                  // Step 1: Service Selection
+                  // Step 1: Service Selection (Restricted to OPD only)
                   <motion.div
                     key="step1"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="space-y-6 py-6"
+                    custom={direction}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="space-y-6 py-4"
                   >
                     <h3 className="font-serif text-xl font-bold text-neutral-800">Available Services</h3>
-                    <div className="space-y-3 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+                    <div className="space-y-3">
                       {services.map(srv => (
                         <div
                           key={srv.name}
                           onClick={() => {
+                            if (isLoadingStep) return;
                             setSelectedTreatment(srv.name);
-                            setStep(2);
+                            transitionToStep(2);
                           }}
-                          className="border border-neutral-100 rounded-2xl p-4 bg-white hover:border-[#8c3a72]/30 hover:bg-[#faf0f5]/20 cursor-pointer transition-all flex justify-between items-center shadow-sm"
+                          className={`border rounded-2xl p-6 bg-white hover:border-[#8c3a72]/30 hover:bg-[#faf0f5]/20 cursor-pointer transition-all flex justify-between items-center shadow-sm hover:scale-[1.01] ${
+                            isLoadingStep && selectedTreatment === srv.name ? 'border-[#8c3a72]/30 bg-[#faf0f5]/10' : 'border-neutral-100'
+                          }`}
                         >
                           <div className="space-y-1">
-                            <p className="font-semibold text-neutral-800 text-sm">{srv.name}</p>
-                            <p className="text-neutral-400 text-[10px]">{srv.desc}</p>
+                            <p className="font-bold text-neutral-800 text-base">{srv.name}</p>
+                            <p className="text-neutral-400 text-xs">{srv.desc}</p>
                           </div>
-                          <span className="material-symbols-outlined text-neutral-300">chevron_right</span>
+                          {isLoadingStep && selectedTreatment === srv.name ? (
+                            <div className="w-5 h-5 border-2 border-[#8c3a72] border-t-transparent rounded-full animate-spin shrink-0" />
+                          ) : (
+                            <span className="material-symbols-outlined text-neutral-300">chevron_right</span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -442,26 +584,28 @@ export const BookingView: React.FC = () => {
                   // Step 2: Date & Time Selection
                   <motion.div
                     key="step2"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="space-y-6 py-4"
+                    custom={direction}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="space-y-5 py-2"
                   >
-                    <div className="flex justify-between items-center">
-                      <h3 className="font-serif text-lg font-bold text-neutral-800">Date & Time Selection</h3>
-                      <div className="flex items-center gap-1">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+                      <h3 className="hidden sm:block font-serif text-lg font-bold text-neutral-800">Date & Time Selection</h3>
+                      <div className="flex items-center justify-between sm:justify-end gap-1 w-full sm:w-auto">
                         <button 
                           onClick={handlePrevMonth}
-                          className="w-8 h-8 rounded-full border border-neutral-100 flex items-center justify-center hover:bg-neutral-50 text-neutral-600 transition-all"
+                          className="w-8 h-8 rounded-full border border-neutral-100 flex items-center justify-center hover:bg-neutral-50 text-neutral-600 transition-all cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-base">chevron_left</span>
                         </button>
-                        <span className="text-sm font-bold text-neutral-800 px-2 min-w-[120px] text-center">
+                        <span className="text-xs font-bold text-neutral-800 px-2 min-w-[110px] text-center uppercase tracking-wider">
                           {monthYearString}
                         </span>
                         <button 
                           onClick={handleNextMonth}
-                          className="w-8 h-8 rounded-full border border-neutral-100 flex items-center justify-center hover:bg-neutral-50 text-neutral-600 transition-all"
+                          className="w-8 h-8 rounded-full border border-neutral-100 flex items-center justify-center hover:bg-neutral-50 text-neutral-600 transition-all cursor-pointer"
                         >
                           <span className="material-symbols-outlined text-base">chevron_right</span>
                         </button>
@@ -470,7 +614,7 @@ export const BookingView: React.FC = () => {
 
                     <div className="grid grid-cols-7 gap-1 text-center">
                       {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => (
-                        <span key={idx} className="text-[10px] font-bold text-neutral-400 uppercase py-1">
+                        <span key={idx} className="text-[9px] font-bold text-neutral-400 uppercase py-1">
                           {day}
                         </span>
                       ))}
@@ -506,7 +650,7 @@ export const BookingView: React.FC = () => {
                           >
                             <span>{date.getDate()}</span>
                             {isSelectable && !isSelected && (
-                              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.75 bg-[#4ec38a] rounded-full animate-pulse" />
+                              <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-[#4ec38a] rounded-full" />
                             )}
                           </button>
                         );
@@ -515,25 +659,29 @@ export const BookingView: React.FC = () => {
 
                     {/* Time Slots Area */}
                     {selectedDate && (
-                      <div className="mt-4 pt-4 border-t border-neutral-100 animate-in fade-in slide-in-from-top-4 duration-300">
-                        <p className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider text-center mb-3">
+                      <div className="mt-3 pt-3 border-t border-neutral-100 animate-in fade-in slide-in-from-top-4 duration-300">
+                        <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider text-center mb-2.5">
                           Pick a slot for <span className="text-[#8c3a72] underline decoration-dotted font-bold">{getDisplayDate(selectedDate)}</span>
                         </p>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5 max-h-[140px] overflow-y-auto pr-1 custom-scrollbar">
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
                           {generatedTimeSlots.map(t => {
                             const displayTime = t.toLowerCase();
                             const isTimeSelected = selectedTime === t;
                             return (
                               <button
                                 key={t}
+                                disabled={isLoadingStep}
                                 onClick={() => handleSelectTime(t)}
-                                className={`py-2 rounded-xl text-xs font-bold tracking-wider transition-all border cursor-pointer ${
+                                className={`py-2 rounded-xl text-xs font-bold tracking-wider transition-all border cursor-pointer flex items-center justify-center gap-1.5 ${
                                   isTimeSelected
                                     ? 'bg-[#8c3a72] text-white border-[#8c3a72] shadow-sm'
                                     : 'bg-[#e3f7eb] text-[#2c6643] border-[#c1ebd0] hover:bg-[#c1ebd0]'
-                                }`}
+                                } ${isLoadingStep ? 'opacity-70 cursor-not-allowed' : ''}`}
                               >
-                                {displayTime}
+                                {isLoadingStep && isTimeSelected && (
+                                  <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+                                )}
+                                <span>{displayTime}</span>
                               </button>
                             );
                           })}
@@ -547,22 +695,30 @@ export const BookingView: React.FC = () => {
                   // Step 3: Customer Information Form
                   <motion.div
                     key="step3"
-                    initial={{ opacity: 0, x: 10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    className="space-y-5 py-4"
+                    custom={direction}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="space-y-4 py-2"
                   >
-                    <h3 className="font-serif text-lg font-bold text-neutral-800">Customer Information</h3>
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-serif text-lg font-bold text-neutral-800">Customer Information</h3>
+                      {/* Compact Selection Summary for Mobile Viewports */}
+                      <div className="md:hidden bg-[#faf0f5] px-3 py-1 rounded-full text-[9px] font-bold text-[#8c3a72]">
+                        {selectedDate && getDisplayDate(selectedDate)} @ {selectedTime.toLowerCase()}
+                      </div>
+                    </div>
                     
                     {formErrors && (
-                      <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-xs text-rose-800 font-semibold uppercase tracking-wider">
+                      <div className="p-3 bg-rose-50 border border-rose-100 rounded-xl text-[10px] text-rose-800 font-semibold uppercase tracking-wider">
                         {formErrors}
                       </div>
                     )}
 
-                    <div className="space-y-4 max-h-[360px] overflow-y-auto pr-1 custom-scrollbar">
+                    <fieldset disabled={isLoadingStep} className="space-y-3 max-h-[300px] md:max-h-none overflow-y-auto pr-1 custom-scrollbar border-0 p-0 m-0">
                       {/* Name row */}
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div className="space-y-1">
                           <input
                             type="text"
@@ -572,7 +728,7 @@ export const BookingView: React.FC = () => {
                               setFirstName(e.target.value);
                               if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: '' });
                             }}
-                            className={`w-full bg-white border rounded-xl py-3 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
+                            className={`w-full bg-white border rounded-xl py-2.5 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
                               fieldErrors.name ? 'border-rose-300' : 'border-neutral-200'
                             }`}
                           />
@@ -586,14 +742,14 @@ export const BookingView: React.FC = () => {
                               setLastName(e.target.value);
                               if (fieldErrors.name) setFieldErrors({ ...fieldErrors, name: '' });
                             }}
-                            className={`w-full bg-white border rounded-xl py-3 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
+                            className={`w-full bg-white border rounded-xl py-2.5 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
                               fieldErrors.name ? 'border-rose-300' : 'border-neutral-200'
                             }`}
                           />
                         </div>
                       </div>
                       {fieldErrors.name && (
-                        <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.name}</p>
+                        <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.name}</p>
                       )}
 
                       {/* Phone and Age */}
@@ -603,7 +759,7 @@ export const BookingView: React.FC = () => {
                             fieldErrors.mobile ? 'border-rose-300' : 'border-neutral-200'
                           }`}>
                             <div className="bg-neutral-50 border-r border-neutral-100 px-3 flex items-center gap-1.5 text-xs text-neutral-500 font-semibold select-none">
-                              <span className="w-4 h-2.5 bg-neutral-300 rounded-sm inline-block" />
+                              <span className="w-3.5 h-2 bg-neutral-300 rounded-sm inline-block" />
                               <span>+91</span>
                             </div>
                             <input
@@ -615,11 +771,11 @@ export const BookingView: React.FC = () => {
                                 setFormData({ ...formData, mobile: val });
                                 if (fieldErrors.mobile) setFieldErrors({ ...fieldErrors, mobile: '' });
                               }}
-                              className="flex-1 px-3 py-3 text-xs text-neutral-800 outline-none bg-transparent"
+                              className="flex-1 px-3 py-2 text-xs text-neutral-800 outline-none bg-transparent"
                             />
                           </div>
                           {fieldErrors.mobile && (
-                            <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.mobile}</p>
+                            <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.mobile}</p>
                           )}
                         </div>
 
@@ -632,12 +788,12 @@ export const BookingView: React.FC = () => {
                               setFormData({ ...formData, age: e.target.value });
                               if (fieldErrors.age) setFieldErrors({ ...fieldErrors, age: '' });
                             }}
-                            className={`w-full bg-white border rounded-xl py-3 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
+                            className={`w-full bg-white border rounded-xl py-2.5 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
                               fieldErrors.age ? 'border-rose-300' : 'border-neutral-200'
                             }`}
                           />
                           {fieldErrors.age && (
-                            <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.age}</p>
+                            <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.age}</p>
                           )}
                         </div>
                       </div>
@@ -652,19 +808,19 @@ export const BookingView: React.FC = () => {
                             setFormData({ ...formData, email: e.target.value });
                             if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: '' });
                           }}
-                          className={`w-full bg-white border rounded-xl py-3 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
+                          className={`w-full bg-white border rounded-xl py-2.5 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none ${
                             fieldErrors.email ? 'border-rose-300' : 'border-neutral-200'
                           }`}
                         />
                         {fieldErrors.email && (
-                          <p className="text-[10px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.email}</p>
+                          <p className="text-[9px] text-rose-500 font-bold uppercase tracking-wider">{fieldErrors.email}</p>
                         )}
                       </div>
 
                       {/* Consultation Type */}
-                      <div className="space-y-2">
+                      <div className="space-y-1.5">
                         <label className="text-[9px] uppercase font-bold tracking-wider text-neutral-400 ml-1">Consultation Mode</label>
-                        <div className="grid grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           <button
                             type="button"
                             onClick={() => setFormData({ ...formData, consultationType: 'IN_CLINIC' })}
@@ -704,11 +860,11 @@ export const BookingView: React.FC = () => {
                           placeholder="Describe your concerns or add comments..."
                           value={formData.concern}
                           onChange={e => setFormData({ ...formData, concern: e.target.value })}
-                          className="w-full bg-white border border-neutral-200 rounded-xl py-3 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none resize-none"
-                          rows={3}
+                          className="w-full bg-white border border-neutral-200 rounded-xl py-2.5 px-4 text-xs font-medium text-neutral-800 focus:border-[#8c3a72] transition-all outline-none resize-none"
+                          rows={2.5}
                         />
                       </div>
-                    </div>
+                    </fieldset>
                   </motion.div>
                 )}
 
@@ -716,13 +872,15 @@ export const BookingView: React.FC = () => {
                   // Step 4: Verify Order Details (Checkout list)
                   <motion.div
                     key="step4"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0 }}
-                    className="space-y-5 py-4"
+                    custom={direction}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="space-y-4 py-2"
                   >
                     <h3 className="font-serif text-lg font-bold text-neutral-800">Verify Order Details</h3>
-                    <div className="space-y-4 max-h-[350px] overflow-y-auto pr-1 custom-scrollbar">
+                    <div className="space-y-3 max-h-[300px] md:max-h-none overflow-y-auto pr-1 custom-scrollbar">
                       
                       {/* Top banner: service name & date/time */}
                       <div className="bg-[#faf0f5] p-4 rounded-2xl border border-[#f3d9ea]/30 space-y-1">
@@ -735,8 +893,8 @@ export const BookingView: React.FC = () => {
 
                       {/* Location details */}
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Location</p>
-                        <div className="p-3.5 border border-neutral-100 rounded-xl space-y-1 bg-neutral-50/50">
+                        <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Location</p>
+                        <div className="p-3 border border-neutral-100 rounded-xl space-y-1 bg-neutral-50/50">
                           <p className="text-xs font-semibold text-neutral-800 flex items-center gap-1">
                             {formData.consultationType === 'ONLINE' ? 'Online Video Consult' : 'Dermelixir Clinic'}
                             <a href="https://maps.app.goo.gl/358y8bHkW6yUjE8u9" target="_blank" rel="noreferrer" className="inline-block text-[#8c3a72]">
@@ -753,9 +911,9 @@ export const BookingView: React.FC = () => {
 
                       {/* Customer details info */}
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Customer</p>
-                        <div className="flex items-center gap-3 p-3.5 border border-neutral-100 rounded-xl bg-neutral-50/50">
-                          <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-600 font-bold flex items-center justify-center text-xs shadow-sm select-none uppercase">
+                        <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Customer</p>
+                        <div className="flex items-center gap-3 p-3 border border-neutral-100 rounded-xl bg-neutral-50/50">
+                          <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-600 font-bold flex items-center justify-center text-[10px] select-none uppercase">
                             {firstName[0] || ''}{lastName[0] || ''}
                           </div>
                           <div>
@@ -767,8 +925,8 @@ export const BookingView: React.FC = () => {
 
                       {/* Checkout Cost Breakdown */}
                       <div className="space-y-1">
-                        <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Cost Breakdown</p>
-                        <div className="p-3.5 border border-neutral-100 rounded-xl space-y-2 bg-neutral-50/50">
+                        <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Cost Breakdown</p>
+                        <div className="p-3 border border-neutral-100 rounded-xl space-y-2 bg-neutral-50/50">
                           <div className="flex justify-between text-xs text-neutral-600">
                             <span>{selectedTreatment} Consultation</span>
                             <span>₹500.00</span>
@@ -786,28 +944,137 @@ export const BookingView: React.FC = () => {
                 )}
 
                 {step === 5 && (
-                  // Step 5: Success Screen
+                  // Step 5: Appointment Confirmed Screen (Matching user screenshot)
                   <motion.div
                     key="step5"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center space-y-6 max-w-sm mx-auto py-10"
+                    custom={direction}
+                    variants={stepVariants}
+                    initial="enter"
+                    animate="center"
+                    exit="exit"
+                    className="space-y-5 py-2 text-center md:text-left max-h-[90vh] overflow-y-auto pr-1 custom-scrollbar"
                   >
-                    <div className="w-20 h-20 bg-[#e3f7eb] text-[#2c6643] rounded-full flex items-center justify-center mx-auto shadow-md border border-[#c1ebd0] animate-pulse">
-                      <span className="material-symbols-outlined text-4xl">check_circle</span>
+                    {/* Header check circles */}
+                    <div className="text-center space-y-3">
+                      <div className="w-14 h-14 bg-[#e3f7eb] text-[#2c6643] rounded-full flex items-center justify-center mx-auto shadow-sm border border-[#c1ebd0]">
+                        <span className="material-symbols-outlined text-3xl font-bold">check</span>
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-xl md:text-2xl font-bold text-neutral-800 tracking-tight">Appointment Confirmed</h3>
+                        <p className="text-xs text-[#6e4e79]">We look forward to seeing you.</p>
+                      </div>
+                      {/* Randomly generated Order ID slug block */}
+                      <div className="bg-neutral-100 px-3 py-1 rounded-md text-[10px] font-bold tracking-widest font-mono text-neutral-600 inline-block uppercase select-all">
+                        {orderId}
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <h3 className="font-serif text-2xl font-bold text-neutral-800">Clinical Success!</h3>
-                      <p className="text-xs text-neutral-500 leading-relaxed">
-                        Your diagnostic slot is now locked. Dr. Megha's office will synchronize with your profile shortly.
-                      </p>
+
+                    <div className="h-px bg-neutral-100 my-4" />
+
+                    {/* Service & Date Ticket Block */}
+                    <div className="flex items-center gap-4 border border-neutral-100 rounded-2xl p-4 bg-neutral-50/30 text-left">
+                      <div className="w-14 h-14 bg-[#f4f4f6] rounded-xl flex flex-col items-center justify-center font-bold border border-neutral-100 shrink-0 select-none">
+                        <span className="text-base text-neutral-800 leading-none font-bold">
+                          {successDateParts.day}
+                        </span>
+                        <span className="text-[9px] uppercase tracking-wider text-neutral-400 mt-1 font-bold">
+                          {successDateParts.month}
+                        </span>
+                      </div>
+                      <div>
+                        <p className="font-serif text-lg font-extrabold text-neutral-800 leading-none">
+                          {selectedTreatment}
+                        </p>
+                        <p className="text-xs text-[#8c3a72] font-bold mt-1.5 flex items-center gap-1">
+                          <span className="material-symbols-outlined text-xs">schedule</span>
+                          {getDisplayDate(selectedDate)}, {selectedTime.toLowerCase()}
+                        </p>
+                      </div>
                     </div>
-                    <button
-                      onClick={handleCloseModal}
-                      className="w-full bg-[#8c3a72] text-white hover:bg-[#6c2c58] py-4 px-6 rounded-2xl font-bold text-xs uppercase tracking-widest shadow-lg transition-all cursor-pointer"
-                    >
-                      Return to Sanctuary
-                    </button>
+
+                    {/* Action buttons (Mocks) */}
+                    <div className="flex flex-wrap gap-3.5 justify-center md:justify-start">
+                      <button 
+                        onClick={() => alert('Appointment added to your google calendar successfully.')}
+                        className="flex items-center gap-1.5 px-4.5 py-2 border border-neutral-200 rounded-xl text-[9px] font-bold uppercase tracking-wider hover:bg-neutral-50 transition-all cursor-pointer bg-white"
+                      >
+                        <span className="material-symbols-outlined text-xs text-neutral-500">calendar_month</span> Add to Calendar
+                      </button>
+                      <button 
+                        onClick={() => window.print()}
+                        className="flex items-center gap-1.5 px-4.5 py-2 border border-neutral-200 rounded-xl text-[9px] font-bold uppercase tracking-wider hover:bg-neutral-50 transition-all cursor-pointer bg-white"
+                      >
+                        <span className="material-symbols-outlined text-xs text-neutral-500">print</span> Print Receipt
+                      </button>
+                    </div>
+
+                    {/* Columns container (Location | Customer) */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-4 border-t border-neutral-100 text-left">
+                      {/* Location Column */}
+                      <div className="space-y-1.5">
+                        <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Location</p>
+                        <div>
+                          <a 
+                            href="https://maps.app.goo.gl/358y8bHkW6yUjE8u9" 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="text-xs font-bold text-[#8c3a72] flex items-center gap-0.5 hover:underline"
+                          >
+                            {formData.consultationType === 'ONLINE' ? 'Online Video Consult' : 'Dermelixir Clinic'}
+                            <span className="material-symbols-outlined text-[10px]">open_in_new</span>
+                          </a>
+                          <p className="text-[10px] text-neutral-500 leading-relaxed mt-1">
+                            {formData.consultationType === 'ONLINE' 
+                              ? 'A secure link is dispatched to your email address.' 
+                              : 'Gyandeep Medicare Hospital, Samne Ghat, Lanka, Varanasi, Uttar Pradesh 221010'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Customer Column */}
+                      <div className="space-y-1.5">
+                        <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Customer</p>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-neutral-200 text-neutral-600 font-bold flex items-center justify-center text-[10px] select-none uppercase shrink-0">
+                            {firstName[0] || ''}{lastName[0] || ''}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold text-neutral-800 truncate">{formData.name}</p>
+                            <p className="text-[10px] text-neutral-400 truncate">{formData.email}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cost Breakdown */}
+                    <div className="space-y-2 pt-4 border-t border-neutral-100 text-left">
+                      <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-widest">Cost Breakdown</p>
+                      <div className="space-y-1.5 bg-neutral-50/50 p-3 rounded-xl border border-neutral-100">
+                        <div className="flex justify-between text-xs text-neutral-600">
+                          <span>{selectedTreatment} Consultation Fee</span>
+                          <span>₹500.00</span>
+                        </div>
+                        <div className="flex justify-between text-xs text-neutral-600">
+                          <span>Payments and Credits</span>
+                          <span>₹0.00</span>
+                        </div>
+                        <div className="h-px bg-neutral-200/60 my-1" />
+                        <div className="flex justify-between items-baseline">
+                          <span className="text-xs font-bold text-neutral-800">Total Price</span>
+                          <span className="font-serif font-extrabold text-base text-neutral-900">₹500.00</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Navigation buttons: Return */}
+                    <div className="flex justify-center pt-3">
+                      <button
+                        onClick={handleCloseModal}
+                        className="bg-[#8c3a72] text-white hover:bg-[#6c2c58] py-3 px-8 rounded-xl font-bold transition-all shadow-md cursor-pointer hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider"
+                      >
+                        Return to Sanctuary
+                      </button>
+                    </div>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -820,7 +1087,9 @@ export const BookingView: React.FC = () => {
               <div>
                 {step > 1 && (
                   <button
+                    disabled={isLoadingStep}
                     onClick={() => {
+                      setDirection(-1);
                       if (step === 2 && !initialTreatment) {
                         setStep(1);
                       } else {
@@ -828,7 +1097,7 @@ export const BookingView: React.FC = () => {
                       }
                       setFormErrors('');
                     }}
-                    className="text-xs font-bold uppercase tracking-wider text-neutral-400 hover:text-neutral-700 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none"
+                    className="text-xs font-bold uppercase tracking-wider text-neutral-400 hover:text-neutral-700 transition-colors flex items-center gap-1 cursor-pointer bg-transparent border-0 outline-none disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span className="material-symbols-outlined text-sm">arrow_back</span> Back
                   </button>
@@ -838,17 +1107,27 @@ export const BookingView: React.FC = () => {
               <div>
                 {step === 3 ? (
                   <button
+                    disabled={isLoadingStep}
                     onClick={validateAndReview}
-                    className="bg-[#8c3a72] text-white hover:bg-[#6c2c58] py-3 px-6 rounded-xl flex items-center gap-1.5 font-bold transition-all shadow-md cursor-pointer hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider"
+                    className="bg-[#8c3a72] text-white hover:bg-[#6c2c58] py-3 px-6 rounded-xl flex items-center gap-1.5 font-bold transition-all shadow-md cursor-pointer hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider animate-in fade-in disabled:opacity-75 disabled:cursor-not-allowed"
                   >
-                    Next <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    {isLoadingStep && (
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    )}
+                    <span>Next</span>
+                    {!isLoadingStep && <span className="material-symbols-outlined text-sm">arrow_forward</span>}
                   </button>
                 ) : step === 4 ? (
                   <button
+                    disabled={isLoadingStep}
                     onClick={handleCompleteBooking}
-                    className="bg-[#8c3a72] text-white hover:bg-[#6c2c58] py-3 px-6 rounded-xl flex items-center gap-1.5 font-bold transition-all shadow-md cursor-pointer hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider"
+                    className="bg-[#8c3a72] text-white hover:bg-[#6c2c58] py-3 px-6 rounded-xl flex items-center gap-1.5 font-bold transition-all shadow-md cursor-pointer hover:scale-[1.01] active:scale-[0.99] text-xs uppercase tracking-wider animate-in fade-in disabled:opacity-75 disabled:cursor-not-allowed"
                   >
-                    Submit <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    {isLoadingStep && (
+                      <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin shrink-0" />
+                    )}
+                    <span>Submit</span>
+                    {!isLoadingStep && <span className="material-symbols-outlined text-sm">arrow_forward</span>}
                   </button>
                 ) : null}
               </div>
@@ -856,9 +1135,9 @@ export const BookingView: React.FC = () => {
           )}
         </div>
 
-        {/* Right Summary Sidebar (Steps 2 and 3 only) */}
+        {/* Right Summary Sidebar (Steps 2 and 3 only) - Hidden on Mobile */}
         {showSummarySidebar && (
-          <div className="md:w-1/4 border-l border-neutral-100 p-6 flex flex-col justify-between bg-white min-w-[220px] animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="hidden md:flex md:w-1/4 border-l border-neutral-100 p-6 flex flex-col justify-between bg-white min-w-[220px] animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-6">
               <h3 className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Summary</h3>
               
@@ -903,7 +1182,7 @@ export const BookingView: React.FC = () => {
             </div>
           </div>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };

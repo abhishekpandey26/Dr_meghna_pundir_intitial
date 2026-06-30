@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect } from 'react';
+import { AnimatePresence } from 'motion/react';
 import { AppProvider, useApp, AppView } from './context/AppContext';
 import { LandingView } from './components/LandingView';
 import { BookingView } from './components/BookingView';
@@ -93,7 +94,9 @@ function ViewDispatcher() {
           }
         })()}
       </div>
-      {view === 'booking' && <BookingView />}
+      <AnimatePresence>
+        {view === 'booking' && <BookingView />}
+      </AnimatePresence>
     </>
   );
 }
