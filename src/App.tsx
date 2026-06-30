@@ -74,8 +74,6 @@ function ViewDispatcher() {
       <div className={isAdminArea ? '' : 'overflow-x-hidden'}>
         {(() => {
           switch (view) {
-            case 'booking':
-              return <BookingView />;
             case 'skin-analyzer':
               return <SkinAnalyzer />;
             case 'admin':
@@ -88,12 +86,14 @@ function ViewDispatcher() {
               return <PatientPortal />;
             case 'blog-detail':
               return <BlogDetailView />;
+            case 'booking':
             case 'landing':
             default:
               return <LandingView />;
           }
         })()}
       </div>
+      {view === 'booking' && <BookingView />}
     </>
   );
 }
