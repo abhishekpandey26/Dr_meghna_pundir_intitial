@@ -242,36 +242,42 @@ export const LandingView: React.FC = () => {
             </a>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {REVIEWS.map((rev) => (
-              <motion.div
-                whileHover={{ y: -5 }}
-                key={rev.id}
-                className="bg-surface-container-lowest p-8 rounded-3xl border border-outline-variant/30 flex flex-col justify-between shadow-sm transition-all"
-              >
-                <div>
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary font-sans">
-                      {rev.initials}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-on-background">{rev.author}</h4>
-                      <div className="flex text-secondary scale-75 -ml-3 mt-0.5">
-                        {[...Array(rev.rating)].map((_, i) => (
-                          <span key={i} className="material-symbols-outlined fill" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
-                        ))}
+          <div className="relative w-full overflow-hidden py-4">
+            {/* Gradient Overlays for smooth fading edges */}
+            <div className="pointer-events-none absolute inset-y-0 left-0 w-16 md:w-32 bg-gradient-to-r from-surface-container-low to-transparent z-10"></div>
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-16 md:w-32 bg-gradient-to-l from-surface-container-low to-transparent z-10"></div>
+
+            <div className="flex gap-6 animate-marquee-ltr py-2">
+              {/* Duplicate the array multiple times to ensure seamless infinite scroll on all screen sizes */}
+              {[...REVIEWS, ...REVIEWS, ...REVIEWS, ...REVIEWS].map((rev, index) => (
+                <div
+                  key={`${rev.id}-${index}`}
+                  className="w-[300px] md:w-[380px] shrink-0 bg-surface-container-lowest p-6 md:p-8 rounded-3xl border border-outline-variant/30 flex flex-col justify-between shadow-sm hover:shadow-md hover:border-secondary/45 hover:scale-[1.01] transition-all duration-300"
+                >
+                  <div>
+                    <div className="flex items-center gap-4 mb-6">
+                      <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center font-bold text-secondary font-sans">
+                        {rev.initials}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-on-background">{rev.author}</h4>
+                        <div className="flex text-secondary scale-75 -ml-3 mt-0.5">
+                          {[...Array(rev.rating)].map((_, i) => (
+                            <span key={i} className="material-symbols-outlined fill" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+                          ))}
+                        </div>
                       </div>
                     </div>
+                    <p className="text-on-surface-variant text-sm italic leading-relaxed">
+                      &ldquo;{rev.comment}&rdquo;
+                    </p>
                   </div>
-                  <p className="text-on-surface-variant text-sm italic leading-relaxed">
-                    &ldquo;{rev.comment}&rdquo;
-                  </p>
+                  <div className="mt-6 flex items-center gap-1.5 text-[10px] text-secondary font-bold tracking-widest uppercase">
+                    <span className="material-symbols-outlined text-[14px]">shield</span> Verifed Clinic Patient
+                  </div>
                 </div>
-                <div className="mt-6 flex items-center gap-1.5 text-[10px] text-secondary font-bold tracking-widest uppercase">
-                  <span className="material-symbols-outlined text-[14px]">shield</span> Verifed Clinic Patient
-                </div>
-              </motion.div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </section>
