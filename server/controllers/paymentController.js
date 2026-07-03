@@ -40,7 +40,8 @@ exports.createPaymentRequest = async (req, res) => {
       { 
         ...patientData,
         patientId,
-        status: 'PAYMENT_PENDING'
+        status: 'PAYMENT_PENDING',
+        paymentMethod: 'ONLINE'
       },
       { upsert: true, returnDocument: 'after', runValidators: true }
     );

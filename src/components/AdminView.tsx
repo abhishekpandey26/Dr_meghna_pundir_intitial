@@ -18,6 +18,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldCheck,
+  Instagram,
   Clock,
   ExternalLink,
   ChevronDown,
@@ -34,13 +35,25 @@ import {
   Activity,
   Sparkles,
   Columns,
-  Newspaper
+  Newspaper,
+  MessageSquare
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend, AreaChart, Area
 } from 'recharts';
 import { CLINIC_HOUR_OPTIONS, SLOT_DURATION_OPTIONS } from '../initialData';
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+
+const getMediaUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('/uploads/')) {
+    const serverBase = API_BASE.replace('/api', '');
+    return `${serverBase}${url}`;
+  }
+  return url;
+};
 
 export const AdminView: React.FC = () => {
   const { 
@@ -81,13 +94,21 @@ export const AdminView: React.FC = () => {
     blogs,
     addBlogPost,
     deleteBlogPost,
-    updateBlogPost
+    updateBlogPost,
+    videoTestimonials,
+    addVideoTestimonial,
+    deleteVideoTestimonial,
+    updateVideoTestimonial,
+    photoTestimonials,
+    addPhotoTestimonial,
+    deletePhotoTestimonial,
+    updatePhotoTestimonial
   } = useApp();
 
   // Navigation State
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'schedule' | 'gallery' | 'beforeafter' | 'skinleads' | 'insights' | 'settings' | 'blogs'>(() => {
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'schedule' | 'gallery' | 'beforeafter' | 'skinleads' | 'insights' | 'settings' | 'blogs' | 'testimonials' | 'instagram'>(() => {
     const hash = window.location.hash.replace('#', '');
-    if (['dashboard', 'appointments', 'schedule', 'gallery', 'beforeafter', 'skinleads', 'insights', 'settings', 'blogs'].includes(hash)) {
+    if (['dashboard', 'appointments', 'schedule', 'gallery', 'beforeafter', 'skinleads', 'insights', 'settings', 'blogs', 'testimonials', 'instagram'].includes(hash)) {
       return hash as any;
     }
     return 'dashboard';
@@ -161,6 +182,43 @@ export const AdminView: React.FC = () => {
   const [showNewBlogModal, setShowNewBlogModal] = useState(false);
   const [showEditBlogModal, setShowEditBlogModal] = useState(false);
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
+
+  // Testimonials States
+  const [activeTestimonialSubTab, setActiveTestimonialSubTab] = useState<'videos' | 'photos'>('videos');
+  const [showNewVideoModal, setShowNewVideoModal] = useState(false);
+  const [showEditVideoModal, setShowEditVideoModal] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<any>(null);
+  const [newVideo, setNewVideo] = useState({ title: '', youtubeUrl: '', category: 'General', order: 0 });
+
+  const [showNewPhotoModal, setShowNewPhotoModal] = useState(false);
+  const [showEditPhotoModal, setShowEditPhotoModal] = useState(false);
+  const [editingPhoto, setEditingPhoto] = useState<any>(null);
+  const [newPhoto, setNewPhoto] = useState({ title: '', treatment: 'Skin Treatment', beforeUrl: '', afterUrl: '', description: '', order: 0 });
+
+  // Instagram Feed States
+  const [instagramPosts, setInstagramPosts] = useState<any[]>([]);
+  const [instagramUrlInput, setInstagramUrlInput] = useState('');
+  const [instagramMediaTypeInput, setInstagramMediaTypeInput] = useState<'image' | 'reel'>('image');
+  const [instagramCaptionInput, setInstagramCaptionInput] = useState('');
+  const [instagramOrderInput, setInstagramOrderInput] = useState(0);
+  const [instagramIsPublishedInput, setInstagramIsPublishedInput] = useState(true);
+  const [instagramFile, setInstagramFile] = useState<File | null>(null);
+
+  const fetchInstagramPosts = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/instagram-posts/admin`);
+      const data = await res.json();
+      setInstagramPosts(data || []);
+    } catch (err) {
+      console.error('Failed to fetch Instagram posts', err);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'instagram') {
+      fetchInstagramPosts();
+    }
+  }, [activeTab]);
   
   const [newBlog, setNewBlog] = useState({
     title: '',
@@ -172,6 +230,9 @@ export const AdminView: React.FC = () => {
     author: 'Dr. Megha Pundir Singh',
     dateString: ''
   });
+
+  const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
+  const [editBlogImageFile, setEditBlogImageFile] = useState<File | null>(null);
 
   const generateSlug = (title: string) => {
     return title
@@ -252,6 +313,8 @@ export const AdminView: React.FC = () => {
             { id: 'skinleads', icon: Sparkles, label: 'Skin Scan Leads' },
             { id: 'insights', icon: Video, label: 'Clinical Insights' },
             { id: 'blogs', icon: Newspaper, label: 'Manage Blogs' },
+            { id: 'testimonials', icon: MessageSquare, label: 'Testimonials' },
+            { id: 'instagram', icon: Instagram, label: 'Instagram Feed' },
             { id: 'settings', icon: Settings, label: 'Clinic Config' },
           ].map((item) => (
             <button
@@ -298,6 +361,7 @@ export const AdminView: React.FC = () => {
               {activeTab === 'dashboard' ? 'Practice Overview' : 
                activeTab === 'insights' ? 'Clinical Insights' : 
                activeTab === 'beforeafter' ? 'Before & After Gallery' :
+               activeTab === 'instagram' ? 'Instagram Feed Hub' :
                activeTab === 'skinleads' ? 'Skin Scan Leads' : activeTab}
             </h2>
             <div className="h-4 w-[1px] bg-neutral-200 mx-2" />
@@ -624,6 +688,15 @@ export const AdminView: React.FC = () => {
                                   ) : (
                                     <span className="text-[8px] font-extrabold tracking-widest bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-md border border-emerald-100">
                                       IN-CLINIC
+                                    </span>
+                                  )}
+                                  {appt.paymentMethod === 'CLINIC' ? (
+                                    <span className="text-[8px] font-extrabold tracking-widest bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md border border-amber-100">
+                                      PAY AT CLINIC
+                                    </span>
+                                  ) : (
+                                    <span className="text-[8px] font-extrabold tracking-widest bg-purple-50 text-purple-700 px-2 py-0.5 rounded-md border border-purple-100">
+                                      PAID ONLINE
                                     </span>
                                   )}
                                 </div>
@@ -1275,7 +1348,7 @@ export const AdminView: React.FC = () => {
                       <div>
                         <div className="aspect-[16/10] overflow-hidden relative bg-neutral-100">
                           <img 
-                            src={post.image} 
+                            src={getMediaUrl(post.image)} 
                             alt={post.title} 
                             className="w-full h-full object-cover"
                           />
@@ -1329,6 +1402,200 @@ export const AdminView: React.FC = () => {
                     </div>
                   )}
                 </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'testimonials' && (
+              <motion.div 
+                key="testimonials"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="space-y-8"
+              >
+                {/* Header */}
+                <div className="flex justify-between items-end">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold">Manage Testimonials</h3>
+                    <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest mt-2">Publish Video Reviews &amp; Before/After Results</p>
+                  </div>
+                  <div className="flex gap-3">
+                    {activeTestimonialSubTab === 'videos' ? (
+                      <button 
+                        onClick={() => {
+                          setNewVideo({ title: '', youtubeUrl: '', category: 'General', order: 0 });
+                          setShowNewVideoModal(true);
+                        }}
+                        className="bg-emerald-900 text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      >
+                        <Plus className="w-5 h-5" /> Add Video Review
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={() => {
+                          setNewPhoto({ title: '', treatment: 'Skin Treatment', beforeUrl: '', afterUrl: '', description: '', order: 0 });
+                          setShowNewPhotoModal(true);
+                        }}
+                        className="bg-emerald-900 text-white px-6 py-3 rounded-2xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      >
+                        <Plus className="w-5 h-5" /> Add Before/After Photo
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Sub Tabs Selection */}
+                <div className="flex gap-2 border-b border-neutral-200 pb-px">
+                  <button
+                    onClick={() => setActiveTestimonialSubTab('videos')}
+                    className={`pb-4 px-6 font-bold text-xs uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
+                      activeTestimonialSubTab === 'videos'
+                        ? 'border-emerald-900 text-emerald-900'
+                        : 'border-transparent text-neutral-400 hover:text-neutral-600'
+                    }`}
+                  >
+                    Video Testimonials ({videoTestimonials.length})
+                  </button>
+                  <button
+                    onClick={() => setActiveTestimonialSubTab('photos')}
+                    className={`pb-4 px-6 font-bold text-xs uppercase tracking-widest border-b-2 transition-all cursor-pointer ${
+                      activeTestimonialSubTab === 'photos'
+                        ? 'border-emerald-900 text-emerald-900'
+                        : 'border-transparent text-neutral-400 hover:text-neutral-600'
+                    }`}
+                  >
+                    Before &amp; After Photos ({photoTestimonials.length})
+                  </button>
+                </div>
+
+                {/* VIDEO TESTIMONIALS SUB-TAB */}
+                {activeTestimonialSubTab === 'videos' && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {videoTestimonials.map((video) => {
+                      const getYouTubeId = (url: string) => {
+                        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                        const match = url.match(regExp);
+                        return match && match[2].length === 11 ? match[2] : null;
+                      };
+                      const yId = getYouTubeId(video.youtubeUrl);
+                      return (
+                        <div key={video._id} className="bg-white rounded-[24px] overflow-hidden border border-neutral-100 shadow-sm flex flex-col justify-between">
+                          <div className="aspect-video bg-neutral-100 relative">
+                            {yId ? (
+                              <img 
+                                src={`https://img.youtube.com/vi/${yId}/hqdefault.jpg`}
+                                alt={video.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-neutral-400">
+                                <Video className="w-8 h-8" />
+                              </div>
+                            )}
+                            <div className="absolute top-3 left-3 bg-emerald-900/90 text-white text-[9px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+                              {video.category}
+                            </div>
+                          </div>
+                          <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                            <div>
+                              <h4 className="font-bold text-sm text-neutral-900 leading-snug">{video.title}</h4>
+                              <p className="text-[10px] text-neutral-400 mt-1 truncate">{video.youtubeUrl}</p>
+                              <p className="text-[9px] text-emerald-800 font-bold uppercase tracking-widest mt-2">Display Order: {video.order || 0}</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={() => {
+                                  setEditingVideo(video);
+                                  setShowEditVideoModal(true);
+                                }}
+                                className="flex-1 py-2.5 bg-neutral-50 hover:bg-emerald-50 text-neutral-600 hover:text-emerald-900 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                              >
+                                <Edit className="w-3.5 h-3.5" /> Edit
+                              </button>
+                              <button 
+                                onClick={async () => {
+                                  if (confirm('Are you sure you want to delete this video review?')) {
+                                    await deleteVideoTestimonial(video._id!);
+                                    triggerToast('Video review deleted successfully.');
+                                  }
+                                }}
+                                className="px-3 bg-neutral-50 hover:bg-rose-50 text-neutral-400 hover:text-rose-600 rounded-xl transition-colors"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {videoTestimonials.length === 0 && (
+                      <div className="col-span-full p-16 text-center bg-white border border-neutral-100 rounded-[24px] text-neutral-400 font-bold text-xs uppercase">
+                        No video reviews published in the database.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* BEFORE & AFTER PHOTOS SUB-TAB */}
+                {activeTestimonialSubTab === 'photos' && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {photoTestimonials.map((photo) => (
+                      <div key={photo._id} className="bg-white rounded-[24px] overflow-hidden border border-neutral-100 shadow-sm flex flex-col justify-between">
+                        <div className="grid grid-cols-2 aspect-[4/3] bg-neutral-100 border-b border-neutral-50">
+                          <img 
+                            src={photo.beforeUrl}
+                            alt="Before"
+                            className="w-full h-full object-cover border-r border-neutral-100"
+                          />
+                          <img 
+                            src={photo.afterUrl}
+                            alt="After"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                          <div>
+                            <span className="text-[9px] font-bold bg-emerald-50 text-emerald-900 border border-emerald-950/10 px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                              {photo.treatment}
+                            </span>
+                            <h4 className="font-bold text-sm text-neutral-900 leading-snug mt-2">{photo.title}</h4>
+                            {photo.description && (
+                              <p className="text-xs text-neutral-400 line-clamp-2 mt-1 leading-relaxed">{photo.description}</p>
+                            )}
+                            <p className="text-[9px] text-emerald-800 font-bold uppercase tracking-widest mt-2">Display Order: {photo.order || 0}</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button 
+                              onClick={() => {
+                                setEditingPhoto(photo);
+                                setShowEditPhotoModal(true);
+                              }}
+                              className="flex-1 py-2.5 bg-neutral-50 hover:bg-emerald-50 text-neutral-600 hover:text-emerald-900 text-[10px] font-bold uppercase tracking-wider rounded-xl transition-colors flex items-center justify-center gap-1.5"
+                            >
+                              <Edit className="w-3.5 h-3.5" /> Edit
+                            </button>
+                            <button 
+                              onClick={async () => {
+                                  if (confirm('Are you sure you want to delete this before/after photo record?')) {
+                                    await deletePhotoTestimonial(photo._id!);
+                                    triggerToast('Before/After record deleted successfully.');
+                                  }
+                                }}
+                              className="px-3 bg-neutral-50 hover:bg-rose-50 text-neutral-400 hover:text-rose-600 rounded-xl transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                    {photoTestimonials.length === 0 && (
+                      <div className="col-span-full p-16 text-center bg-white border border-neutral-100 rounded-[24px] text-neutral-400 font-bold text-xs uppercase">
+                        No before/after photo testimonials published in the database.
+                      </div>
+                    )}
+                  </div>
+                )}
               </motion.div>
             )}
 
@@ -1431,6 +1698,267 @@ export const AdminView: React.FC = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+              </motion.div>
+            )}
+
+            {activeTab === 'instagram' && (
+              <motion.div 
+                key="instagram"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
+                className="space-y-8"
+              >
+                <div>
+                  <h3 className="font-serif text-3xl font-bold text-neutral-900">Instagram Feed Hub</h3>
+                  <p className="text-neutral-400 text-xs font-bold uppercase tracking-widest mt-2">Manage Follow on Instagram posts &amp; reels</p>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                  {/* Left Column: Form */}
+                  <div className="bg-white p-8 rounded-[32px] border border-neutral-100 shadow-sm space-y-6">
+                    <h4 className="font-serif text-lg font-bold text-neutral-900 border-b border-neutral-100 pb-3">Add Post / Reel</h4>
+                    
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      if (!instagramUrlInput) {
+                        return triggerToast('Instagram post/reel URL is required', 'error');
+                      }
+
+                      try {
+                        const formData = new FormData();
+                        formData.append('instagramUrl', instagramUrlInput);
+                        formData.append('mediaType', instagramMediaTypeInput);
+                        formData.append('caption', instagramCaptionInput);
+                        formData.append('order', instagramOrderInput.toString());
+                        formData.append('isPublished', instagramIsPublishedInput.toString());
+                        if (instagramFile) {
+                          formData.append('mediaFile', instagramFile);
+                        }
+
+                        const res = await fetch(`${API_BASE}/instagram-posts/admin`, {
+                          method: 'POST',
+                          body: formData
+                        });
+
+                        const data = await res.json();
+                        if (res.ok) {
+                          triggerToast('Instagram post added successfully!');
+                          setInstagramUrlInput('');
+                          setInstagramCaptionInput('');
+                          setInstagramOrderInput(0);
+                          setInstagramIsPublishedInput(true);
+                          setInstagramFile(null);
+                          const fileInput = document.querySelector('input[name="instagramThumbFile"]') as HTMLInputElement | null;
+                          if (fileInput) fileInput.value = '';
+                          fetchInstagramPosts();
+                        } else {
+                          triggerToast(data.error || 'Failed to add post', 'error');
+                        }
+                      } catch (err: any) {
+                        triggerToast(err.message || 'Error occurred', 'error');
+                      }
+                    }} className="space-y-4">
+                      
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Instagram Link</label>
+                        <input 
+                          type="url" 
+                          required 
+                          value={instagramUrlInput}
+                          onChange={(e) => setInstagramUrlInput(e.target.value)}
+                          className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5" 
+                          placeholder="e.g. https://www.instagram.com/reel/C7u4_Bypx7e/" 
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Media Type</label>
+                        <select 
+                          value={instagramMediaTypeInput}
+                          onChange={(e) => setInstagramMediaTypeInput(e.target.value as any)}
+                          className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5 cursor-pointer"
+                        >
+                          <option value="image">Image Post</option>
+                          <option value="reel">Reel / Video</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Custom Thumbnail Image (Optional)</label>
+                        <input 
+                          type="file" 
+                          name="instagramThumbFile"
+                          accept="image/*"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setInstagramFile(e.target.files[0]);
+                            }
+                          }}
+                          className="w-full bg-neutral-50 rounded-xl py-2 px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5 cursor-pointer" 
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Caption / Description</label>
+                        <textarea 
+                          value={instagramCaptionInput}
+                          onChange={(e) => setInstagramCaptionInput(e.target.value)}
+                          rows={3}
+                          className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5 resize-none" 
+                          placeholder="Short description overlay..." 
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400">Order / Position</label>
+                        <input 
+                          type="number" 
+                          value={instagramOrderInput}
+                          onChange={(e) => setInstagramOrderInput(parseInt(e.target.value) || 0)}
+                          className="w-full bg-neutral-50 border-none rounded-xl py-3 px-4 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5" 
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-2">
+                        <input 
+                          type="checkbox" 
+                          id="isPublished"
+                          checked={instagramIsPublishedInput}
+                          onChange={(e) => setInstagramIsPublishedInput(e.target.checked)}
+                          className="w-4 h-4 rounded border-neutral-300 text-emerald-950 focus:ring-emerald-950" 
+                        />
+                        <label htmlFor="isPublished" className="text-xs font-bold text-neutral-500 cursor-pointer uppercase tracking-wider">Publish Immediately</label>
+                      </div>
+
+                      <button 
+                        type="submit" 
+                        className="w-full bg-emerald-900 text-white font-bold text-xs uppercase tracking-widest py-4 rounded-xl hover:bg-emerald-950 transition-colors shadow-lg shadow-emerald-900/10 cursor-pointer"
+                      >
+                        Add Feed Post
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Right Column: List */}
+                  <div className="lg:col-span-2 bg-white rounded-[32px] border border-neutral-100 shadow-sm overflow-hidden">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-neutral-50/50 border-b border-neutral-100">
+                          <th className="px-8 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Feed Post</th>
+                          <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-center">Type</th>
+                          <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-center">Sort Order</th>
+                          <th className="px-6 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-center">Status</th>
+                          <th className="px-8 py-5 text-[10px] font-bold text-neutral-400 uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {instagramPosts.map((post) => (
+                          <tr key={post._id} className="border-b border-neutral-100/70 hover:bg-neutral-50/20 transition-colors">
+                            <td className="px-8 py-5 flex items-center gap-4">
+                              <div className="w-12 h-12 rounded-xl overflow-hidden border border-neutral-100 bg-neutral-50 flex-shrink-0">
+                                <img src={getMediaUrl(post.thumbnailUrl)} alt="" className="w-full h-full object-cover" />
+                              </div>
+                              <div className="min-w-0">
+                                <a 
+                                  href={post.instagramUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer" 
+                                  className="text-xs font-semibold text-emerald-950 hover:underline flex items-center gap-1"
+                                >
+                                  Open Link <ExternalLink className="w-3 h-3" />
+                                </a>
+                                <p className="text-[10px] text-neutral-400 truncate max-w-xs mt-1">{post.caption || 'No caption'}</p>
+                              </div>
+                            </td>
+                            
+                            <td className="px-6 py-5 text-center">
+                              <span className={`inline-block px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider ${
+                                post.mediaType === 'reel' ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'
+                              }`}>
+                                {post.mediaType}
+                              </span>
+                            </td>
+
+                            <td className="px-6 py-5 text-center">
+                              <input 
+                                type="number" 
+                                defaultValue={post.order}
+                                onBlur={async (e) => {
+                                  const val = parseInt(e.target.value);
+                                  if (!isNaN(val) && val !== post.order) {
+                                    try {
+                                      await fetch(`${API_BASE}/instagram-posts/admin/${post._id}`, {
+                                        method: 'PUT',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ order: val })
+                                      });
+                                      triggerToast('Order position saved.');
+                                      fetchInstagramPosts();
+                                    } catch (err) {
+                                      console.error(err);
+                                    }
+                                  }
+                                }}
+                                className="w-16 bg-neutral-50 text-center border-none rounded-lg py-1 px-2 text-xs font-bold focus:ring-2 focus:ring-emerald-950/5"
+                              />
+                            </td>
+
+                            <td className="px-6 py-5 text-center">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await fetch(`${API_BASE}/instagram-posts/admin/${post._id}`, {
+                                      method: 'PUT',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ isPublished: !post.isPublished })
+                                    });
+                                    triggerToast(`Post status set to ${!post.isPublished ? 'Published' : 'Draft'}`);
+                                    fetchInstagramPosts();
+                                  } catch (err) {
+                                    console.error(err);
+                                  }
+                                }}
+                                className={`px-2.5 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider cursor-pointer ${
+                                  post.isPublished ? 'bg-emerald-50 text-emerald-700' : 'bg-neutral-100 text-neutral-500'
+                                }`}
+                              >
+                                {post.isPublished ? 'Published' : 'Draft'}
+                              </button>
+                            </td>
+                            <td className="px-8 py-5 text-right">
+                              <button 
+                                onClick={async () => {
+                                  if (confirm('Delete this Instagram post link permanently?')) {
+                                    try {
+                                      const res = await fetch(`${API_BASE}/instagram-posts/admin/${post._id}`, { method: 'DELETE' });
+                                      if (res.ok) {
+                                        triggerToast('Post link removed successfully.', 'error');
+                                        fetchInstagramPosts();
+                                      }
+                                    } catch (err) {
+                                      console.error(err);
+                                    }
+                                  }
+                                }}
+                                className="p-2 text-neutral-300 hover:text-rose-600 rounded-xl transition-colors"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {instagramPosts.length === 0 && (
+                          <tr>
+                            <td colSpan={5} className="px-8 py-20 text-center text-neutral-400 font-bold text-sm bg-neutral-50/30">
+                              No Instagram feed posts configured yet.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1972,12 +2500,28 @@ export const AdminView: React.FC = () => {
 
                 <form className="space-y-5" onSubmit={async (e) => {
                   e.preventDefault();
-                  const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
-                  if (!isValidUrl(newBlog.image)) {
-                    return triggerToast('Cover Image must be a valid URL starting with http:// or https://', 'error');
+                  if (!blogImageFile && !newBlog.image) {
+                    return triggerToast('Please upload a cover image or provide a valid cover image URL', 'error');
                   }
-                  await addBlogPost(newBlog);
+                  
+                  const formData = new FormData();
+                  formData.append('title', newBlog.title);
+                  formData.append('slug', newBlog.slug);
+                  formData.append('summary', newBlog.summary);
+                  formData.append('content', newBlog.content);
+                  formData.append('category', newBlog.category);
+                  formData.append('author', newBlog.author);
+                  formData.append('dateString', newBlog.dateString);
+                  
+                  if (blogImageFile) {
+                    formData.append('blogImage', blogImageFile);
+                  } else {
+                    formData.append('image', newBlog.image);
+                  }
+
+                  await addBlogPost(formData as any);
                   setShowNewBlogModal(false);
+                  setBlogImageFile(null);
                   triggerToast('Blog post published successfully!');
                 }}>
                   <div className="space-y-1">
@@ -2032,14 +2576,29 @@ export const AdminView: React.FC = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image URL</label>
-                    <input 
-                      required type="url" value={newBlog.image}
-                      onChange={(e) => setNewBlog({...newBlog, image: e.target.value})}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image File (Optional)</label>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setBlogImageFile(e.target.files[0]);
+                          }
+                        }}
+                        className="w-full bg-neutral-50 rounded-2xl py-2 px-3 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image URL (Fallback)</label>
+                      <input 
+                        type="url" value={newBlog.image}
+                        onChange={(e) => setNewBlog({...newBlog, image: e.target.value})}
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3.5 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Short Summary (Preview text)</label>
@@ -2099,16 +2658,32 @@ export const AdminView: React.FC = () => {
                   </button>
                 </div>
 
-                <form className="space-y-5" onSubmit={async (e) => {
+                 <form className="space-y-5" onSubmit={async (e) => {
                   e.preventDefault();
                   if (editingBlog && editingBlog._id) {
-                    const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
-                    if (!isValidUrl(editingBlog.image)) {
-                      return triggerToast('Cover Image must be a valid URL starting with http:// or https://', 'error');
+                    if (!editBlogImageFile && !editingBlog.image) {
+                      return triggerToast('Please upload a cover image or provide a valid cover image URL', 'error');
                     }
-                    await updateBlogPost(editingBlog._id, editingBlog);
+                    
+                    const formData = new FormData();
+                    formData.append('title', editingBlog.title);
+                    formData.append('slug', editingBlog.slug);
+                    formData.append('summary', editingBlog.summary);
+                    formData.append('content', editingBlog.content);
+                    formData.append('category', editingBlog.category);
+                    formData.append('author', editingBlog.author);
+                    formData.append('dateString', editingBlog.dateString);
+                    
+                    if (editBlogImageFile) {
+                      formData.append('blogImage', editBlogImageFile);
+                    } else {
+                      formData.append('image', editingBlog.image);
+                    }
+
+                    await updateBlogPost(editingBlog._id, formData as any);
                     setShowEditBlogModal(false);
                     setEditingBlog(null);
+                    setEditBlogImageFile(null);
                     triggerToast('Blog post updated successfully.');
                   }
                 }}>
@@ -2161,14 +2736,29 @@ export const AdminView: React.FC = () => {
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image URL</label>
-                    <input 
-                      required type="url" value={editingBlog.image}
-                      onChange={(e) => setEditingBlog({...editingBlog, image: e.target.value})}
-                      placeholder="https://images.unsplash.com/..."
-                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image File (Optional)</label>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            setEditBlogImageFile(e.target.files[0]);
+                          }
+                        }}
+                        className="w-full bg-neutral-50 rounded-2xl py-2 px-3 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer" 
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Cover Image URL</label>
+                      <input 
+                        type="url" value={editingBlog.image}
+                        onChange={(e) => setEditingBlog({...editingBlog, image: e.target.value})}
+                        placeholder="https://images.unsplash.com/..."
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3.5 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Short Summary (Preview text)</label>
@@ -2194,6 +2784,374 @@ export const AdminView: React.FC = () => {
                     className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
                   >
                     Save Post Changes
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* New Video Testimonial Modal */}
+      <AnimatePresence>
+        {showNewVideoModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowNewVideoModal(false)}
+              className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl relative z-10 my-8"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Add Video Review</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Publish a Video Testimonial</p>
+                  </div>
+                  <button onClick={() => setShowNewVideoModal(false)} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-5" onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!newVideo.title || !newVideo.youtubeUrl) {
+                    return triggerToast('Title and YouTube URL are required', 'error');
+                  }
+                  await addVideoTestimonial(newVideo);
+                  setShowNewVideoModal(false);
+                  triggerToast('Video review published successfully!');
+                }}>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Video Title</label>
+                    <input 
+                      required type="text" value={newVideo.title}
+                      onChange={(e) => setNewVideo({...newVideo, title: e.target.value})}
+                      placeholder="e.g. Hair Transplant Testimonial"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">YouTube URL</label>
+                    <input 
+                      required type="url" value={newVideo.youtubeUrl}
+                      onChange={(e) => setNewVideo({...newVideo, youtubeUrl: e.target.value})}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Category / Tag</label>
+                      <input 
+                        required type="text" value={newVideo.category}
+                        onChange={(e) => setNewVideo({...newVideo, category: e.target.value})}
+                        placeholder="e.g. Hair Transplant, Skin Allergy"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Display Order</label>
+                      <input 
+                        required type="number" value={newVideo.order}
+                        onChange={(e) => setNewVideo({...newVideo, order: parseInt(e.target.value) || 0})}
+                        placeholder="0"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                  >
+                    Add Video Review
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Video Testimonial Modal */}
+      <AnimatePresence>
+        {showEditVideoModal && editingVideo && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowEditVideoModal(false)}
+              className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl relative z-10 my-8"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Edit Video Review</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Modify Testimonial details</p>
+                  </div>
+                  <button onClick={() => setShowEditVideoModal(false)} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-5" onSubmit={async (e) => {
+                  e.preventDefault();
+                  await updateVideoTestimonial(editingVideo._id, editingVideo);
+                  setShowEditVideoModal(false);
+                  triggerToast('Video review updated successfully!');
+                }}>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Video Title</label>
+                    <input 
+                      required type="text" value={editingVideo.title}
+                      onChange={(e) => setEditingVideo({...editingVideo, title: e.target.value})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">YouTube URL</label>
+                    <input 
+                      required type="url" value={editingVideo.youtubeUrl}
+                      onChange={(e) => setEditingVideo({...editingVideo, youtubeUrl: e.target.value})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Category / Tag</label>
+                      <input 
+                        required type="text" value={editingVideo.category}
+                        onChange={(e) => setEditingVideo({...editingVideo, category: e.target.value})}
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Display Order</label>
+                      <input 
+                        required type="number" value={editingVideo.order || 0}
+                        onChange={(e) => setEditingVideo({...editingVideo, order: parseInt(e.target.value) || 0})}
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                  >
+                    Save Video Changes
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* New Before/After Photo Modal */}
+      <AnimatePresence>
+        {showNewPhotoModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowNewPhotoModal(false)}
+              className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl relative z-10 my-8"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Add Before/After Photo</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Publish transformation result</p>
+                  </div>
+                  <button onClick={() => setShowNewPhotoModal(false)} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-5" onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!newPhoto.title || !newPhoto.beforeUrl || !newPhoto.afterUrl) {
+                    return triggerToast('Title, Before URL, and After URL are required', 'error');
+                  }
+                  await addPhotoTestimonial(newPhoto);
+                  setShowNewPhotoModal(false);
+                  triggerToast('Before/After record published successfully!');
+                }}>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Case Title / Patient Label</label>
+                    <input 
+                      required type="text" value={newPhoto.title}
+                      onChange={(e) => setNewPhoto({...newPhoto, title: e.target.value})}
+                      placeholder="e.g. Severe Acne Scar Transformation"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Treatment Category</label>
+                      <input 
+                        required type="text" value={newPhoto.treatment}
+                        onChange={(e) => setNewPhoto({...newPhoto, treatment: e.target.value})}
+                        placeholder="e.g. Skin Allergy, Hair Restoration"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Display Order</label>
+                      <input 
+                        required type="number" value={newPhoto.order}
+                        onChange={(e) => setNewPhoto({...newPhoto, order: parseInt(e.target.value) || 0})}
+                        placeholder="0"
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Before Photo URL</label>
+                    <input 
+                      required type="url" value={newPhoto.beforeUrl}
+                      onChange={(e) => setNewPhoto({...newPhoto, beforeUrl: e.target.value})}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">After Photo URL</label>
+                    <input 
+                      required type="url" value={newPhoto.afterUrl}
+                      onChange={(e) => setNewPhoto({...newPhoto, afterUrl: e.target.value})}
+                      placeholder="https://images.unsplash.com/..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Description (Optional)</label>
+                    <textarea 
+                      value={newPhoto.description} rows={2}
+                      onChange={(e) => setNewPhoto({...newPhoto, description: e.target.value})}
+                      placeholder="Add brief details about the clinical procedure..."
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 resize-none"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                  >
+                    Add Before/After Photo
+                  </button>
+                </form>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Edit Before/After Photo Modal */}
+      <AnimatePresence>
+        {showEditPhotoModal && editingPhoto && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-6 overflow-y-auto">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setShowEditPhotoModal(false)}
+              className="fixed inset-0 bg-neutral-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-lg rounded-[40px] overflow-hidden shadow-2xl relative z-10 my-8"
+            >
+              <div className="p-10">
+                <div className="flex justify-between items-start mb-8">
+                  <div>
+                    <h3 className="font-serif text-3xl font-bold text-neutral-900">Edit Before/After Photo</h3>
+                    <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mt-2">Modify transformation details</p>
+                  </div>
+                  <button onClick={() => setShowEditPhotoModal(false)} className="p-2 hover:bg-neutral-100 rounded-xl transition-colors">
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <form className="space-y-5" onSubmit={async (e) => {
+                  e.preventDefault();
+                  await updatePhotoTestimonial(editingPhoto._id, editingPhoto);
+                  setShowEditPhotoModal(false);
+                  triggerToast('Before/After record updated successfully!');
+                }}>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Case Title / Patient Label</label>
+                    <input 
+                      required type="text" value={editingPhoto.title}
+                      onChange={(e) => setEditingPhoto({...editingPhoto, title: e.target.value})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Treatment Category</label>
+                      <input 
+                        required type="text" value={editingPhoto.treatment}
+                        onChange={(e) => setEditingPhoto({...editingPhoto, treatment: e.target.value})}
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Display Order</label>
+                      <input 
+                        required type="number" value={editingPhoto.order || 0}
+                        onChange={(e) => setEditingPhoto({...editingPhoto, order: parseInt(e.target.value) || 0})}
+                        className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Before Photo URL</label>
+                    <input 
+                      required type="url" value={editingPhoto.beforeUrl}
+                      onChange={(e) => setEditingPhoto({...editingPhoto, beforeUrl: e.target.value})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">After Photo URL</label>
+                    <input 
+                      required type="url" value={editingPhoto.afterUrl}
+                      onChange={(e) => setEditingPhoto({...editingPhoto, afterUrl: e.target.value})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Description (Optional)</label>
+                    <textarea 
+                      value={editingPhoto.description || ''} rows={2}
+                      onChange={(e) => setEditingPhoto({...editingPhoto, description: e.target.value})}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 resize-none"
+                    />
+                  </div>
+
+                  <button 
+                    type="submit"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                  >
+                    Save Photo Changes
                   </button>
                 </form>
               </div>

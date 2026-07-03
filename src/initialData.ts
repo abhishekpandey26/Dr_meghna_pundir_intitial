@@ -106,6 +106,7 @@ export const TREATMENTS: TreatmentInfo[] = [
   {
     id: 'treatment_1',
     name: 'Medical Skincare',
+    image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=600&q=80',
     description: 'Bespoke medical aesthetic solutions tailored to your unique biology.',
     icon: 'face_6',
     subservices: ['Advanced Acne Control', 'Pigmentation Therapy', 'Medical Peels']
@@ -113,6 +114,7 @@ export const TREATMENTS: TreatmentInfo[] = [
   {
     id: 'treatment_2',
     name: 'Laser Technology',
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRSLythsS-Gt6t2Zq6jBdnr9iiErEkaZa-uoZ5yVlsKUBqS330ZxZAquC6O&s=10',
     description: 'US-FDA approved laser technologies calibrated precisely for flawless skin.',
     icon: 'flare',
     subservices: ['Laser Hair Reduction', 'Tattoo Removal', 'Scar Revision']
@@ -120,6 +122,7 @@ export const TREATMENTS: TreatmentInfo[] = [
   {
     id: 'treatment_3',
     name: 'Hair Restoration',
+    image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlNWamgMh51yDhqAfnwt596Tbb6qsMTaVJp7bVbaW26oNpT0oKxls6dME&s=10',
     description: 'Comprehensive scalp revitalization using advanced growth factor concentrates.',
     icon: 'face',
     subservices: ['PRP & Mesotherapy', 'Hair Fall Diagnosis', 'Scalp Rejuvenation']
@@ -127,6 +130,7 @@ export const TREATMENTS: TreatmentInfo[] = [
   {
     id: 'treatment_4',
     name: 'Medical Consult',
+    image: 'https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=600&q=80',
     description: 'Personalized private consultation and diagnostics with Dr. Megha Singh.',
     icon: 'medical_services',
     subservices: ['1-on-1 skin diagnostic', 'Detailed blood work evaluation', 'Custom treatment roadmap']

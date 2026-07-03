@@ -1,6 +1,27 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const BlogPost = require('../models/BlogPost');
+
+// Ensure uploads folder exists
+const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+// Multer storage configuration for blog cover images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, 'blog-' + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
 
 // GET all blogs
 router.get('/', async (req, res) => {
@@ -96,8 +117,13 @@ router.get('/:slug', async (req, res) => {
 });
 
 // POST new blog (Admin)
-router.post('/', async (req, res) => {
-  const { title, slug, content, summary, image, category, author, dateString } = req.body;
+router.post('/', upload.single('blogImage'), async (req, res) => {
+  let { title, slug, content, summary, image, category, author, dateString } = req.body;
+  
+  if (req.file) {
+    image = `/uploads/${req.file.filename}`;
+  }
+
   if (!title || !slug || !content || !summary || !image || !dateString) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
@@ -119,9 +145,13 @@ router.post('/', async (req, res) => {
 });
 
 // PUT update blog (Admin)
-router.put('/:id', async (req, res) => {
+router.put('/:id', upload.single('blogImage'), async (req, res) => {
   try {
-    const updated = await BlogPost.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    let updateData = { ...req.body };
+    if (req.file) {
+      updateData.image = `/uploads/${req.file.filename}`;
+    }
+    const updated = await BlogPost.findByIdAndUpdate(req.params.id, updateData, { new: true });
     if (!updated) {
       return res.status(404).json({ error: 'Blog post not found' });
     }

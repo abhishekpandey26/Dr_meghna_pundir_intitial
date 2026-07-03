@@ -14,9 +14,21 @@ import { SkinAnalyzer } from './components/SkinAnalyzer';
 import { VideoRoom } from './components/VideoRoom';
 import { PatientPortal } from './components/PatientPortal';
 import { BlogDetailView } from './components/BlogDetailView';
+import { TestimonialsView } from './components/TestimonialsView';
+import { AboutView } from './components/AboutView';
+import { GalleryView } from './components/GalleryView';
+
+import { motion, useScroll, useSpring } from 'framer-motion';
 
 function ViewDispatcher() {
   const { view, isAuthenticated, setView } = useApp();
+
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 100,
+    damping: 30,
+    restDelta: 0.001
+  });
 
   // Initial URL Routing Logic
   useEffect(() => {
@@ -38,15 +50,19 @@ function ViewDispatcher() {
       }
 
       // Priority 2: Query param based (?view=admin)
-      if (viewParam && ['landing', 'booking', 'admin', 'admin-login', 'skin-analyzer', 'video-room', 'patient-portal', 'blog-detail'].includes(viewParam)) {
-        if (!isAuthenticated && (viewParam === 'admin' || viewParam === 'admin-login')) {
-          setView('admin-login');
-        } else if (isAuthenticated && viewParam === 'admin-login') {
-          setView('admin');
-        } else {
-          const slug = params.get('slug') || undefined;
-          setView(viewParam, slug);
+      if (viewParam && ['landing', 'booking', 'admin', 'admin-login', 'skin-analyzer', 'video-room', 'patient-portal', 'blog-detail', 'testimonials', 'about', 'gallery'].includes(viewParam)) {
+        if (viewParam !== view) {
+          if (!isAuthenticated && (viewParam === 'admin' || viewParam === 'admin-login')) {
+            setView('admin-login');
+          } else if (isAuthenticated && viewParam === 'admin-login') {
+            setView('admin');
+          } else {
+            const slug = params.get('slug') || undefined;
+            setView(viewParam, slug);
+          }
         }
+      } else if (!viewParam && view !== 'landing') {
+        setView('landing');
       }
     };
 
@@ -54,7 +70,12 @@ function ViewDispatcher() {
     // Also listen for back/forward events
     window.addEventListener('popstate', handleUrlRouting);
     return () => window.removeEventListener('popstate', handleUrlRouting);
-  }, [isAuthenticated, setView]);
+  }, [isAuthenticated, setView, view]);
+
+  // Scroll to top on every view change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, [view]);
 
   const isAdminArea = view === 'admin' || view === 'admin-login';
 
@@ -68,14 +89,23 @@ function ViewDispatcher() {
 
   return (
     <>
+      <motion.div
+        style={{
+          scaleX,
+          position: 'fixed',
+          top: 0, left: 0, right: 0,
+          height: '3px',
+          background: 'var(--rose)',
+          transformOrigin: '0%',
+          zIndex: 9999
+        }}
+      />
       {!isAdminArea && (
         <ChatAgent onStartBooking={() => setView('booking')} />
       )}
       <div className={isAdminArea ? '' : 'overflow-x-hidden'}>
         {(() => {
           switch (view) {
-            case 'booking':
-              return <BookingView />;
             case 'skin-analyzer':
               return <SkinAnalyzer />;
             case 'admin':
@@ -88,12 +118,20 @@ function ViewDispatcher() {
               return <PatientPortal />;
             case 'blog-detail':
               return <BlogDetailView />;
+            case 'testimonials':
+              return <TestimonialsView />;
+            case 'about':
+              return <AboutView />;
+            case 'gallery':
+              return <GalleryView />;
+            case 'booking':
             case 'landing':
             default:
               return <LandingView />;
           }
         })()}
       </div>
+      {view === 'booking' && <BookingView />}
     </>
   );
 }

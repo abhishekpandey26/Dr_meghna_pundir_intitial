@@ -23,7 +23,8 @@ const appointmentSchema = new mongoose.Schema({
   },
   paymentId: { type: String },
   paymentRequestId: { type: String },
-  paymentStatus: { type: String, default: 'Pending' }
+  paymentStatus: { type: String, default: 'Pending' },
+  paymentMethod: { type: String, enum: ['ONLINE', 'CLINIC'], default: 'ONLINE' }
 }, { timestamps: true });
 
 // Prevent double booking on confirmed sessions

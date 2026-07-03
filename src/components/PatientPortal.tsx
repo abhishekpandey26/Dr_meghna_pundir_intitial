@@ -32,8 +32,16 @@ export const PatientPortal: React.FC = () => {
     patientAppointments, 
     loginPatientWithGoogle, 
     logoutPatient,
-    updatePatientProfile
+    updatePatientProfile,
+    loadPatientProfile
   } = useApp();
+
+  // Load patient profile and history on mount or when token is active
+  useEffect(() => {
+    if (patientToken && loadPatientProfile) {
+      loadPatientProfile();
+    }
+  }, [patientToken, loadPatientProfile]);
 
   // Login Form States
   const [loading, setLoading] = useState(false);
@@ -109,12 +117,33 @@ export const PatientPortal: React.FC = () => {
     }
   };
 
+  // Helper to parse dates like "Jul 10", "Jul 02" safely without native parser misinterpreting the day as a year
+  const parseApptDate = (dateStr: string): Date => {
+    if (!dateStr) return new Date();
+    
+    // Format "MMM DD" (e.g. "Jul 10", "Jul 02")
+    const parts = dateStr.trim().split(/\s+/);
+    if (parts.length === 2) {
+      const monthNames = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+      const mIdx = monthNames.indexOf(parts[0].toLowerCase().slice(0, 3));
+      const day = parseInt(parts[1], 10);
+      if (mIdx !== -1 && !isNaN(day)) {
+        // Assume current year
+        const currentYear = new Date().getFullYear();
+        return new Date(currentYear, mIdx, day);
+      }
+    }
+    
+    const parsed = new Date(dateStr);
+    return isNaN(parsed.getTime()) ? new Date() : parsed;
+  };
+
   // Sort and split appointments into upcoming and past
   const now = new Date();
   
   const upcomingAppointments = patientAppointments.filter(appt => {
     try {
-      const apptDate = new Date(appt.date);
+      const apptDate = parseApptDate(appt.date);
       // If date is today or in future
       apptDate.setHours(23, 59, 59, 999);
       return apptDate >= now && !['CANCELLED', 'REJECTED'].includes(appt.status.toUpperCase());
@@ -125,7 +154,7 @@ export const PatientPortal: React.FC = () => {
 
   const pastAppointments = patientAppointments.filter(appt => {
     try {
-      const apptDate = new Date(appt.date);
+      const apptDate = parseApptDate(appt.date);
       apptDate.setHours(23, 59, 59, 999);
       return apptDate < now || ['CANCELLED', 'REJECTED', 'COMPLETED'].includes(appt.status.toUpperCase());
     } catch (e) {
@@ -164,26 +193,30 @@ export const PatientPortal: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 selection:bg-emerald-900 selection:text-white pb-24">
-      {/* Top Banner Navigation */}
-      <nav className="h-24 max-w-7xl mx-auto px-6 flex items-center justify-between border-b border-stone-200/60">
-        <button 
-          onClick={() => setView('landing')} 
-          className="flex items-center gap-2.5 text-emerald-950 font-bold uppercase tracking-[0.25em] text-[10px] hover:opacity-75 transition-opacity"
+    <div className="min-h-screen pb-24 font-sans" style={{ background: 'var(--cream)', color: 'var(--ink)' }}>
+      {/* Top Bar Navigation */}
+      <nav className="h-20 max-w-7xl mx-auto px-6 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
+        <button
+          onClick={() => setView('landing')}
+          className="flex items-center gap-2.5 font-bold uppercase tracking-[0.2em] text-[10px] hover:opacity-70 transition-opacity cursor-pointer"
+          style={{ color: 'var(--muted)' }}
         >
           <ArrowLeft className="w-4 h-4" /> Back to Home
         </button>
         <div className="flex items-center gap-2">
-          <span className="font-serif text-2xl font-bold tracking-tighter text-emerald-950">DermElixir</span>
-          <span className="text-[9px] font-bold bg-emerald-900/10 border border-emerald-950/10 text-emerald-900 px-2.5 py-0.5 rounded-full uppercase tracking-wider">PORTAL</span>
+          <span className="font-serif text-2xl font-semibold" style={{ color: 'var(--ink)' }}>Derm Elixir</span>
+          <span
+            className="text-[9px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider"
+            style={{ background: 'rgba(184,103,79,0.1)', color: 'var(--terracotta-dark)', border: '1px solid rgba(184,103,79,0.2)' }}
+          >Portal</span>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 mt-12 md:mt-16">
+      <div className="max-w-7xl mx-auto px-6 mt-10 md:mt-14">
         <AnimatePresence mode="wait">
           {!patientToken ? (
             /* ================= LOGIN CARD ================= */
-            <motion.div 
+            <motion.div
               key="login"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -191,32 +224,35 @@ export const PatientPortal: React.FC = () => {
               className="max-w-md mx-auto"
             >
               <div className="text-center mb-8">
-                <div className="w-16 h-16 bg-emerald-950 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-emerald-900/10">
+                <div
+                  className="w-16 h-16 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg text-white"
+                  style={{ background: 'var(--terracotta)' }}
+                >
                   <Sparkles className="w-7 h-7" />
                 </div>
-                <h1 className="font-serif text-3xl md:text-4xl font-bold text-emerald-950 tracking-tighter">Patient Portal</h1>
-                <p className="text-stone-500 text-xs mt-3 uppercase tracking-wider font-semibold">Secure access via Google</p>
+                <h1 className="font-serif text-3xl md:text-4xl font-semibold" style={{ color: 'var(--ink)' }}>Patient Portal</h1>
+                <p className="text-xs mt-3 uppercase tracking-wider font-semibold" style={{ color: 'var(--muted)' }}>Secure access via Google</p>
               </div>
 
-              <div className="glass-card bg-white/70 p-8 md:p-10 rounded-[32px] border border-white shadow-2xl shadow-emerald-950/5 space-y-6 text-center">
+              <div className="bg-white p-8 md:p-10 rounded-2xl shadow-sm space-y-6 text-center" style={{ border: '1px solid var(--border)' }}>
                 {error && (
-                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-2xl flex items-start gap-3 text-left">
+                  <div className="p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3 text-left">
                     <AlertCircle className="w-4 h-4 text-rose-600 mt-0.5 flex-shrink-0" />
                     <span className="text-[10px] text-rose-800 font-bold uppercase tracking-wider leading-relaxed">{error}</span>
                   </div>
                 )}
                 {successMsg && (
-                  <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-start gap-3 text-left">
+                  <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-xl flex items-start gap-3 text-left">
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
                     <span className="text-[10px] text-emerald-800 font-bold uppercase tracking-wider leading-relaxed">{successMsg}</span>
                   </div>
                 )}
 
-                <p className="text-stone-500 text-xs leading-relaxed max-w-xs mx-auto mb-4">
+                <p className="text-xs leading-relaxed max-w-xs mx-auto mb-4" style={{ color: 'var(--muted)' }}>
                   Please log in with your Google account to view your scheduled visits, access video rooms, and manage your patient profile.
                 </p>
 
-                <button 
+                <button
                   onClick={async () => {
                     setError('');
                     setLoading(true);
@@ -236,13 +272,12 @@ export const PatientPortal: React.FC = () => {
                     }
                   }}
                   disabled={loading}
-                  className="w-full bg-emerald-950 text-white py-5 rounded-[20px] font-bold text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-black transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50"
+                  className="w-full py-4 rounded-2xl font-bold text-[10px] uppercase tracking-[0.2em] shadow-md transition-all flex items-center justify-center gap-2.5 cursor-pointer disabled:opacity-50 text-white"
+                  style={{ background: 'var(--terracotta)' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--terracotta-dark)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'var(--terracotta)')}
                 >
-                  {loading ? (
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                  ) : (
-                    <>Sign In with Google</>
-                  )}
+                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Sign In with Google</>}
                 </button>
               </div>
             </motion.div>
@@ -256,22 +291,27 @@ export const PatientPortal: React.FC = () => {
               className="space-y-10"
             >
               {/* Profile Welcome Banner */}
-              <div className="bg-emerald-950 text-white p-8 md:p-12 rounded-[32px] md:rounded-[40px] shadow-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 rounded-full bg-emerald-900/40 blur-3xl pointer-events-none" />
-                <div className="absolute left-0 bottom-0 -translate-x-12 translate-y-12 w-64 h-64 rounded-full bg-emerald-900/20 blur-3xl pointer-events-none" />
+              <div
+                className="text-white p-8 md:p-12 rounded-2xl shadow-xl relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6"
+                style={{ background: 'linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-dark) 100%)' }}
+              >
+                <div className="absolute right-0 top-0 translate-x-12 -translate-y-12 w-64 h-64 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(255,255,255,0.08)' }} />
+                <div className="absolute left-0 bottom-0 -translate-x-12 translate-y-12 w-64 h-64 rounded-full blur-3xl pointer-events-none" style={{ background: 'rgba(255,255,255,0.05)' }} />
                 <div className="space-y-3 relative z-10">
-                  <div className="flex items-center gap-2 bg-emerald-900/60 border border-emerald-800/30 w-fit px-3.5 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest text-emerald-200">
-                    <Sparkles className="w-3 h-3" /> DermElixir Clinical Node
+                  <div className="flex items-center gap-2 w-fit px-3.5 py-1.5 rounded-full text-[9px] font-bold uppercase tracking-widest" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                    <Sparkles className="w-3 h-3" /> Derm Elixir Patient Portal
                   </div>
-                  <h2 className="font-serif text-3xl md:text-5xl font-bold tracking-tight text-white leading-tight">
+                  <h2 className="font-serif text-3xl md:text-5xl font-semibold leading-tight text-white">
                     Welcome, {currentPatient?.name || 'Valued Patient'}
                   </h2>
-                  <p className="text-emerald-300/80 text-xs font-semibold uppercase tracking-wider">{currentPatient?.email}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'rgba(255,255,255,0.7)' }}>{currentPatient?.email}</p>
                 </div>
-                
-                <button 
+                <button
                   onClick={logoutPatient}
-                  className="bg-white/10 hover:bg-white text-white hover:text-emerald-950 border border-white/20 rounded-2xl py-4.5 px-8 font-bold text-[9px] uppercase tracking-[0.25em] flex items-center justify-center gap-2.5 cursor-pointer transition-all self-start md:self-center hover:shadow-lg hover:scale-105 active:scale-95 duration-300 relative z-20"
+                  className="py-3.5 px-7 rounded-xl font-bold text-[9px] uppercase tracking-[0.2em] flex items-center justify-center gap-2.5 cursor-pointer transition-all self-start md:self-center hover:shadow-md active:scale-95 duration-300 relative z-20"
+                  style={{ background: 'rgba(255,255,255,0.15)', border: '1px solid rgba(255,255,255,0.2)', color: 'white' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'white'; e.currentTarget.style.color = 'var(--terracotta-dark)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.15)'; e.currentTarget.style.color = 'white'; }}
                 >
                   <LogOut className="w-4 h-4" /> Sign Out
                 </button>
@@ -282,13 +322,16 @@ export const PatientPortal: React.FC = () => {
                 
                 {/* LEFT COLUMN: Profile Details Edit */}
                 <div className="space-y-6">
-                  <div className="glass-card bg-white/70 p-6 md:p-8 rounded-[32px] border border-white shadow-xl shadow-emerald-950/5">
+                  <div className="bg-white p-6 md:p-8 rounded-2xl shadow-sm" style={{ border: '1px solid var(--border)' }}>
                     <div className="flex justify-between items-center mb-6">
-                      <h3 className="font-serif text-lg font-bold text-emerald-950">Patient Details</h3>
+                      <h3 className="font-serif text-lg font-semibold" style={{ color: 'var(--ink)' }}>Patient Details</h3>
                       {!editMode && (
-                        <button 
+                        <button
                           onClick={() => setEditMode(true)}
-                          className="text-[9px] font-bold text-emerald-900 border border-emerald-900/20 hover:bg-emerald-50 rounded-xl px-3 py-1.5 uppercase tracking-wider flex items-center gap-1.5 transition-all"
+                          className="text-[9px] font-bold rounded-xl px-3 py-1.5 uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer"
+                          style={{ color: 'var(--terracotta)', border: '1px solid var(--terracotta)', background: 'transparent' }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'var(--blush)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                         >
                           <Edit2 className="w-3 h-3" /> Update Profile
                         </button>

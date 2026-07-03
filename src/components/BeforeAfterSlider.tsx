@@ -80,11 +80,11 @@ export const BeforeAfterSlider: React.FC = () => {
           <button
             key={cat}
             onClick={() => setActiveCategory(cat)}
-            className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
-              activeCategory === cat
-                ? 'bg-emerald-900 text-white shadow-md'
-                : 'bg-white border border-neutral-100 text-neutral-500 hover:bg-neutral-50 hover:text-emerald-900'
-            }`}
+            className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer`}
+            style={activeCategory === cat
+              ? { background: 'var(--terracotta)', color: 'white', border: '1px solid var(--terracotta)' }
+              : { background: 'white', color: 'var(--muted)', border: '1px solid var(--border)' }
+            }
           >
             {cat}
           </button>
@@ -137,10 +137,13 @@ export const BeforeAfterSlider: React.FC = () => {
 
               {/* Drag Handle Divider */}
               <div 
-                className="absolute inset-y-0 w-1 bg-white cursor-ew-resize z-20"
-                style={{ left: `${sliderPosition}%` }}
+                className="absolute inset-y-0 w-0.5 cursor-ew-resize z-20"
+                style={{ left: `${sliderPosition}%`, background: 'var(--cream)' }}
               >
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 bg-white text-emerald-950 rounded-full flex items-center justify-center shadow-2xl border-2 border-emerald-900/10">
+                <div
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-10 h-10 rounded-full flex items-center justify-center shadow-xl text-white"
+                  style={{ background: 'var(--terracotta)', border: '2px solid white' }}
+                >
                   <span className="material-symbols-outlined text-lg">unfold_more</span>
                 </div>
               </div>
@@ -153,7 +156,9 @@ export const BeforeAfterSlider: React.FC = () => {
 
           {/* Details & Selectors - 2 columns */}
           <div className="md:col-span-2 space-y-6">
-            <div className="glass-card bg-white/70 border border-white rounded-[32px] p-6 shadow-xl shadow-emerald-950/5 space-y-4">
+            <div className="rounded-2xl p-6 shadow-sm space-y-4"
+              style={{ background: 'var(--cream)', border: '1px solid var(--border)' }}
+            >
               <div>
                 <span className="text-[9px] font-bold uppercase tracking-[0.3em] text-emerald-800 bg-emerald-100/40 px-3 py-1 rounded-full border border-emerald-900/5 inline-block">
                   Case File

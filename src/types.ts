@@ -10,6 +10,7 @@ export interface Appointment {
   date: string; // e.g., "Oct 15"
   status: 'Approved' | 'Pending' | 'Rejected' | 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW' | 'RESCHEDULED' | 'PAYMENT_PENDING' | 'PAYMENT_FAILED';
   paymentStatus?: string;
+  paymentMethod?: 'ONLINE' | 'CLINIC';
   mobile: string;
   email: string;
   age: number;
@@ -38,6 +39,7 @@ export interface Review {
 export interface TreatmentInfo {
   id: string;
   name: string;
+  image?: string;
   description: string;
   icon: string;
   subservices: string[];
@@ -100,3 +102,22 @@ export interface BlogPost {
   createdAt?: string;
 }
 
+export interface VideoTestimonial {
+  _id?: string;
+  title: string;
+  youtubeUrl: string;
+  category: string;
+  order?: number;
+  createdAt?: string;
+}
+
+export interface PhotoTestimonial {
+  _id?: string;
+  title: string;
+  treatment: string;
+  beforeUrl: string;
+  afterUrl: string;
+  description?: string;
+  order?: number;
+  createdAt?: string;
+}

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Appointment, ClinicConfig, ReelInsight, BeforeAfterItem, SkinLead, Patient, BlogPost } from '../types';
+import { Appointment, ClinicConfig, ReelInsight, BeforeAfterItem, SkinLead, Patient, BlogPost, VideoTestimonial, PhotoTestimonial } from '../types';
 
-export type AppView = 'landing' | 'booking' | 'admin' | 'admin-login' | 'skin-analyzer' | 'video-room' | 'patient-portal' | 'blog-detail';
+export type AppView = 'landing' | 'booking' | 'admin' | 'admin-login' | 'skin-analyzer' | 'video-room' | 'patient-portal' | 'blog-detail' | 'testimonials' | 'about' | 'gallery';
 
 export interface FetchAppointmentsParams {
   page?: number;
@@ -64,9 +64,18 @@ interface AppContextProps {
   loadPatientProfile: () => Promise<void>;
   updatePatientProfile: (name: string, mobile: string, age?: number) => Promise<{ success: boolean; message?: string }>;
   blogs: BlogPost[];
-  addBlogPost: (post: Omit<BlogPost, '_id'>) => Promise<void>;
+  addBlogPost: (post: Omit<BlogPost, '_id'> | FormData) => Promise<void>;
   deleteBlogPost: (id: string) => Promise<void>;
-  updateBlogPost: (id: string, post: Partial<BlogPost>) => Promise<void>;
+  updateBlogPost: (id: string, post: Partial<BlogPost> | FormData) => Promise<void>;
+  // Testimonials
+  videoTestimonials: VideoTestimonial[];
+  addVideoTestimonial: (v: Omit<VideoTestimonial, '_id'>) => Promise<void>;
+  deleteVideoTestimonial: (id: string) => Promise<void>;
+  updateVideoTestimonial: (id: string, v: Partial<VideoTestimonial>) => Promise<void>;
+  photoTestimonials: PhotoTestimonial[];
+  addPhotoTestimonial: (p: Omit<PhotoTestimonial, '_id'>) => Promise<void>;
+  deletePhotoTestimonial: (id: string) => Promise<void>;
+  updatePhotoTestimonial: (id: string, p: Partial<PhotoTestimonial>) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
@@ -92,13 +101,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [beforeAfterItems, setBeforeAfterItems] = useState<BeforeAfterItem[]>([]);
   const [skinLeads, setSkinLeads] = useState<SkinLead[]>([]);
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
-  
+  const [videoTestimonials, setVideoTestimonials] = useState<VideoTestimonial[]>([]);
+  const [photoTestimonials, setPhotoTestimonials] = useState<PhotoTestimonial[]>([]);
+
   const [patientToken, setPatientToken] = useState<string | null>(() => {
     return localStorage.getItem('dermelixir_patient_token');
   });
   const [currentPatient, setCurrentPatient] = useState<Patient | null>(null);
   const [patientAppointments, setPatientAppointments] = useState<Appointment[]>([]);
-  
+
   const [emergencyClosed, setEmergencyClosedState] = useState<boolean>(() => {
     return localStorage.getItem('dermelixir_emergency_closed') === 'true';
   });
@@ -194,7 +205,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       const res = await fetch(`${API_BASE}/appointments?${query.toString()}`);
       const data = await res.json();
-      
+
       if (data.appointments) {
         setAppointments(data.appointments);
         setTotalPages(data.totalPages ?? 1);
@@ -234,7 +245,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       })
     });
     const data = await res.json();
-    if (res.ok) await fetchAppointments();
+    if (res.ok) {
+      await fetchAppointments();
+      if (patientToken) {
+        await loadPatientProfile();
+      }
+    }
     return data;
   };
 
@@ -435,7 +451,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const res = await fetch(`${API_BASE}/auth/update-profile`, {
         method: 'PUT',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${patientToken}`
         },
@@ -452,11 +468,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const addBlogPost = async (post: Omit<BlogPost, '_id'>) => {
+  const addBlogPost = async (post: Omit<BlogPost, '_id'> | FormData) => {
+    const isFormData = post instanceof FormData;
     await fetch(`${API_BASE}/blogs`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post)
+      headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+      body: isFormData ? post : JSON.stringify(post)
     });
     const res = await fetch(`${API_BASE}/blogs`);
     setBlogs(await res.json());
@@ -468,14 +485,78 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setBlogs(await res.json());
   };
 
-  const updateBlogPost = async (id: string, post: Partial<BlogPost>) => {
+  const updateBlogPost = async (id: string, post: Partial<BlogPost> | FormData) => {
+    const isFormData = post instanceof FormData;
     await fetch(`${API_BASE}/blogs/${id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post)
+      headers: isFormData ? {} : { 'Content-Type': 'application/json' },
+      body: isFormData ? post : JSON.stringify(post)
     });
     const res = await fetch(`${API_BASE}/blogs`);
     setBlogs(await res.json());
+  };
+
+  /* ── TESTIMONIALS ─────────────────────────────────────────────────────── */
+  const fetchVideoTestimonials = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/testimonials/videos/all`);
+      const data = await res.json();
+      setVideoTestimonials(Array.isArray(data) ? data : []);
+    } catch { /* silent */ }
+  };
+
+  const addVideoTestimonial = async (v: Omit<VideoTestimonial, '_id'>) => {
+    await fetch(`${API_BASE}/testimonials/videos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(v)
+    });
+    await fetchVideoTestimonials();
+  };
+
+  const deleteVideoTestimonial = async (id: string) => {
+    await fetch(`${API_BASE}/testimonials/videos/${id}`, { method: 'DELETE' });
+    await fetchVideoTestimonials();
+  };
+
+  const updateVideoTestimonial = async (id: string, v: Partial<VideoTestimonial>) => {
+    await fetch(`${API_BASE}/testimonials/videos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(v)
+    });
+    await fetchVideoTestimonials();
+  };
+
+  const fetchPhotoTestimonials = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/testimonials/photos/all`);
+      const data = await res.json();
+      setPhotoTestimonials(Array.isArray(data) ? data : []);
+    } catch { /* silent */ }
+  };
+
+  const addPhotoTestimonial = async (p: Omit<PhotoTestimonial, '_id'>) => {
+    await fetch(`${API_BASE}/testimonials/photos`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p)
+    });
+    await fetchPhotoTestimonials();
+  };
+
+  const deletePhotoTestimonial = async (id: string) => {
+    await fetch(`${API_BASE}/testimonials/photos/${id}`, { method: 'DELETE' });
+    await fetchPhotoTestimonials();
+  };
+
+  const updatePhotoTestimonial = async (id: string, p: Partial<PhotoTestimonial>) => {
+    await fetch(`${API_BASE}/testimonials/photos/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(p)
+    });
+    await fetchPhotoTestimonials();
   };
 
   useEffect(() => {
@@ -483,6 +564,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       loadPatientProfile();
     }
   }, [patientToken]);
+
+  useEffect(() => {
+    fetchVideoTestimonials();
+    fetchPhotoTestimonials();
+  }, []);
 
   return (
     <AppContext.Provider value={{
@@ -538,7 +624,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       blogs,
       addBlogPost,
       deleteBlogPost,
-      updateBlogPost
+      updateBlogPost,
+      videoTestimonials,
+      addVideoTestimonial,
+      deleteVideoTestimonial,
+      updateVideoTestimonial,
+      photoTestimonials,
+      addPhotoTestimonial,
+      deletePhotoTestimonial,
+      updatePhotoTestimonial
     }}>
       {children}
     </AppContext.Provider>

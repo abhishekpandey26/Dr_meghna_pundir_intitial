@@ -86,17 +86,15 @@ export const ChatAgent: React.FC<{ onStartBooking: (treatment?: string) => void 
           initial={{ opacity: 0, x: 20, scale: 0.8 }}
           animate={{ opacity: 1, x: 0, scale: 1 }}
           transition={{ delay: 2, duration: 0.5, ease: "easeOut" }}
-          className={`fixed bottom-24 z-[100] bg-white/90 backdrop-blur-xl p-4 rounded-[20px] shadow-[0_10px_30px_rgba(0,0,0,0.1)] border border-white/20 whitespace-nowrap hidden md:block
-             ${window.innerWidth <= 768 ? 'left-8' : 'right-28'}`}
+          className={`fixed bottom-24 z-[100] bg-white p-4 rounded-2xl shadow-lg whitespace-nowrap hidden md:block`}
+          style={{ right: '5.5rem', border: '1px solid #EDE2D4' }}
         >
-          <div className="absolute bottom-[-10px] w-5 h-5 bg-white/90 transform rotate-45 border-r border-b border-white/20 hidden md:block
-            ${window.innerWidth <= 768 ? 'left-6' : 'right-6'}"
-          />
-          <h5 className="text-[11px] font-extrabold text-black uppercase tracking-widest mb-1 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+          <div className="absolute bottom-[-8px] right-5 w-4 h-4 bg-white transform rotate-45" style={{ borderRight: '1px solid #EDE2D4', borderBottom: '1px solid #EDE2D4' }} />
+          <h5 className="text-[11px] font-bold uppercase tracking-widest mb-1 flex items-center gap-2" style={{ color: '#2A2118' }}>
+            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#4A7C59' }} />
             We're Online!
           </h5>
-          <p className="text-[12px] text-neutral-600 font-medium">How may I help you today?</p>
+          <p className="text-[12px] font-medium" style={{ color: '#7A6E62' }}>How may I help you today?</p>
         </motion.div>
       )}
 
@@ -107,7 +105,8 @@ export const ChatAgent: React.FC<{ onStartBooking: (treatment?: string) => void 
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-8 right-8 z-[100] w-16 h-16 bg-black text-white rounded-full flex items-center justify-center shadow-[0_20px_50px_rgba(0,0,0,0.3)] border border-white/10"
+        className="fixed bottom-8 right-8 z-[100] w-16 h-16 rounded-full flex items-center justify-center shadow-xl text-white"
+        style={{ background: 'var(--terracotta)' }}
       >
         <span className="material-symbols-outlined text-3xl">
           {isOpen ? 'close' : 'chat_bubble'}
@@ -135,16 +134,18 @@ export const ChatAgent: React.FC<{ onStartBooking: (treatment?: string) => void 
               <span className="material-symbols-outlined text-lg">close</span>
             </button>
             {/* Header */}
-            <div className="p-8 bg-black text-white flex items-center gap-4 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-              <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md">
-                <span className="material-symbols-outlined text-emerald-400">support_agent</span>
+            <div className="p-8 text-white flex items-center gap-4 relative overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, var(--terracotta) 0%, var(--terracotta-dark) 100%)' }}
+            >
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" style={{ background: 'rgba(255,255,255,0.1)' }} />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.15)' }}>
+                <span className="material-symbols-outlined" style={{ color: '#FFF9F0' }}>support_agent</span>
               </div>
               <div>
-                <h3 className="font-serif text-xl font-bold tracking-tight">Clinical <span className="text-emerald-400">Concierge</span></h3>
+                <h3 className="font-serif text-xl font-bold">Clinical <span style={{ color: 'var(--cream)' }}>Concierge</span></h3>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/40">Live Assistant</span>
+                  <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: 'var(--cream)' }} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'rgba(255,255,255,0.5)' }}>Live Assistant</span>
                 </div>
               </div>
             </div>
@@ -160,9 +161,13 @@ export const ChatAgent: React.FC<{ onStartBooking: (treatment?: string) => void 
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     className={`max-w-[85%] p-5 rounded-[24px] text-[13px] leading-relaxed shadow-sm ${msg.sender === 'user'
-                      ? 'bg-black text-white rounded-tr-none'
-                      : 'bg-white/90 backdrop-blur-md border border-white/20 text-neutral-900 rounded-tl-none font-medium'
+                      ? 'rounded-tr-none text-white'
+                      : 'rounded-tl-none font-medium'
                       }`}
+                    style={msg.sender === 'user'
+                      ? { background: 'var(--terracotta)' }
+                      : { background: 'var(--blush)', color: 'var(--ink)', border: '1px solid var(--border)' }
+                    }
                   >
                     {msg.text}
                   </motion.div>
@@ -173,7 +178,10 @@ export const ChatAgent: React.FC<{ onStartBooking: (treatment?: string) => void 
                         <button
                           key={opt}
                           onClick={() => handleOptionClick(opt)}
-                          className="bg-white border border-black/10 text-neutral-900 px-4 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest hover:bg-black hover:text-white transition-all shadow-sm active:scale-95"
+                          className="px-4 py-2.5 rounded-full text-[11px] font-bold uppercase tracking-widest transition-all shadow-sm active:scale-95 cursor-pointer"
+                          style={{ background: 'white', border: '1px solid var(--terracotta)', color: 'var(--terracotta-dark)' }}
+                          onMouseEnter={e => { e.currentTarget.style.background = 'var(--blush)'; }}
+                          onMouseLeave={e => { e.currentTarget.style.background = 'white'; }}
                         >
                           {opt}
                         </button>

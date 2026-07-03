@@ -221,11 +221,13 @@ export const SkinAnalyzer: React.FC = () => {
   };
 
   return (
-    <div className="bg-[#fcf8fa] text-neutral-900 min-h-screen font-sans selection:bg-emerald-900 selection:text-white">
+    <div className="min-h-screen font-sans" style={{ background: 'var(--blush)', color: 'var(--ink)' }}>
       {/* Top Bar Navigation */}
-      <nav className="fixed top-0 w-full z-50 bg-white/40 backdrop-blur-3xl border-b border-emerald-950/5 px-6 md:px-20 h-20 flex items-center justify-between">
-        <span onClick={() => setView('landing')} className="font-serif text-3xl font-bold tracking-tighter text-emerald-950 cursor-pointer">DERMELIXIR</span>
-        <button onClick={() => setView('landing')} className="text-[10px] uppercase font-bold tracking-[0.3em] flex items-center gap-2 hover:opacity-50 transition-all opacity-40">
+      <nav className="fixed top-0 w-full z-50 px-6 md:px-20 h-20 flex items-center justify-between"
+        style={{ background: 'rgba(255,249,240,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}
+      >
+        <button onClick={() => setView('landing')} className="font-serif text-2xl font-semibold cursor-pointer" style={{ color: 'var(--ink)' }}>Derm Elixir</button>
+        <button onClick={() => setView('landing')} className="text-[10px] uppercase font-bold tracking-[0.3em] flex items-center gap-2 transition-all cursor-pointer" style={{ color: 'var(--muted)' }}>
           <span className="material-symbols-outlined text-sm">close</span> Close Scan
         </button>
       </nav>
@@ -236,24 +238,31 @@ export const SkinAnalyzer: React.FC = () => {
           {/* SCREEN 1: INTRO */}
           {screen === 'intro' && (
             <motion.div key="intro" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="max-w-2xl text-center space-y-8">
-              <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-emerald-800 bg-emerald-100/40 px-4 py-2 rounded-full border border-emerald-900/5">Clinical AI Diagnostic</span>
-              <h1 className="font-serif text-4xl md:text-6xl font-bold text-emerald-950 tracking-tighter leading-tight">AI Skin Analysis</h1>
-              <p className="text-neutral-500 text-sm md:text-base max-w-lg mx-auto leading-relaxed">
+              <span
+                className="inline-block text-[10px] font-bold uppercase tracking-[0.15em] px-4 py-2 rounded-full"
+                style={{ color: 'var(--terracotta-dark)', background: 'rgba(184,103,79,0.1)', border: '1px solid rgba(184,103,79,0.2)' }}
+              >Clinical AI Diagnostic</span>
+              <h1 className="font-serif text-4xl md:text-[52px] font-semibold leading-tight" style={{ color: 'var(--ink)' }}>AI Skin Analysis</h1>
+              <p className="text-sm md:text-base max-w-lg mx-auto leading-relaxed" style={{ color: 'var(--muted)' }}>
                 Scan your face to receive a detailed dermis health report analyzing spots, redness, pores, and hydration levels, with direct clinical recommendations.
               </p>
-              
-              <div className="p-6 bg-white/60 border border-white rounded-[24px] shadow-lg flex gap-4 text-left max-w-md mx-auto items-start">
-                <span className="material-symbols-outlined text-emerald-800 bg-emerald-100 p-2.5 rounded-xl">shield_with_heart</span>
+
+              <div className="p-6 bg-white rounded-2xl shadow-sm flex gap-4 text-left max-w-md mx-auto items-start" style={{ border: '1px solid var(--border)' }}>
+                <span className="material-symbols-outlined p-2.5 rounded-xl" style={{ color: 'var(--gold-accent)', background: 'rgba(201,160,92,0.1)' }}>shield_with_heart</span>
                 <div className="space-y-1">
-                  <h4 className="text-xs font-bold uppercase tracking-widest text-emerald-950">Patient Privacy Guaranteed</h4>
-                  <p className="text-[10px] text-neutral-400 font-medium leading-relaxed uppercase">
+                  <h4 className="text-xs font-bold uppercase tracking-widest" style={{ color: 'var(--ink)' }}>Patient Privacy Guaranteed</h4>
+                  <p className="text-[10px] font-medium leading-relaxed uppercase" style={{ color: 'var(--muted)' }}>
                     Your photos exist only locally in the browser's temporary memory. We do not save or upload your picture.
                   </p>
                 </div>
               </div>
 
               <div className="pt-4">
-                <button onClick={() => setScreen('questions')} className="bg-emerald-950 text-white hover:bg-black py-4 px-12 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer">
+                <button
+                  onClick={() => setScreen('questions')}
+                  className="text-white py-4 px-12 rounded-full font-bold text-xs uppercase tracking-[0.15em] shadow-lg hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer"
+                  style={{ background: 'var(--terracotta)' }}
+                >
                   Start Consultation Scan
                 </button>
               </div>
