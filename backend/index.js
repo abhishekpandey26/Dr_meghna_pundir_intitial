@@ -9,7 +9,8 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(cors());
+// If FRONTEND_URL is set (e.g. in production), restrict CORS to that origin; otherwise allow all (local dev).
+app.use(cors(process.env.FRONTEND_URL ? { origin: process.env.FRONTEND_URL } : {}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

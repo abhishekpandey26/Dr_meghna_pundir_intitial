@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { API_BASE } from '../config';
 
 interface InstagramPost {
   _id: string;
@@ -10,8 +11,6 @@ interface InstagramPost {
   caption?: string;
   order: number;
 }
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
 
 const getMediaUrl = (url: string) => {
   if (!url) return '';

@@ -3,8 +3,7 @@ import { useApp } from '../context/AppContext';
 import { BlogPost } from '../types';
 import { InstagramSection } from './InstagramSection';
 import { ArrowLeft, Calendar, User, Clock, Search } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+import { API_BASE } from '../config';
 
 const getMediaUrl = (url: string) => {
   if (!url) return '';

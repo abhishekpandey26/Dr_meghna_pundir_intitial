@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Appointment, ClinicConfig, ReelInsight, BeforeAfterItem, SkinLead, Patient, BlogPost, VideoTestimonial, PhotoTestimonial } from '../types';
+import { API_BASE } from '../config';
 
 export type AppView = 'landing' | 'booking' | 'admin' | 'admin-login' | 'skin-analyzer' | 'video-room' | 'patient-portal' | 'blog-detail' | 'testimonials' | 'about' | 'gallery';
 
@@ -80,7 +81,6 @@ interface AppContextProps {
 
 const AppContext = createContext<AppContextProps | undefined>(undefined);
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [view, setViewState] = useState<AppView>('landing');

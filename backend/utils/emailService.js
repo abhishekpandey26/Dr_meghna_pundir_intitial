@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+
 // Create SMTP Transporter
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp-relay.brevo.com',
@@ -23,7 +25,7 @@ const sendBookingEmail = async (appt) => {
   }
 
   const isOnline = appt.consultationType === 'ONLINE';
-  const portalUrl = `http://localhost:3000/?view=video-room&id=${appt._id}`;
+  const portalUrl = `${FRONTEND_URL}/?view=video-room&id=${appt._id}`;
   const meetLinkHtml = isOnline 
     ? `
       <div style="margin: 30px 0; text-align: center;">

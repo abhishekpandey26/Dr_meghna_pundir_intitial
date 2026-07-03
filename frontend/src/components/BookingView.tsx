@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
+import { API_BASE } from '../config';
 
 export const BookingView: React.FC = () => {
   const {
@@ -53,7 +54,6 @@ export const BookingView: React.FC = () => {
     const fetchSlots = async () => {
       setIsLoadingSlots(true);
       try {
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
         const res = await fetch(`${API_BASE}/slots?date=${encodeURIComponent(selectedDate)}`);
         const data = await res.json();
         if (data && data.slots) {
@@ -261,7 +261,6 @@ export const BookingView: React.FC = () => {
         const token = await getRecaptchaToken();
 
         // 2. Verify server-side
-        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
         const captchaRes = await fetch(`${API_BASE}/bookings/verify-captcha`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

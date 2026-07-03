@@ -8,8 +8,7 @@ import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { InstagramSection } from './InstagramSection';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
+import { API_BASE } from '../config';
 
 const getMediaUrl = (url: string) => {
   if (!url) return '';

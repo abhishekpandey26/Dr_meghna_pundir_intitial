@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  useApp 
+import {
+  useApp
 } from '../context/AppContext';
+import { API_BASE } from '../config';
 import { BlogPost } from '../types';
 import { 
   LayoutDashboard, 
@@ -43,8 +44,6 @@ import {
   PieChart, Pie, Cell, Legend, AreaChart, Area
 } from 'recharts';
 import { CLINIC_HOUR_OPTIONS, SLOT_DURATION_OPTIONS } from '../initialData';
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001/api';
 
 const getMediaUrl = (url: string) => {
   if (!url) return '';
@@ -125,7 +124,7 @@ export const AdminView: React.FC = () => {
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch('http://localhost:5001/api/analytics/overview');
+        const res = await fetch(`${API_BASE}/analytics/overview`);
         const data = await res.json();
         setAnalytics(data);
       } catch (err) {
