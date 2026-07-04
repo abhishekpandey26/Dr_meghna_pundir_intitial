@@ -174,7 +174,7 @@ export const AdminView: React.FC = () => {
   const [showNewApptModal, setShowNewApptModal] = useState(false);
   const [showNewGalleryModal, setShowNewGalleryModal] = useState(false);
   const [showEditGalleryModal, setShowEditGalleryModal] = useState(false);
-  const [editingGalleryItem, setEditingGalleryItem] = useState<{ _id?: string, title: string, url: string } | null>(null);
+  const [editingGalleryItem, setEditingGalleryItem] = useState<{ _id?: string, title: string, url: string, order?: number } | null>(null);
   const [showNewReelModal, setShowNewReelModal] = useState(false);
   const [showEditReelModal, setShowEditReelModal] = useState(false);
   const [editingReel, setEditingReel] = useState<{ _id?: string, title: string, coverImage: string, videoUrl: string, type: 'photo_camera' | 'smart_display' } | null>(null);
@@ -254,7 +254,7 @@ export const AdminView: React.FC = () => {
     age: '25'
   });
 
-  const [newGallery, setNewGallery] = useState({ title: '', url: '' });
+  const [newGallery, setNewGallery] = useState<{ title: string, url: string, order: string }>({ title: '', url: '', order: '' });
   const [newReel, setNewReel] = useState({ title: '', coverImage: '', videoUrl: '', type: 'smart_display' as 'photo_camera' | 'smart_display' });
 
   const triggerToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -950,25 +950,29 @@ export const AdminView: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                   {galleryItems.map((item) => (
                     <div key={item._id} className="group relative bg-white rounded-[24px] overflow-hidden border border-neutral-100 shadow-sm">
-                      <div className="aspect-[4/3] overflow-hidden">
-                        <img 
-                          src={item.url} 
-                          alt={item.title} 
+                      <div className="aspect-[4/3] overflow-hidden relative">
+                        <img
+                          src={item.url}
+                          alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
+                        <div className="absolute top-2 left-2 w-7 h-7 rounded-full bg-neutral-900/80 backdrop-blur-sm text-white text-[11px] font-extrabold flex items-center justify-center z-10">
+                          {item.order ?? 0}
+                        </div>
                       </div>
                       <div className="p-4 flex items-center justify-between">
                         <div>
                           <p className="font-bold text-xs text-neutral-900">{item.title}</p>
-                          <p className="text-[9px] text-neutral-400 uppercase font-extrabold tracking-widest mt-1">Live Portfolio</p>
+                          <p className="text-[9px] text-neutral-400 uppercase font-extrabold tracking-widest mt-1">Order #{item.order ?? 0}</p>
                         </div>
                         <div className="flex gap-1">
-                          <button 
+                          <button
                             onClick={() => {
                               setEditingGalleryItem({
                                 _id: item._id,
                                 title: item.title,
-                                url: item.url
+                                url: item.url,
+                                order: item.order ?? 0
                               });
                               setShowEditGalleryModal(true);
                             }}
@@ -2176,14 +2180,18 @@ export const AdminView: React.FC = () => {
                   if (!isValidUrl(newGallery.url)) {
                     return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
                   }
-                  addGalleryItem(newGallery);
-                  setNewGallery({ title: '', url: '' });
+                  addGalleryItem({
+                    title: newGallery.title,
+                    url: newGallery.url,
+                    ...(newGallery.order.trim() !== '' ? { order: Number(newGallery.order) } : {})
+                  });
+                  setNewGallery({ title: '', url: '', order: '' });
                   setShowNewGalleryModal(false);
                   triggerToast('Asset integrated into showcase.');
                 }}>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Asset Title</label>
-                    <input 
+                    <input
                       required type="text" value={newGallery.title}
                       onChange={(e) => setNewGallery({...newGallery, title: e.target.value})}
                       placeholder="e.g. VIP Treatment Wing"
@@ -2192,15 +2200,24 @@ export const AdminView: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Image Endpoint (URL)</label>
-                    <input 
+                    <input
                       required type="url" value={newGallery.url}
                       onChange={(e) => setNewGallery({...newGallery, url: e.target.value})}
                       placeholder="https://images.unsplash.com/..."
                       className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Display Order</label>
+                    <input
+                      type="number" value={newGallery.order}
+                      onChange={(e) => setNewGallery({...newGallery, order: e.target.value})}
+                      placeholder="Lower numbers show first — leave blank to add at the end"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
 
-                  <button 
+                  <button
                     type="submit"
                     className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
                   >
@@ -2248,7 +2265,8 @@ export const AdminView: React.FC = () => {
                     }
                     updateGalleryItem(editingGalleryItem._id, {
                       title: editingGalleryItem.title,
-                      url: editingGalleryItem.url
+                      url: editingGalleryItem.url,
+                      order: editingGalleryItem.order ?? 0
                     });
                     setShowEditGalleryModal(false);
                     setEditingGalleryItem(null);
@@ -2257,7 +2275,7 @@ export const AdminView: React.FC = () => {
                 }}>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Asset Title</label>
-                    <input 
+                    <input
                       required type="text" value={editingGalleryItem.title}
                       onChange={(e) => setEditingGalleryItem({...editingGalleryItem, title: e.target.value})}
                       placeholder="e.g. VIP Treatment Wing"
@@ -2266,15 +2284,24 @@ export const AdminView: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Image Endpoint (URL)</label>
-                    <input 
+                    <input
                       required type="url" value={editingGalleryItem.url}
                       onChange={(e) => setEditingGalleryItem({...editingGalleryItem, url: e.target.value})}
                       placeholder="https://images.unsplash.com/..."
                       className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Display Order</label>
+                    <input
+                      type="number" value={editingGalleryItem.order ?? 0}
+                      onChange={(e) => setEditingGalleryItem({...editingGalleryItem, order: Number(e.target.value)})}
+                      placeholder="Lower numbers show first"
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
+                    />
+                  </div>
 
-                  <button 
+                  <button
                     type="submit"
                     className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
                   >

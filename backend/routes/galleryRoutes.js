@@ -5,8 +5,14 @@ const GalleryItem = require('../models/GalleryItem');
 // Create
 router.post('/', async (req, res) => {
   try {
-    const item = await GalleryItem.create(req.body);
-    res.status(201).json(item);
+    let { order } = req.body;
+    if (order === undefined || order === null || order === '') {
+      const last = await GalleryItem.findOne().sort({ order: -1 });
+      order = last ? last.order + 1 : 1;
+    }
+    await GalleryItem.create({ ...req.body, order });
+    const list = await GalleryItem.find().sort({ order: 1, createdAt: -1 });
+    res.status(201).json(list);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -15,7 +21,7 @@ router.post('/', async (req, res) => {
 // Read
 router.get('/', async (req, res) => {
   try {
-    const list = await GalleryItem.find().sort({ createdAt: -1 });
+    const list = await GalleryItem.find().sort({ order: 1, createdAt: -1 });
     res.json(list);
   } catch (err) {
     res.status(500).json({ error: err.message });

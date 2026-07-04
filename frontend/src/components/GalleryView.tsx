@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
-import { 
-  ArrowLeft, X, ChevronLeft, ChevronRight, Maximize2, 
-  MapPin, Phone, Clock, Award, MessageCircle, Navigation, ExternalLink 
+import {
+  ArrowLeft, X, ChevronLeft, ChevronRight, Maximize2,
+  MapPin, Phone, Clock, Award, MessageCircle, Navigation, ExternalLink
 } from 'lucide-react';
+import { InstagramSection } from './InstagramSection';
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
@@ -255,6 +256,9 @@ export const GalleryView: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* ── FOLLOW ON INSTAGRAM ───────────────────────────────────────────── */}
+      <InstagramSection />
 
       {/* ── LIGHTBOX DIALOG ──────────────────────────────────────────────── */}
       <AnimatePresence>

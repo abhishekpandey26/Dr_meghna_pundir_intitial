@@ -137,14 +137,13 @@
 .mega-dropdown {
   display: none;
   position: absolute;
-  top: 100%;
+  top: calc(100% + 12px);
   left: 50%;
   transform: translateX(-50%);
   background: white;
-  border-radius: 0 0 16px 16px;
-  box-shadow: 0 20px 60px rgba(42,33,24,0.12);
+  border-radius: 18px;
+  box-shadow: 0 20px 60px rgba(42,33,24,0.14);
   border: 1px solid var(--border);
-  border-top: none;
   z-index: 200;
   min-width: 560px;
 }
@@ -161,6 +160,12 @@
 .animate-stroke {
   stroke-dasharray: 100;
   animation: strokeDraw 0.8s ease-out forwards;
+}
+
+@keyframes whatsappPulse {
+  0%   { transform: scale(1); opacity: 0.55; }
+  70%  { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
 }
 
 /* ─── Infinite Marquee / Ticker ──────────────────────────────────────────── */

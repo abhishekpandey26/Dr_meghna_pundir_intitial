@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { auth, googleProvider } from '../firebase';
@@ -46,6 +46,17 @@ export const BookingView: React.FC = () => {
   const [isVerifyingPayment, setIsVerifyingPayment] = useState<boolean>(false);
   const [slotsStatus, setSlotsStatus] = useState<{ time: string; status: 'AVAILABLE' | 'BOOKED' | 'LOCKED' }[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
+  const timeSlotSectionRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll the newly revealed time-slot picker into view once a date is chosen,
+  // so the user isn't left staring at the calendar wondering where the times went.
+  useEffect(() => {
+    if (!selectedDate) return;
+    const timer = window.setTimeout(() => {
+      timeSlotSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [selectedDate]);
 
   // Load slot availability dynamically when date changes
   useEffect(() => {
@@ -344,55 +355,55 @@ export const BookingView: React.FC = () => {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/60 backdrop-blur-sm overflow-y-auto">
-      <div 
-        onClick={triggerReset} 
+    <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-0 md:p-4 pt-6 md:pt-4 bg-neutral-900/60 backdrop-blur-sm overflow-y-auto">
+      <div
+        onClick={triggerReset}
         className="absolute inset-0 cursor-pointer"
       />
 
-      <div className="bg-white w-full max-w-5xl rounded-[32px] overflow-hidden shadow-2xl relative z-10 flex flex-col md:flex-row min-h-[550px] max-h-[90vh]">
+      <div className="bg-white w-full max-w-5xl md:rounded-[32px] rounded-t-[28px] overflow-x-hidden overflow-y-auto md:overflow-y-hidden shadow-2xl relative z-10 flex flex-col md:flex-row min-h-[550px] max-h-[94vh] md:max-h-[90vh]">
         
-        {/* Left Branded Side Panel */}
-        <div className="w-full md:w-[32%] bg-[#FAF5F9] p-8 flex flex-col justify-between items-center text-center relative border-b md:border-b-0 md:border-r border-purple-100/50">
-          <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-            
+        {/* Left Branded Side Panel — compact single row on mobile, full showcase on desktop */}
+        <div className="w-full md:w-[32%] bg-[#FAF5F9] flex flex-row md:flex-col md:justify-between items-center text-left md:text-center relative border-b md:border-b-0 md:border-r border-purple-100/50 px-5 py-4 md:p-8 gap-3 md:gap-0 flex-shrink-0">
+          <div className="flex-1 md:flex-1 flex flex-row md:flex-col items-center md:justify-center gap-3 md:gap-0 md:space-y-6 min-w-0">
+
             {/* Dynamic Step Graphic Icon */}
             {!patientToken ? (
-              <div className="w-20 h-20 bg-purple-100/50 rounded-full flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-4xl text-[#8A256E]">lock</span>
+              <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
+                <span className="material-symbols-outlined text-lg md:text-4xl text-[#8A256E]">lock</span>
               </div>
             ) : step === 1 ? (
-              <div className="w-20 h-20 bg-purple-100/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-10 h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
+                <svg className="w-5 h-5 md:w-10 md:h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
                 </svg>
               </div>
             ) : step === 2 ? (
-              <div className="w-20 h-20 bg-purple-100/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-10 h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
+                <svg className="w-5 h-5 md:w-10 md:h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
                 </svg>
               </div>
             ) : step === 3 ? (
-              <div className="w-20 h-20 bg-purple-100/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-10 h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
+                <svg className="w-5 h-5 md:w-10 md:h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
                 </svg>
               </div>
             ) : step === 4 ? (
-              <div className="w-20 h-20 bg-purple-100/50 rounded-full flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-4xl text-[#8A256E]">payments</span>
+              <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
+                <span className="material-symbols-outlined text-lg md:text-4xl text-[#8A256E]">payments</span>
               </div>
             ) : (
-              <div className="w-20 h-20 bg-purple-100/50 rounded-full flex items-center justify-center mb-6">
-                <svg className="w-10 h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+              <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
+                <svg className="w-5 h-5 md:w-10 md:h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.156 12.156L16.5 16.5m-2.25-1.5a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
                 </svg>
               </div>
             )}
 
-            <div className="space-y-2">
-              <h2 className="text-xl font-bold text-neutral-800">
+            <div className="md:space-y-2 min-w-0">
+              <h2 className="text-sm md:text-xl font-bold text-neutral-800 truncate md:whitespace-normal">
                 {!patientToken ? 'Secure Booking' :
                  step === 1 ? 'Service Selection' :
                  step === 2 ? 'Select Date & Time' :
@@ -401,7 +412,7 @@ export const BookingView: React.FC = () => {
                  step === 5 ? 'Verify Order Details' :
                  'Appointment Confirmed'}
               </h2>
-              <p className="text-xs text-neutral-400 max-w-[200px] leading-relaxed">
+              <p className="hidden md:block text-xs text-neutral-400 max-w-[200px] leading-relaxed">
                 {!patientToken ? 'Please sign in with Google to confirm your diagnostic slot.' :
                  step === 1 ? 'Please select a service for which you want to schedule an appointment' :
                  step === 2 ? 'Please select date and time for your appointment' :
@@ -413,17 +424,17 @@ export const BookingView: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-8 space-y-1">
+          <div className="hidden md:block mt-8 space-y-1">
             <p className="text-[10px] font-extrabold uppercase text-neutral-400">Questions?</p>
             <p className="text-xs font-bold text-[#8A256E]">Call (880) 887-2742 for help</p>
           </div>
         </div>
 
         {/* Right Dynamic Pane Container */}
-        <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-          
+        <div className="flex-1 flex flex-col md:flex-row overflow-visible md:overflow-hidden">
+
           {/* Main Form Area */}
-          <div className="flex-1 p-8 overflow-y-auto max-h-[85vh]">
+          <div className="flex-1 p-5 md:p-8 overflow-visible md:overflow-y-auto md:max-h-[85vh]">
             
             {/* Header Close button */}
             <div className="flex justify-between items-center mb-6">
@@ -557,7 +568,7 @@ export const BookingView: React.FC = () => {
 
                     {/* Time Slot Picker Under Calendar */}
                     {selectedDate && (
-                      <div className="space-y-4 pt-4 border-t border-neutral-100">
+                      <div ref={timeSlotSectionRef} className="space-y-4 pt-4 border-t border-neutral-100 scroll-mt-4">
                         <p className="text-xs font-bold text-neutral-500">Pick a slot for <span className="underline text-[#8A256E]">{selectedDate}</span></p>
                         
                         {isLoadingSlots ? (
@@ -871,9 +882,9 @@ export const BookingView: React.FC = () => {
 
           {/* Right Summary Column */}
           {patientToken && step >= 2 && step <= 5 && (
-            <div className="w-full md:w-[35%] p-8 bg-white border-t md:border-t-0 md:border-l border-neutral-100 flex flex-col justify-between max-h-[85vh] overflow-y-auto">
-              
-              <div className="space-y-6">
+            <div className="w-full md:w-[35%] p-5 md:p-8 bg-white border-t md:border-t-0 md:border-l border-neutral-100 flex flex-col justify-between md:max-h-[85vh] overflow-visible md:overflow-y-auto flex-shrink-0">
+
+              <div className="space-y-4 md:space-y-6">
                 <div>
                   <h4 className="text-xs font-extrabold uppercase tracking-widest text-neutral-400">Summary</h4>
                   <div className="h-px bg-neutral-100 my-3 border-dashed border-t" />
@@ -897,7 +908,7 @@ export const BookingView: React.FC = () => {
                 </div>
               </div>
 
-              <div className="space-y-4 pt-6 mt-8 border-t border-neutral-100">
+              <div className="space-y-4 pt-4 mt-4 md:pt-6 md:mt-8 border-t border-neutral-100">
                 <p className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider">Cost Breakdown</p>
                 
                 <div className="space-y-2">

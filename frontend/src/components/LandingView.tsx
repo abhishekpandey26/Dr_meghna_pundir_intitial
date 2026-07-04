@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { useApp } from '../context/AppContext';
 import { REVIEWS, TREATMENTS } from '../initialData';
@@ -178,8 +178,54 @@ export const LandingView: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [treatmentsOpen, setTreatmentsOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileTreatmentsOpen, setMobileTreatmentsOpen] = useState(false);
+  const [heroPhase, setHeroPhase] = useState<'video' | 'profile'>('video');
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
+  const heroPhaseGuard = useRef(false);
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
   const blogSectionRef = useRef<HTMLDivElement>(null);
+
+  const revealHeroProfile = () => {
+    if (heroPhaseGuard.current) return;
+    heroPhaseGuard.current = true;
+    setHeroPhase('profile');
+  };
+
+  const revealHeroVideo = () => {
+    heroPhaseGuard.current = false;
+    setHeroPhase('video');
+  };
+
+  // Cycle the hero: video plays through at its own pace → doctor profile
+  // holds for a few seconds → back to video, looping continuously.
+  useEffect(() => {
+    if (heroPhase === 'video') {
+      const video = heroVideoRef.current;
+      if (video) {
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      }
+      // Safety net only — if `onEnded` never fires, don't get stuck.
+      // Uses the video's real duration so it never cuts playback short.
+      const durationMs = video && isFinite(video.duration) && video.duration > 0
+        ? video.duration * 1000 + 1500
+        : 20000;
+      const fallback = window.setTimeout(revealHeroProfile, durationMs);
+      return () => window.clearTimeout(fallback);
+    } else {
+      const holdTimer = window.setTimeout(revealHeroVideo, 4000);
+      return () => window.clearTimeout(holdTimer);
+    }
+  }, [heroPhase]);
+
+  useEffect(() => {
+    const onScroll = () => setNavScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     const timeouts: number[] = [];
@@ -328,36 +374,31 @@ export const LandingView: React.FC = () => {
 
       {/* ── MAIN NAVBAR ──────────────────────────────────────────────────── */}
       <header
-        className="fixed top-0 left-0 w-full z-50 transition-expo"
+        className="fixed top-3 md:top-5 left-3 right-3 md:left-6 md:right-6 z-50 mx-auto max-w-7xl transition-all duration-300"
         style={{
-          background: 'var(--cream)',
-          borderBottom: '1px solid var(--border)',
-          height: '68px'
+          background: navScrolled ? 'rgba(255,250,244,0.85)' : 'rgba(255,250,244,0.55)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: '1px solid rgba(255,255,255,0.6)',
+          borderRadius: mobileMenuOpen ? '16px 16px 0 0' : '16px',
+          boxShadow: navScrolled ? '0 10px 40px rgba(43,33,24,0.14)' : '0 6px 24px rgba(43,33,24,0.06)'
         }}
       >
-        <div className="flex justify-between items-center px-5 h-full w-full max-w-7xl mx-auto md:px-16">
+        <div className="flex justify-between items-center gap-2 px-3.5 h-16 w-full md:px-7">
 
           {/* Logo */}
           <button onClick={() => setView('landing')} className="flex flex-col items-start cursor-pointer">
-            <span className="font-serif text-2xl font-semibold leading-none" style={{ color: 'var(--ink)' }}>Derm Elixir</span>
-            <span className="text-[10px] font-medium uppercase tracking-[0.1em] leading-none mt-0.5" style={{ color: 'var(--terracotta)' }}>Skin · Hair · Laser</span>
+            <span className="font-serif text-xl md:text-2xl font-semibold leading-none whitespace-nowrap" style={{ color: 'var(--ink)' }}>Derm Elixir</span>
+            <span className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.1em] leading-none mt-0.5 whitespace-nowrap" style={{ color: 'var(--terracotta)' }}>Skin · Hair · Laser</span>
           </button>
 
           {/* Nav Links */}
-          <nav className="hidden lg:flex items-center space-x-7">
-            <button 
-              onClick={() => setView('about')}
-              className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer bg-transparent border-0 p-0" 
-              style={{ color: 'var(--ink)' }}
-            >
-              About
-            </button>
-
+          <nav className="hidden lg:flex items-center gap-1">
             {/* Treatments Mega-Dropdown */}
             <div className="relative mega-trigger">
               <button
                 onClick={() => setTreatmentsOpen(!treatmentsOpen)}
-                className="flex items-center gap-1 text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer"
+                className="flex items-center gap-1 text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60"
                 style={{ color: 'var(--ink)' }}
               >
                 Treatments
@@ -404,93 +445,352 @@ export const LandingView: React.FC = () => {
               </div>
             </div>
 
-            <button onClick={() => setView('skin-analyzer')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
-            <button onClick={() => setView('gallery')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer" style={{ color: 'var(--ink)' }}>Gallery</button>
-            <a href="#transformations" className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70" style={{ color: 'var(--ink)' }}>Before & After</a>
-            <a href="#reviews" className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70" style={{ color: 'var(--ink)' }}>Reviews</a>
-            <a href="#contact" className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70" style={{ color: 'var(--ink)' }}>Contact</a>
+            <button onClick={() => setView('skin-analyzer')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
+            <button onClick={() => setView('gallery')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
+            <a href="#transformations" className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>Before & After</a>
           </nav>
 
           {/* Right side buttons */}
-          <div className="flex items-center gap-3">
-            {patientToken && currentPatient ? (
-              <>
+          <div className="flex items-center gap-1.5 md:gap-3">
+            {/* Login / Dashboard cluster — desktop only, tucked into the mobile drawer below */}
+            <div className="hidden lg:flex items-center gap-3">
+              {patientToken && currentPatient ? (
+                <>
+                  <button
+                    onClick={() => setView('patient-portal')}
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
+                    style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
+                  >
+                    Dashboard 🚀
+                  </button>
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shadow flex-shrink-0"
+                    style={{ background: 'var(--terracotta)' }}
+                  >
+                    {currentPatient.name ? currentPatient.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : currentPatient.email.slice(0, 2)}
+                  </div>
+                </>
+              ) : (
                 <button
-                  onClick={() => setView('patient-portal')}
-                  className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80"
-                  style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
+                  onClick={handleGoogleLoginClick}
+                  className="px-5 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
+                  style={{ border: '1.5px solid var(--terracotta)', color: 'var(--terracotta)', background: 'transparent' }}
                 >
-                  Dashboard 🚀
+                  Login
                 </button>
-                <div
-                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shadow"
-                  style={{ background: 'var(--terracotta)' }}
-                >
-                  {currentPatient.name ? currentPatient.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : currentPatient.email.slice(0, 2)}
-                </div>
-              </>
-            ) : (
-              <button
-                onClick={handleGoogleLoginClick}
-                className="px-5 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80"
-                style={{ border: '1.5px solid var(--terracotta)', color: 'var(--terracotta)', background: 'transparent' }}
-              >
-                Login
-              </button>
-            )}
+              )}
+            </div>
+
             <button
               onClick={() => startBooking()}
-              className="px-5 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full text-white transition-all active:scale-95 cursor-pointer"
+              className="px-3.5 md:px-5 py-2 text-[11px] md:text-xs font-semibold uppercase tracking-[0.05em] rounded-full text-white transition-all active:scale-95 cursor-pointer shadow-md hover:shadow-lg whitespace-nowrap"
               style={{ background: 'var(--terracotta)' }}
               onMouseEnter={e => (e.currentTarget.style.background = 'var(--gold-accent)')}
               onMouseLeave={e => (e.currentTarget.style.background = 'var(--terracotta)')}
             >
               Book Now
             </button>
+
+            {/* Hamburger — mobile & tablet only */}
+            <button
+              onClick={() => setMobileMenuOpen(open => !open)}
+              aria-label="Toggle menu"
+              className="lg:hidden flex items-center justify-center w-9 h-9 rounded-full flex-shrink-0 cursor-pointer transition-colors hover:bg-white/60"
+              style={{ color: 'var(--ink)' }}
+            >
+              {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
 
         </div>
+
+        {/* Mobile drawer — nav links + account, collapses under the floating bar */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+              className="lg:hidden overflow-hidden"
+              style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}
+            >
+              <div className="px-3.5 py-3 flex flex-col gap-1">
+                <div>
+                  <button
+                    onClick={() => setMobileTreatmentsOpen(o => !o)}
+                    className="w-full flex items-center justify-between text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60"
+                    style={{ color: 'var(--ink)' }}
+                  >
+                    Treatments
+                    <svg width="10" height="10" viewBox="0 0 10 10" fill="currentColor" className="opacity-50 transition-transform" style={{ transform: mobileTreatmentsOpen ? 'rotate(180deg)' : 'none' }}>
+                      <path d="M1 3l4 4 4-4" />
+                    </svg>
+                  </button>
+                  <AnimatePresence>
+                    {mobileTreatmentsOpen && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                        className="overflow-hidden pl-3"
+                      >
+                        {['Acne Treatment', 'Pigmentation', 'PRP Therapy', 'Hair Transplant', 'Botox', 'Dermal Fillers'].map(item => (
+                          <button
+                            key={item}
+                            onClick={() => { startBooking(item); setMobileMenuOpen(false); }}
+                            className="block w-full text-left text-[13px] font-medium py-2.5 px-3 rounded-lg cursor-pointer hover:bg-white/60"
+                            style={{ color: 'var(--muted)' }}
+                          >
+                            {item}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+
+                <button onClick={() => { setView('skin-analyzer'); setMobileMenuOpen(false); }} className="text-left text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
+                <button onClick={() => { setView('gallery'); setMobileMenuOpen(false); }} className="text-left text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
+                <a href="#transformations" onClick={() => setMobileMenuOpen(false)} className="text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl hover:bg-white/60" style={{ color: 'var(--ink)' }}>Before &amp; After</a>
+
+                <div className="mt-2 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
+                  {patientToken && currentPatient ? (
+                    <button
+                      onClick={() => { setView('patient-portal'); setMobileMenuOpen(false); }}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer"
+                      style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
+                    >
+                      Dashboard 🚀
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => { handleGoogleLoginClick(); setMobileMenuOpen(false); }}
+                      className="w-full px-4 py-3 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer"
+                      style={{ border: '1.5px solid var(--terracotta)', color: 'var(--terracotta)', background: 'transparent' }}
+                    >
+                      Login
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </header>
 
-      {/* Spacer for fixed navbar */}
-      <div style={{ height: '68px' }} />
+      {/* Spacer — mobile only, so the navbar never overlaps/cuts the short hero video below it.
+          Desktop keeps the navbar floating over the hero like before. */}
+      <div className="h-[88px] md:h-0" />
 
       {/* ── HERO SECTION ─────────────────────────────────────────────────── */}
-      {/* Zone 1: video with a single minimal bordered text block — no buttons/stats overlaid */}
-      <section className="relative h-[78vh] md:h-[82vh] min-h-[480px] w-full overflow-hidden flex items-center justify-center">
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute inset-0 w-full h-full z-0 object-cover object-center"
-          poster="/clinic_interior.png"
-        >
-          <source src="/assets/hero.mp4" type="video/mp4" />
-        </video>
+      {/* A two-slide loop: intro video plays to completion, then holds on a
+          doctor-profile split for a few seconds, then repeats. */}
+      <section
+        className="relative h-[78vh] md:h-[82vh] min-h-[520px] w-full overflow-hidden"
+        style={{
+          background: 'var(--blush)',
+          height: heroPhase === 'video' ? 'clamp(220px, 56.25vw, 760px)' : undefined,
+          minHeight: heroPhase === 'video' ? 0 : undefined,
+          transition: 'height 0.7s cubic-bezier(0.22,1,0.36,1)'
+        }}
+      >
+        <div className="relative z-10 h-full w-full flex flex-col md:flex-row">
 
-        {/* Light dark tint, just enough for the bordered box to sit legibly */}
-        <div
-          className="absolute inset-0 z-10 pointer-events-none"
-          style={{ background: 'rgba(0,0,0,0.25)' }}
-        />
+          {/* Media panel — video during slide 1, doctor portrait during slide 2 */}
+          <motion.div
+            className={`relative flex-shrink-0 order-1 ${heroPhase === 'profile' ? 'md:order-2' : 'md:order-1'}`}
+            initial={false}
+            animate={
+              heroPhase === 'profile'
+                ? { flexBasis: '48%', padding: '36px' }
+                : { flexBasis: '100%', padding: '0px' }
+            }
+            transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="relative w-full h-full">
+              {/* Decorative accent block behind the portrait — only in profile slide */}
+              <div
+                className="absolute"
+                style={{
+                  bottom: '-18px',
+                  left: '-18px',
+                  width: '100%',
+                  height: '100%',
+                  borderRadius: 28,
+                  background: 'var(--terracotta)',
+                  opacity: heroPhase === 'profile' ? 0.9 : 0,
+                  transform: heroPhase === 'profile' ? 'rotate(0deg)' : 'rotate(-2deg)',
+                  transition: 'opacity 0.8s ease 0.15s, transform 0.9s ease',
+                  zIndex: 0
+                }}
+              />
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="relative z-20 px-6"
+              <div
+                className="relative w-full h-full overflow-hidden"
+                style={{
+                  borderRadius: heroPhase === 'profile' ? '140px 140px 20px 20px' : 0,
+                  transition: 'border-radius 1s cubic-bezier(0.22,1,0.36,1)',
+                  boxShadow: heroPhase === 'profile' ? '0 24px 60px rgba(0,0,0,0.2)' : 'none',
+                  border: heroPhase === 'profile' ? '6px solid var(--white)' : 'none',
+                  background: 'var(--ink)',
+                  zIndex: 1
+                }}
+              >
+                <video
+                  ref={heroVideoRef}
+                  autoPlay
+                  muted
+                  playsInline
+                  onEnded={revealHeroProfile}
+                  className="absolute inset-0 w-full h-full object-contain object-center"
+                  style={{ opacity: heroPhase === 'profile' ? 0 : 1, transition: 'opacity 0.6s ease' }}
+                  poster="/clinic_interior.png"
+                >
+                  <source src="/assets/hero.mp4" type="video/mp4" />
+                </video>
+
+                <img
+                  src="/assets/doctor_portrait.jpg"
+                  alt="Dr. Megha Pundir Singh"
+                  className="absolute inset-0 w-full h-full object-cover object-top"
+                  style={{ opacity: heroPhase === 'profile' ? 1 : 0, transition: 'opacity 0.7s ease 0.3s' }}
+                />
+
+                {/* Dark tint — only while the video is playing */}
+                <div
+                  className="absolute inset-0 pointer-events-none"
+                  style={{ background: 'rgba(0,0,0,0.25)', opacity: heroPhase === 'video' ? 1 : 0, transition: 'opacity 0.6s ease' }}
+                />
+              </div>
+
+              {/* Credential badge — only once the profile slide is showing */}
+              <div
+                className="absolute bottom-6 left-6 bg-white rounded-2xl px-5 py-3 shadow-lg"
+                style={{
+                  opacity: heroPhase === 'profile' ? 1 : 0,
+                  transform: heroPhase === 'profile' ? 'translateY(0)' : 'translateY(12px)',
+                  transition: 'opacity 0.6s ease 0.7s, transform 0.6s ease 0.7s',
+                  zIndex: 2
+                }}
+              >
+                <div className="font-serif text-sm font-medium" style={{ color: 'var(--ink)' }}>
+                  MBBS · MD (Skin &amp; V.D.)
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider mt-1" style={{ color: 'var(--rose)' }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#4A7C59', display: 'inline-block' }} />
+                  Certified Dermatologist
+                </div>
+              </div>
+            </div>
+
+            {/* Centered clinic tagline — only during the video slide */}
+            <AnimatePresence>
+              {heroPhase === 'video' && (
+                <motion.div
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.94 }}
+                  transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+                  className="absolute inset-0 z-20 flex items-center justify-center px-6"
+                >
+                  <div className="border border-white/40 px-10 sm:px-16 md:px-20 py-7 md:py-9 text-center bg-black/10 backdrop-blur-[1px]">
+                    <p className="font-serif uppercase tracking-[0.12em] text-white text-xl sm:text-2xl md:text-3xl">
+                      Dr. Megha Pundir Singh's
+                    </p>
+                    <span className="block w-10 h-px bg-white/40 mx-auto my-3" />
+                    <p className="text-white/70 text-[11px] sm:text-xs md:text-sm font-light tracking-[0.2em] uppercase">
+                      Skin, Hair &amp; Laser Clinic
+                    </p>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+
+          {/* Bio panel — text-led doctor introduction, slide 2 */}
+          <motion.div
+            className={`relative flex items-center overflow-hidden order-2 ${heroPhase === 'profile' ? 'md:order-1' : 'md:order-2'}`}
+            initial={false}
+            animate={
+              heroPhase === 'profile'
+                ? { flexBasis: '52%', opacity: 1 }
+                : { flexBasis: '0%', opacity: 0 }
+            }
+            transition={{ duration: 0.8, delay: heroPhase === 'profile' ? 0.4 : 0, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <AnimatePresence mode="wait">
+              {heroPhase === 'profile' && (
+                <motion.div
+                  key="hero-bio-copy"
+                  initial={{ opacity: 0, y: 18 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                  className="pl-14 pr-6 sm:pl-16 sm:pr-10 md:pl-20 md:pr-12 py-8 max-w-xl"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--rose)' }}>
+                    Meet Your Doctor
+                  </p>
+                  <h1 className="font-serif text-3xl md:text-[46px] font-bold leading-tight mb-4" style={{ color: 'var(--ink)' }}>
+                    Dr. Megha Pundir Singh, MD
+                  </h1>
+                  <p className="italic font-serif text-base md:text-lg mb-4" style={{ color: 'var(--terracotta-dark)' }}>
+                    Dermatologist · Cosmetologist · Aesthetic Physician &amp; Hair Restoration Specialist
+                  </p>
+                  <p className="text-sm leading-relaxed mb-6 hidden sm:block" style={{ color: 'var(--ink)', opacity: 0.75 }}>
+                    Varanasi's most trusted dermatologist, bringing 10+ years of clinical excellence in advanced cosmetic dermatology and hair restoration — helping every patient feel confident in their own skin.
+                  </p>
+                  <div className="flex items-center gap-2 mb-7">
+                    <span className="font-serif text-lg font-semibold" style={{ color: 'var(--ink)' }}>4.9★</span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: 'var(--muted)' }}>· 1000+ Happy Patients</span>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+                    <button
+                      onClick={() => startBooking()}
+                      className="px-6 py-3 text-[12px] font-semibold uppercase tracking-wider rounded-full text-white cursor-pointer transition-all hover:opacity-90 shadow-md border-0"
+                      style={{ background: 'var(--rose)' }}
+                    >
+                      Book a Consultation
+                    </button>
+                    <button
+                      onClick={() => setView('about')}
+                      className="group inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider border-b pb-0.5 cursor-pointer bg-transparent"
+                      style={{ color: 'var(--terracotta-dark)', borderColor: 'var(--border)' }}
+                    >
+                      Know More
+                      <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
+
+        {/* Slide controls — left/right arrow + two animated pagination dots */}
+        <button
+          onClick={() => (heroPhase === 'video' ? revealHeroProfile() : revealHeroVideo())}
+          aria-label="Toggle hero slide"
+          className="absolute left-3 md:left-5 top-1/2 -translate-y-1/2 z-30 w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center cursor-pointer transition-colors"
+          style={{ background: 'rgba(255,255,255,0.85)', color: 'var(--ink)' }}
         >
-          <div className="border border-white/40 px-10 sm:px-16 md:px-20 py-7 md:py-9 text-center bg-black/10 backdrop-blur-[1px]">
-            <p className="font-serif uppercase tracking-[0.12em] text-white text-xl sm:text-2xl md:text-3xl">
-              Dr. Megha Pundir Singh's
-            </p>
-            <span className="block w-10 h-px bg-white/40 mx-auto my-3" />
-            <p className="text-white/70 text-[11px] sm:text-xs md:text-sm font-light tracking-[0.2em] uppercase">
-              Skin, Hair &amp; Laser Clinic
-            </p>
-          </div>
-        </motion.div>
+          {heroPhase === 'video' ? <ChevronRight className="w-4 h-4 md:w-5 md:h-5" /> : <ChevronLeft className="w-4 h-4 md:w-5 md:h-5" />}
+        </button>
+
+        <div className="absolute left-1/2 -translate-x-1/2 bottom-5 md:bottom-7 z-30 flex items-center gap-2.5 bg-white/85 backdrop-blur-sm px-3.5 py-2.5 rounded-full shadow-md">
+          <button onClick={revealHeroVideo} aria-label="Show intro video" className="relative w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(0,0,0,0.15)' }}>
+            {heroPhase === 'video' && (
+              <motion.span layoutId="hero-dot-active" className="absolute inset-0 rounded-full" style={{ background: 'var(--rose)' }} transition={{ type: 'spring', stiffness: 320, damping: 28 }} />
+            )}
+          </button>
+          <button onClick={revealHeroProfile} aria-label="Show doctor profile" className="relative w-2.5 h-2.5 rounded-full" style={{ background: 'rgba(0,0,0,0.15)' }}>
+            {heroPhase === 'profile' && (
+              <motion.span layoutId="hero-dot-active" className="absolute inset-0 rounded-full" style={{ background: 'var(--rose)' }} transition={{ type: 'spring', stiffness: 320, damping: 28 }} />
+            )}
+          </button>
+        </div>
       </section>
 
       {/* Zone 2: solid bar directly below the video — tagline, rating, single CTA */}
@@ -533,7 +833,7 @@ export const LandingView: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] as const }}
             className="lg:col-span-5 relative"
           >
@@ -575,7 +875,7 @@ export const LandingView: React.FC = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
+                viewport={{ once: false }}
                 transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.5 }}
                 style={{
                   position: 'absolute',
@@ -625,7 +925,7 @@ export const LandingView: React.FC = () => {
           <motion.div
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ duration: 0.8, delay: 0.15, ease: [0.22, 1, 0.36, 1] as const }}
             className="lg:col-span-7 space-y-6"
           >
@@ -715,7 +1015,7 @@ export const LandingView: React.FC = () => {
 
         <div className="max-w-7xl mx-auto relative z-10">
           <motion.div
-            initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }}
+            initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: false }} transition={{ duration: 0.6 }}
             className="text-center mb-12 space-y-3"
           >
             <span className="text-xs font-semibold uppercase tracking-[0.15em]" style={{ color: 'var(--terracotta-dark)' }}>Verified Patients</span>
@@ -1514,7 +1814,7 @@ export const LandingView: React.FC = () => {
             }}
             initial="hidden"
             whileInView="show"
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             className="grid grid-cols-1 md:grid-cols-3 gap-6"
           >
             {(galleryItems && galleryItems.length > 0
@@ -1669,7 +1969,7 @@ export const LandingView: React.FC = () => {
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{
               duration: 0.7,
               ease: [0.22, 1, 0.36, 1]
@@ -1682,7 +1982,7 @@ export const LandingView: React.FC = () => {
           <motion.p
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{
               duration: 0.6,
               ease: [0.22, 1, 0.36, 1],
@@ -1700,7 +2000,7 @@ export const LandingView: React.FC = () => {
           variants={containerVariants}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true, amount: 0.2 }}
+          viewport={{ once: false, amount: 0.2 }}
         >
           {videoTestimonials.slice(0, 3).map((item, index) => {
             const getYouTubeId = (url: string) => {
@@ -1791,7 +2091,7 @@ export const LandingView: React.FC = () => {
             onClick={() => setView('testimonials')}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
+            viewport={{ once: false }}
             transition={{ delay: 0.5, duration: 0.5 }}
             whileHover={{
               scale: 1.05,
@@ -2086,6 +2386,29 @@ export const LandingView: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* ── FLOATING WHATSAPP BUTTON (bottom-left) ──────────────────────────── */}
+      <motion.a
+        href="https://api.whatsapp.com/send/?phone=919453238699&text=Hello%21+I+would+like+to+know+more+about+Derm+Elixir+treatments.&type=phone_number&app_absent=0"
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Chat on WhatsApp"
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.85, rotate: -8 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 18 }}
+        className="fixed bottom-24 lg:bottom-8 left-4 md:left-8 z-40 w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center shadow-xl"
+        style={{ background: '#25D366' }}
+      >
+        <span
+          className="absolute inset-0 rounded-full"
+          style={{ background: '#25D366', animation: 'whatsappPulse 2.2s ease-out infinite' }}
+        />
+        <svg viewBox="0 0 32 32" className="relative w-7 h-7 md:w-8 md:h-8" fill="white">
+          <path d="M16.004 3C9.377 3 4 8.373 4 15c0 2.386.696 4.61 1.897 6.484L4 29l7.72-1.868A11.93 11.93 0 0 0 16.004 27C22.63 27 28 21.627 28 15S22.63 3 16.004 3zm0 21.75a9.7 9.7 0 0 1-4.95-1.354l-.355-.21-4.583 1.109 1.127-4.464-.232-.366A9.71 9.71 0 0 1 5.25 15c0-5.936 4.818-10.75 10.754-10.75S26.75 9.064 26.75 15 21.94 24.75 16.004 24.75zm5.518-7.61c-.302-.152-1.788-.883-2.065-.984-.277-.101-.479-.152-.68.152-.202.303-.78.983-.957 1.186-.176.202-.352.227-.654.076-.302-.152-1.276-.47-2.431-1.5-.899-.802-1.506-1.793-1.682-2.095-.176-.303-.019-.466.133-.617.136-.136.302-.353.454-.53.151-.176.201-.303.302-.505.101-.202.05-.379-.025-.53-.076-.152-.68-1.638-.932-2.243-.246-.59-.496-.51-.68-.52-.176-.008-.378-.01-.58-.01-.202 0-.53.076-.807.379-.277.303-1.058 1.034-1.058 2.52 0 1.487 1.083 2.925 1.234 3.127.151.202 2.132 3.256 5.166 4.566.722.312 1.285.498 1.725.637.725.23 1.384.198 1.905.12.581-.087 1.788-.731 2.04-1.437.252-.706.252-1.311.176-1.437-.075-.126-.277-.202-.579-.353z" />
+        </svg>
+      </motion.a>
 
       {/* ── DOCTOR VIDEO MODAL ───────────────────────────────────────────── */}
       <AnimatePresence>
