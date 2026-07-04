@@ -15,24 +15,20 @@ const getMediaUrl = (url: string) => {
 };
 
 export const BlogDetailView: React.FC = () => {
-  const { setView, blogs } = useApp();
+  const { setView, blogs, blogSlug: slug } = useApp();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
-  const getSlug = () => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('slug') || '';
-  };
-
-  const slug = getSlug();
 
   useEffect(() => {
     if (!slug) {
       setView('landing');
       return;
     }
-    
+
+    setLoading(true);
+    setPost(null);
+
     // Check locally first
     const localPost = blogs.find(b => b.slug === slug);
     if (localPost) {

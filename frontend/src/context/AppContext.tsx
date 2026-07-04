@@ -17,6 +17,7 @@ export interface FetchAppointmentsParams {
 interface AppContextProps {
   view: AppView;
   setView: (view: AppView, slug?: string) => void;
+  blogSlug: string;
   isAuthenticated: boolean;
   setIsAuthenticated: (val: boolean) => void;
   appointments: Appointment[];
@@ -84,6 +85,7 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [view, setViewState] = useState<AppView>('landing');
+  const [blogSlug, setBlogSlug] = useState<string>(() => new URLSearchParams(window.location.search).get('slug') || '');
   const [isAuthenticated, setIsAuthenticatedState] = useState<boolean>(() => {
     return localStorage.getItem('dermelixir_admin_auth') === 'true';
   });
@@ -162,6 +164,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const setView = (newView: AppView, slug?: string) => {
     setViewState(newView);
+    if (newView === 'blog-detail' && slug) {
+      setBlogSlug(slug);
+    }
     const url = new URL(window.location.href);
     url.searchParams.set('view', newView);
     if (newView === 'blog-detail' && slug) {
@@ -574,6 +579,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     <AppContext.Provider value={{
       view,
       setView,
+      blogSlug,
       isAuthenticated,
       setIsAuthenticated,
       appointments,

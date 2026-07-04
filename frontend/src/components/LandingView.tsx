@@ -2368,18 +2368,10 @@ export const LandingView: React.FC = () => {
 
       {/* ── MOBILE STICKY BAR ────────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 p-4 lg:hidden" style={{ background: 'rgba(255,249,240,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid var(--border)' }}>
-        <div className="flex gap-3 max-w-md mx-auto">
-          <a
-            href="https://api.whatsapp.com/send/?phone=917905587609&text=Hello%21+I+would+like+to+book+a+consultation+with+Dr.+Megha+Pundir+Singh.&type=phone_number&app_absent=0"
-            target="_blank" rel="noreferrer"
-            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-2 font-bold tracking-widest text-xs uppercase active:scale-95 transition-all text-center text-white"
-            style={{ background: '#25D366' }}
-          >
-            <span className="material-symbols-outlined text-base">chat</span> WhatsApp
-          </a>
+        <div className="flex justify-center max-w-md mx-auto">
           <button
             onClick={() => startBooking()}
-            className="flex-[1.5] h-12 rounded-xl flex items-center justify-center gap-2 font-bold tracking-widest text-xs uppercase active:scale-95 transition-all text-white cursor-pointer"
+            className="px-14 h-12 rounded-xl flex items-center justify-center gap-2 font-bold tracking-widest text-xs uppercase active:scale-95 transition-all text-white cursor-pointer shadow-lg"
             style={{ background: 'var(--terracotta)' }}
           >
             <span className="material-symbols-outlined text-base">calendar_month</span> Book Now

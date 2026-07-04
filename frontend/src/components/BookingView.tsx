@@ -47,6 +47,8 @@ export const BookingView: React.FC = () => {
   const [slotsStatus, setSlotsStatus] = useState<{ time: string; status: 'AVAILABLE' | 'BOOKED' | 'LOCKED' }[]>([]);
   const [isLoadingSlots, setIsLoadingSlots] = useState<boolean>(false);
   const timeSlotSectionRef = useRef<HTMLDivElement>(null);
+  const modalCardRef = useRef<HTMLDivElement>(null);
+  const formAreaRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll the newly revealed time-slot picker into view once a date is chosen,
   // so the user isn't left staring at the calendar wondering where the times went.
@@ -57,6 +59,13 @@ export const BookingView: React.FC = () => {
     }, 80);
     return () => window.clearTimeout(timer);
   }, [selectedDate]);
+
+  // Every time the wizard advances to a new step, land the user at the top of
+  // that step instead of wherever the previous step happened to be scrolled to.
+  useEffect(() => {
+    modalCardRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+    formAreaRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [step]);
 
   // Load slot availability dynamically when date changes
   useEffect(() => {
@@ -361,7 +370,7 @@ export const BookingView: React.FC = () => {
         className="absolute inset-0 cursor-pointer"
       />
 
-      <div className="bg-white w-full max-w-5xl md:rounded-[32px] rounded-t-[28px] overflow-x-hidden overflow-y-auto md:overflow-y-hidden shadow-2xl relative z-10 flex flex-col md:flex-row min-h-[550px] max-h-[94vh] md:max-h-[90vh]">
+      <div ref={modalCardRef} className="bg-white w-full max-w-5xl md:rounded-[32px] rounded-t-[28px] overflow-x-hidden overflow-y-auto md:overflow-y-hidden shadow-2xl relative z-10 flex flex-col md:flex-row min-h-[550px] max-h-[94vh] md:max-h-[90vh]">
         
         {/* Left Branded Side Panel — compact single row on mobile, full showcase on desktop */}
         <div className="w-full md:w-[32%] bg-[#FAF5F9] flex flex-row md:flex-col md:justify-between items-center text-left md:text-center relative border-b md:border-b-0 md:border-r border-purple-100/50 px-5 py-4 md:p-8 gap-3 md:gap-0 flex-shrink-0">
@@ -434,7 +443,7 @@ export const BookingView: React.FC = () => {
         <div className="flex-1 flex flex-col md:flex-row overflow-visible md:overflow-hidden">
 
           {/* Main Form Area */}
-          <div className="flex-1 p-5 md:p-8 overflow-visible md:overflow-y-auto md:max-h-[85vh]">
+          <div ref={formAreaRef} className="flex-1 p-5 md:p-8 overflow-visible md:overflow-y-auto md:max-h-[85vh]">
             
             {/* Header Close button */}
             <div className="flex justify-between items-center mb-6">
