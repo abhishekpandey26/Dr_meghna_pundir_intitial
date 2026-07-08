@@ -7,6 +7,7 @@ dotenv.config();
 
 const API_KEY = process.env.INSTAMOJO_API_KEY;
 const AUTH_TOKEN = process.env.INSTAMOJO_AUTH_TOKEN;
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
 let BASE_URL = process.env.INSTAMOJO_BASE_URL || 'https://www.instamojo.com/api/1.1/';
 if (BASE_URL && !BASE_URL.endsWith('/')) {
   BASE_URL += '/';
@@ -40,7 +41,8 @@ exports.createPaymentRequest = async (req, res) => {
       { 
         ...patientData,
         patientId,
-        status: 'PAYMENT_PENDING'
+        status: 'PAYMENT_PENDING',
+        paymentMethod: 'ONLINE'
       },
       { upsert: true, returnDocument: 'after', runValidators: true }
     );
@@ -52,7 +54,7 @@ exports.createPaymentRequest = async (req, res) => {
       buyer_name: patientData.patientName,
       email: patientData.email,
       phone: patientData.mobile,
-      redirect_url: `http://localhost:3000/?view=booking&payment_status=check&appointmentId=${appointment._id}`,
+      redirect_url: `${FRONTEND_URL}/?view=booking&payment_status=check&appointmentId=${appointment._id}`,
       send_email: false,
       send_sms: false,
       allow_repeated_payments: false

@@ -1,14 +1,16 @@
 const nodemailer = require('nodemailer');
 require('dotenv').config();
 
-// Create SMTP Transporter
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, '');
+
+// Create Mailjet SMTP Transporter
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp-relay.brevo.com',
-  port: parseInt(process.env.EMAIL_PORT || '587'),
+  host: process.env.EMAIL_HOST || process.env.MAILJET_SMTP_HOST || 'in-v3.mailjet.com',
+  port: parseInt(process.env.EMAIL_PORT || process.env.MAILJET_SMTP_PORT || '587', 10),
   secure: false, // true for 465, false for other ports
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    user: process.env.EMAIL_USER || process.env.MAILJET_API_KEY,
+    pass: process.env.EMAIL_PASS || process.env.MAILJET_API_SECRET
   }
 });
 
@@ -23,7 +25,7 @@ const sendBookingEmail = async (appt) => {
   }
 
   const isOnline = appt.consultationType === 'ONLINE';
-  const portalUrl = `http://localhost:3000/?view=video-room&id=${appt._id}`;
+  const portalUrl = `${FRONTEND_URL}/?view=video-room&id=${appt._id}`;
   const meetLinkHtml = isOnline 
     ? `
       <div style="margin: 30px 0; text-align: center;">
@@ -163,7 +165,7 @@ const sendBookingEmail = async (appt) => {
     console.log('✅ Confirmation email successfully dispatched! Message ID:', info.messageId);
     return info;
   } catch (err) {
-    console.error('❌ Nodemailer Error: Failed to dispatch confirmation email:', err.message);
+    console.error('❌ Mailjet SMTP Error: Failed to dispatch confirmation email:', err.message);
     throw err;
   }
 };
@@ -256,7 +258,7 @@ const sendOtpEmail = async (email, otpCode) => {
     console.log('✅ OTP email successfully dispatched! Message ID:', info.messageId);
     return info;
   } catch (err) {
-    console.error('❌ Nodemailer Error: Failed to dispatch OTP email:', err.message);
+    console.error('❌ Mailjet SMTP Error: Failed to dispatch OTP email:', err.message);
     throw err;
   }
 };
