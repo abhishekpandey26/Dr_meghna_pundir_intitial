@@ -7,9 +7,14 @@ router.get('/', async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 10));
-    const { status, payment, search, sortBy = 'createdAt', order = 'desc' } = req.query;
+    const { status, payment, search, sortBy = 'createdAt', order = 'desc', date } = req.query;
 
     const query = {};
+    
+    // Date filter
+    if (date) {
+      query.date = date;
+    }
     
     // Payment group filter (paid / pending / all)
     if (payment === 'paid') {

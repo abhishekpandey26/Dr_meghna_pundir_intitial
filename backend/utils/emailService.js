@@ -263,5 +263,98 @@ const sendOtpEmail = async (email, otpCode) => {
   }
 };
 
-module.exports = { sendBookingEmail, sendOtpEmail };
+/**
+ * Send OTP verification email to the admin/owner
+ * @param {string} email - Owner email address
+ * @param {string} otpCode - 6-digit verification code
+ */
+const sendAdminOtpEmail = async (email, otpCode) => {
+  if (!email) {
+    console.warn('❌ Cannot send Admin OTP email: email address is missing.');
+    return;
+  }
+
+  const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>DermElixir Admin Security Code</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,500&display=swap');
+      </style>
+    </head>
+    <body style="margin: 0; padding: 0; background-color: #f7f5f6; -webkit-font-smoothing: antialiased;">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f7f5f6; padding: 40px 0;">
+        <tr>
+          <td align="center">
+            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 32px; overflow: hidden; box-shadow: 0 20px 40px rgba(15, 23, 42, 0.04); border: 1px solid #f1f0f2;">
+              
+              <!-- Header Section -->
+              <tr>
+                <td style="background-color: #022c22; padding: 40px; text-align: center;">
+                  <h1 style="margin: 0; font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: #ffffff; letter-spacing: -0.02em;">DermElixir</h1>
+                  <p style="margin: 5px 0 0 0; font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 0.3em;">Administrative Security Node</p>
+                </td>
+              </tr>
+              
+              <!-- Content Section -->
+              <tr>
+                <td style="padding: 40px 45px; background-color: #ffffff;">
+                  <p style="margin: 0 0 15px 0; font-family: 'Inter', sans-serif; font-size: 15px; font-weight: 500; color: #374151;">
+                    Hello Owner,
+                  </p>
+                  <p style="margin: 0 0 25px 0; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 500; color: #4b5563; line-height: 1.6;">
+                    You are setting up or resetting the owner password for the DermElixir Admin Panel. Please use the following single-use verification code to authorize this action:
+                  </p>
+                  
+                  <!-- OTP Code Display -->
+                  <div style="margin: 30px 0; text-align: center;">
+                    <div style="background-color: #fcf8fa; border: 1px dashed #e5e7eb; border-radius: 20px; padding: 25px; display: inline-block; min-width: 200px;">
+                      <span style="font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.15em;">Security OTP</span>
+                      <div style="font-family: 'Inter', sans-serif; font-size: 36px; font-weight: 800; color: #b91c1c; letter-spacing: 0.25em; margin-top: 10px; margin-left: 0.25em;">${otpCode}</div>
+                    </div>
+                  </div>
+
+                  <p style="margin: 25px 0 0 0; font-family: 'Inter', sans-serif; font-size: 12px; font-style: italic; color: #9ca3af; line-height: 1.6; text-align: center;">
+                    This security OTP is valid for 5 minutes. If you did not initiate this change, please contact your systems administrator immediately.
+                  </p>
+                </td>
+              </tr>
+              
+              <!-- Footer Section -->
+              <tr>
+                <td style="background-color: #fafaf9; border-top: 1px solid #f1f0f2; padding: 30px; text-align: center;">
+                  <p style="margin: 0; font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: #022c22;">DermElixir</p>
+                  <p style="margin: 4px 0 0 0; font-family: 'Inter', sans-serif; font-size: 8px; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.2em;">Varanasi, UP &bull; Administrative Systems</p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  const mailOptions = {
+    from: `"DermElixir Security" <${process.env.EMAIL_SENDER || 'dggupta614@gmail.com'}>`,
+    to: email,
+    subject: `DermElixir Admin Security Verification: ${otpCode}`,
+    html: emailHtml
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('✅ Admin OTP email successfully dispatched! Message ID:', info.messageId);
+    return info;
+  } catch (err) {
+    console.error('❌ Nodemailer Error: Failed to dispatch Admin OTP email:', err.message);
+    throw err;
+  }
+};
+
+module.exports = { sendBookingEmail, sendOtpEmail, sendAdminOtpEmail };
 

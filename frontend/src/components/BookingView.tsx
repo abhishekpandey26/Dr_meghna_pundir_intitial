@@ -1,8 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
-import { auth, googleProvider } from '../firebase';
-import { signInWithPopup } from 'firebase/auth';
 import { API_BASE } from '../config';
 
 export const BookingView: React.FC = () => {
@@ -294,13 +292,8 @@ export const BookingView: React.FC = () => {
           return;
         }
 
-        // 3. Update patient profile and proceed
-        const res = await updatePatientProfile(formData.name, formData.mobile, parseInt(formData.age, 10));
-        if (res.success) {
-          setStep(4); // Go to step 4 (Payment Method Selection)
-        } else {
-          setFormErrors(res.message || 'Failed to update patient profile.');
-        }
+        // Proceed to payment method selection directly (no Google login required)
+        setStep(4);
       } catch (err) {
         setFormErrors('Security validation failed or network connection error. Please try again.');
       } finally {
@@ -372,16 +365,12 @@ export const BookingView: React.FC = () => {
 
       <div ref={modalCardRef} className="bg-white w-full max-w-5xl md:rounded-[32px] rounded-t-[28px] overflow-x-hidden overflow-y-auto md:overflow-y-hidden shadow-2xl relative z-10 flex flex-col md:flex-row min-h-[550px] max-h-[94vh] md:max-h-[90vh]">
         
-        {/* Left Branded Side Panel — compact single row on mobile, full showcase on desktop */}
+         {/* Left Branded Side Panel — compact single row on mobile, full showcase on desktop */}
         <div className="w-full md:w-[32%] bg-[#FAF5F9] flex flex-row md:flex-col md:justify-between items-center text-left md:text-center relative border-b md:border-b-0 md:border-r border-purple-100/50 px-5 py-4 md:p-8 gap-3 md:gap-0 flex-shrink-0">
           <div className="flex-1 md:flex-1 flex flex-row md:flex-col items-center md:justify-center gap-3 md:gap-0 md:space-y-6 min-w-0">
 
             {/* Dynamic Step Graphic Icon */}
-            {!patientToken ? (
-              <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
-                <span className="material-symbols-outlined text-lg md:text-4xl text-[#8A256E]">lock</span>
-              </div>
-            ) : step === 1 ? (
+            {step === 1 ? (
               <div className="w-10 h-10 md:w-20 md:h-20 flex-shrink-0 bg-purple-100/50 rounded-full flex items-center justify-center md:mb-6">
                 <svg className="w-5 h-5 md:w-10 md:h-10 text-[#8A256E]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
@@ -413,8 +402,7 @@ export const BookingView: React.FC = () => {
 
             <div className="md:space-y-2 min-w-0">
               <h2 className="text-sm md:text-xl font-bold text-neutral-800 truncate md:whitespace-normal">
-                {!patientToken ? 'Secure Booking' :
-                 step === 1 ? 'Service Selection' :
+                {step === 1 ? 'Service Selection' :
                  step === 2 ? 'Select Date & Time' :
                  step === 3 ? 'Enter Your Information' :
                  step === 4 ? 'Payment Method' :
@@ -422,8 +410,7 @@ export const BookingView: React.FC = () => {
                  'Appointment Confirmed'}
               </h2>
               <p className="hidden md:block text-xs text-neutral-400 max-w-[200px] leading-relaxed">
-                {!patientToken ? 'Please sign in with Google to confirm your diagnostic slot.' :
-                 step === 1 ? 'Please select a service for which you want to schedule an appointment' :
+                {step === 1 ? 'Please select a service for which you want to schedule an appointment' :
                  step === 2 ? 'Please select date and time for your appointment' :
                  step === 3 ? 'Please enter your contact information' :
                  step === 4 ? 'Please choose how you would like to pay for your consultation' :
@@ -448,7 +435,7 @@ export const BookingView: React.FC = () => {
             {/* Header Close button */}
             <div className="flex justify-between items-center mb-6">
               <span className="text-sm font-bold text-neutral-400 uppercase tracking-wider">
-                {patientToken && step < 6 ? `Step ${step} of 5` : ''}
+                {step < 6 ? `Step ${step} of 5` : ''}
               </span>
               <button 
                 onClick={triggerReset} 
@@ -458,32 +445,8 @@ export const BookingView: React.FC = () => {
               </button>
             </div>
 
-            {/* Google Sign-In Screen */}
-            {!patientToken ? (
-              <div className="flex flex-col items-center justify-center py-10 space-y-6 text-center">
-                <p className="text-neutral-500 text-xs max-w-sm">
-                  Sign in securely to reserve your slot and manage details from your patient history dashboard.
-                </p>
-                <button 
-                  onClick={async () => {
-                    try {
-                      const result = await signInWithPopup(auth, googleProvider);
-                      const user = result.user;
-                      if (user && user.email) {
-                        await loginPatientWithGoogle(user.email, user.displayName || '');
-                      }
-                    } catch (err: any) {
-                      alert('Google login failed: ' + err.message);
-                    }
-                  }}
-                  className="bg-[#8A256E] text-white hover:bg-[#721F5B] py-4 px-6 rounded-2xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer shadow-md shadow-purple-900/10"
-                >
-                  <span className="material-symbols-outlined text-sm">login</span> Sign In with Google
-                </button>
-              </div>
-            ) : (
-              <AnimatePresence mode="wait">
-                {step === 1 && (
+            <AnimatePresence mode="wait">
+              {step === 1 && (
                   <motion.div key="step1" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
                     <h3 className="font-bold text-neutral-800 text-lg">Available Services</h3>
                     <div className="space-y-3">
@@ -886,11 +849,10 @@ export const BookingView: React.FC = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-            )}
           </div>
 
           {/* Right Summary Column */}
-          {patientToken && step >= 2 && step <= 5 && (
+          {step >= 2 && step <= 5 && (
             <div className="w-full md:w-[35%] p-5 md:p-8 bg-white border-t md:border-t-0 md:border-l border-neutral-100 flex flex-col justify-between md:max-h-[85vh] overflow-visible md:overflow-y-auto flex-shrink-0">
 
               <div className="space-y-4 md:space-y-6">

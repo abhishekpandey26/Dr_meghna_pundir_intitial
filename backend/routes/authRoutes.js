@@ -160,4 +160,163 @@ router.put('/update-profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Admin authentication models and utilities
+const Admin = require('../models/Admin');
+const { hashPassword, verifyPassword } = require('../utils/passwordHelper');
+const { sendAdminOtpEmail } = require('../utils/emailService');
+
+const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'abhishekkumarp383@gmail.com').toLowerCase().trim();
+
+// Helper to ensure Admin document exists for owner
+const ensureAdminExists = async () => {
+  let admin = await Admin.findOne({ email: OWNER_EMAIL });
+  if (!admin) {
+    const defaultHashed = hashPassword('admin123');
+    admin = new Admin({ email: OWNER_EMAIL, password: defaultHashed });
+    await admin.save();
+  } else if (!admin.password) {
+    admin.password = hashPassword('admin123');
+    await admin.save();
+  }
+  return admin;
+};
+
+/**
+ * @route POST /api/auth/admin/send-otp
+ * @desc Generate and send OTP to owner email for password setup/reset
+ */
+router.post('/admin/send-otp', async (req, res) => {
+  try {
+    let { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    email = email.trim().toLowerCase();
+
+    // Verify requested email matches owner email
+    if (email !== OWNER_EMAIL) {
+      return res.status(403).json({ success: false, message: 'Unauthorized. OTP can only be sent to the owner email.' });
+    }
+
+    // Ensure admin document exists in collection
+    await ensureAdminExists();
+
+    // Generate 6-digit OTP code
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Save/update OTP in database
+    await OTP.findOneAndUpdate(
+      { email },
+      { code: otpCode, createdAt: new Date() },
+      { upsert: true, new: true }
+    );
+
+    // Send SMTP OTP email
+    await sendAdminOtpEmail(email, otpCode);
+
+    return res.json({ success: true, message: 'OTP verification code sent to owner email' });
+  } catch (error) {
+    console.error('Error in send-otp route:', error);
+    return res.status(500).json({ success: false, message: 'Failed to send verification code' });
+  }
+});
+
+/**
+ * @route POST /api/auth/admin/verify-otp-reset-password
+ * @desc Verify OTP and set a new password for the owner admin account
+ */
+router.post('/admin/verify-otp-reset-password', async (req, res) => {
+  try {
+    let { email, code, newPassword } = req.body;
+    if (!email || !code || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Email, verification code, and new password are required' });
+    }
+
+    email = email.trim().toLowerCase();
+    code = code.trim();
+
+    if (email !== OWNER_EMAIL) {
+      return res.status(403).json({ success: false, message: 'Unauthorized email' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
+    }
+
+    // Find valid OTP
+    const otpRecord = await OTP.findOne({ email, code });
+    if (!otpRecord) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired verification code' });
+    }
+
+    // Hash the password and save to Admin
+    const hashedPassword = hashPassword(newPassword);
+    const admin = await ensureAdminExists();
+    admin.password = hashedPassword;
+    await admin.save();
+
+    // Remove the OTP record
+    await OTP.deleteOne({ _id: otpRecord._id });
+
+    return res.json({ success: true, message: 'New password established successfully' });
+  } catch (error) {
+    console.error('Error in verify-otp-reset-password route:', error);
+    return res.status(500).json({ success: false, message: 'Failed to set new password' });
+  }
+});
+
+/**
+ * @route POST /api/auth/admin/login
+ * @desc Authenticate owner admin and return session confirmation
+ */
+router.post('/admin/login', async (req, res) => {
+  try {
+    let { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ success: false, message: 'Email and password are required' });
+    }
+
+    email = email.trim().toLowerCase();
+
+    if (email !== OWNER_EMAIL) {
+      return res.status(401).json({ success: false, message: 'Invalid administrative credentials' });
+    }
+
+    // Ensure the admin account exists and has a default password set if empty
+    await ensureAdminExists();
+
+    const admin = await Admin.findOne({ email });
+    if (!admin || !admin.password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password not set yet. Please use Setup Owner Password option to define one.' 
+      });
+    }
+
+    // Verify password
+    const isMatch = verifyPassword(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ success: false, message: 'Invalid administrative credentials' });
+    }
+
+    // Generate JWT token for admin
+    const token = jwt.sign(
+      { id: admin._id, email: admin.email, role: 'admin' },
+      JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    return res.json({
+      success: true,
+      message: 'Access granted successfully',
+      token,
+      email: admin.email
+    });
+  } catch (error) {
+    console.error('Error during admin login:', error);
+    return res.status(500).json({ success: false, message: 'Authentication server error' });
+  }
+});
+
 module.exports = router;

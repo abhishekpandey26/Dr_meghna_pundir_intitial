@@ -346,23 +346,41 @@ export const LandingView: React.FC = () => {
   ];
 
   const row1Cards = [
-    { name: 'Acne Treatment', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80' },
-    { name: 'Acne Scar Treatment', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQX0RWWFn8ItmYVqAQEi4t6SxTmVhyCr7hOwGlWXnGzqQ&s=10' },
-    { name: 'Pigmentation & Melasma', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3Epvr1w1L5Yr7TywIFnv09E3hCQXdi2huXnFIgVS-AA&s=10' },
     { name: 'Laser Hair Reduction', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSi8uLliJZQWRrYvBHDNztuWxYy2fPUhcWxEno8s1Qu0Q&s=10' },
-    { name: 'Hydrafacial', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80' },
-    { name: 'Chemical Peel', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQu3MW7CRKNDHaVOKkWOJ8nm6yVjpihrcnQ1q1STxy2Kw&s=10' },
-    { name: 'Botox & Fillers', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQAxy7WNhoIQ1jjKvjySgnq-t93nqXsC4BCp6iHuwtYmA&s=10' }
+    { name: 'Hair Transplant', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlNWamgMh51yDhqAfnwt596Tbb6qsMTaVJp7bVbaW26oNpT0oKxls6dME&s=10' },
+    { name: 'Tattoo Removal Service', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzNdL2uhcLd-ahSFUF9U25zCPSo36cCEF9tQ0wYg_Q2w&s=10' },
+    { name: 'HydraFacial', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80' },
+    { name: 'PRP Treatment', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxNY75V3H8XgF9_jdzThQSNjebxh-tDgQT8WTDIugGEw&s=10' },
+    { name: 'Chemical Peel Service', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQu3MW7CRKNDHaVOKkWOJ8nm6yVjpihrcnQ1q1STxy2Kw&s=10' },
+    { name: 'Double Chin Reduction', image: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=400&q=80' },
+    { name: 'Laser Treatment by CO2', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' },
+    { name: 'Lip Blushing Service', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' },
+    { name: 'Beard Transplant', image: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&q=80' },
+    { name: 'Scar Transplant', image: 'https://images.unsplash.com/photo-1527891751199-7225231a68dd?w=400&q=80' },
+    { name: 'Acne Treatment (Laser)', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80' },
+    { name: 'Mole/Wart Removal', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQk-QMe9KGocF9J7m-T6hlOTGzORbVs43u1S9K4fTIU_g&s=10' },
+    { name: 'Hollywood Peel', image: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=400&q=80' },
+    { name: 'Vampire Facial', image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400&q=80' },
+    { name: 'HIFU Treatment', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' }
   ];
 
   const row2Cards = [
-    { name: 'PRP Hair Restoration', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxNY75V3H8XgF9_jdzThQSNjebxh-tDgQT8WTDIugGEw&s=10' },
-    { name: 'Hair Loss Treatment', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4Hm_QbpAaga_a0WrIn9_RGmJ7d27q_T2sFzX-3hm90g&s=10' },
-    { name: 'Dark Circles & Eye Bag', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeh96vQrFalqZQmClrYsaiotxDllzx8SDxXthL-5F9mA&s=10' },
-    { name: 'Skin Rejuvenation & Glow', image: 'https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=400&q=80' },
-    { name: 'Anti-Aging Treatment', image: 'https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&q=80' },
-    { name: 'Tattoo Removal', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzNdL2uhcLd-ahSFUF9U25zCPSo36cCEF9tQ0wYg_Q2w&s=10' },
-    { name: 'Mole & Wart Removal', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQk-QMe9KGocF9J7m-T6hlOTGzORbVs43u1S9K4fTIU_g&s=10' }
+    { name: 'Melasma Treatment', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR3Epvr1w1L5Yr7TywIFnv09E3hCQXdi2huXnFIgVS-AA&s=10' },
+    { name: 'Laser Lip Surgery', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' },
+    { name: 'Intense Pulsed Light (IPL) treatment', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' },
+    { name: 'Hymenoplasty Treatment', image: 'https://images.unsplash.com/photo-1579684389782-64d84b5e901f?w=400&q=80' },
+    { name: 'Dermapen 4 Treatment', image: 'https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?w=400&q=80' },
+    { name: 'IPL Hair treatment', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' },
+    { name: 'Bikini Line Hair Removal Treatment', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' },
+    { name: 'Dandruff Treatment Treatment', image: 'https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&q=80' },
+    { name: 'Dimple Creation', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' },
+    { name: 'Skin Blemishes', image: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeh96vQrFalqZQmClrYsaiotxDllzx8SDxXthL-5F9mA&s=10' },
+    { name: 'Alopecia areata diagnosis and treatment', image: 'https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&q=80' },
+    { name: 'Trichologist for Hair Treatment', image: 'https://images.unsplash.com/photo-1552693673-1bf958298935?w=400&q=80' },
+    { name: 'G-shot Treatment', image: 'https://images.unsplash.com/photo-1579684389782-64d84b5e901f?w=400&q=80' },
+    { name: 'Lymphatic Drainage Massage', image: 'https://images.unsplash.com/photo-1519823551278-64ac92834909?w=400&q=80' },
+    { name: 'post pregnancy Aesthetic treatments', image: 'https://images.unsplash.com/photo-1519823551278-64ac92834909?w=400&q=80' },
+    { name: 'Microblading treatments', image: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&q=80' }
   ];
 
   return (
@@ -410,9 +428,21 @@ export const LandingView: React.FC = () => {
                 <div className="grid grid-cols-3 gap-6">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--terracotta)' }}>Skin</p>
-                    {['Acne Treatment', 'Pigmentation', 'Melasma Therapy', 'Anti-Aging'].map(item => (
+                    {[
+                      'Acne Treatment (Laser)',
+                      'Acne Scar Treatment',
+                      'Melasma Treatment',
+                      'Chemical Peel Service',
+                      'Hollywood Peel',
+                      'Vampire Facial',
+                      'HydraFacial',
+                      'Dermapen 4 Treatment',
+                      'Skin Blemishes',
+                      'Laser Treatment by CO2',
+                      'HIFU Treatment'
+                    ].map(item => (
                       <button key={item} onClick={() => startBooking(item)}
-                        className="block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-all cursor-pointer"
+                        className="block w-full text-left text-xs py-1.5 px-3 rounded-lg font-medium transition-all cursor-pointer"
                         style={{ color: 'var(--ink)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--blush)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -421,9 +451,17 @@ export const LandingView: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--terracotta)' }}>Hair</p>
-                    {['PRP Therapy', 'GFC Treatment', 'Hair Transplant', 'Hair Fall Control'].map(item => (
+                    {[
+                      'Hair Transplant',
+                      'Beard Transplant',
+                      'Scar Transplant',
+                      'PRP Treatment',
+                      'Dandruff Treatment Treatment',
+                      'Alopecia areata diagnosis and treatment',
+                      'Trichologist for Hair Treatment'
+                    ].map(item => (
                       <button key={item} onClick={() => startBooking(item)}
-                        className="block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-all cursor-pointer"
+                        className="block w-full text-left text-xs py-1.5 px-3 rounded-lg font-medium transition-all cursor-pointer"
                         style={{ color: 'var(--ink)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--blush)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -432,9 +470,23 @@ export const LandingView: React.FC = () => {
                   </div>
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--terracotta)' }}>Aesthetics</p>
-                    {['Botox', 'Dermal Fillers', 'Carbon Peel', 'Korean Glow Facial'].map(item => (
+                    {[
+                      'Laser Hair Reduction',
+                      'Bikini Line Hair Removal Treatment',
+                      'Tattoo Removal Service',
+                      'Double Chin Reduction',
+                      'Lip Blushing Service',
+                      'Laser Lip Surgery',
+                      'Dimple Creation',
+                      'Hymenoplasty Treatment',
+                      'G-shot Treatment',
+                      'Lymphatic Drainage Massage',
+                      'post pregnancy Aesthetic treatments',
+                      'Microblading treatments',
+                      'Botox & Fillers'
+                    ].map(item => (
                       <button key={item} onClick={() => startBooking(item)}
-                        className="block w-full text-left text-sm py-2 px-3 rounded-lg font-medium transition-all cursor-pointer"
+                        className="block w-full text-left text-xs py-1.5 px-3 rounded-lg font-medium transition-all cursor-pointer"
                         style={{ color: 'var(--ink)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--blush)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -534,9 +586,43 @@ export const LandingView: React.FC = () => {
                         animate={{ opacity: 1, height: 'auto' }}
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.25 }}
-                        className="overflow-hidden pl-3"
+                        className="overflow-hidden pl-3 max-h-[300px] overflow-y-auto"
                       >
-                        {['Acne Treatment', 'Pigmentation', 'PRP Therapy', 'Hair Transplant', 'Botox', 'Dermal Fillers'].map(item => (
+                        {[
+                          'Laser Hair Reduction',
+                          'Hair Transplant',
+                          'Tattoo Removal Service',
+                          'HydraFacial',
+                          'PRP Treatment',
+                          'Chemical Peel Service',
+                          'Double Chin Reduction',
+                          'Laser Treatment by CO2',
+                          'Lip Blushing Service',
+                          'Beard Transplant',
+                          'Scar Transplant',
+                          'Acne Treatment (Laser)',
+                          'Mole/Wart Removal',
+                          'Hollywood Peel',
+                          'Vampire Facial',
+                          'HIFU Treatment',
+                          'Melasma Treatment',
+                          'Laser Lip Surgery',
+                          'Intense Pulsed Light (IPL) treatment',
+                          'Hymenoplasty Treatment',
+                          'Dermapen 4 Treatment',
+                          'IPL Hair treatment',
+                          'Bikini Line Hair Removal Treatment',
+                          'Dandruff Treatment Treatment',
+                          'Dimple Creation',
+                          'Skin Blemishes',
+                          'Alopecia areata diagnosis and treatment',
+                          'Trichologist for Hair Treatment',
+                          'G-shot Treatment',
+                          'Lymphatic Drainage Massage',
+                          'post pregnancy Aesthetic treatments',
+                          'Microblading treatments',
+                          'Botox & Fillers'
+                        ].map(item => (
                           <button
                             key={item}
                             onClick={() => { startBooking(item); setMobileMenuOpen(false); }}
@@ -1608,9 +1694,9 @@ export const LandingView: React.FC = () => {
             </motion.div>
 
             <div className="max-w-4xl mx-auto overflow-hidden shadow-sm border border-[var(--border)] bg-white rounded-none">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
                 <table className="w-full text-left border-collapse">
-                  <thead>
+                  <thead className="sticky top-0 z-10 bg-white">
                     <tr style={{ background: 'var(--terracotta)' }}>
                       <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider text-white w-1/2">Treatment</th>
                       <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider text-white w-1/2">Concern Addressed</th>
@@ -1624,15 +1710,38 @@ export const LandingView: React.FC = () => {
                     className="divide-y divide-[var(--border)]"
                   >
                     {[
-                      { treatment: "Acne Treatment", concern: "Active acne, breakouts, and skin inflammation" },
-                      { treatment: "Acne Scar Treatment", concern: "Deep scars, rolling scars, and uneven skin texture" },
-                      { treatment: "Pigmentation & Melasma", concern: "Dark spots, sun damage, and uneven skin tone" },
-                      { treatment: "Laser Hair Reduction", concern: "Unwanted body and facial hair removal" },
-                      { treatment: "Hydrafacial", concern: "Clogged pores, skin dehydration, and dullness" },
-                      { treatment: "Chemical Peel", concern: "Fine lines, superficial scars, and dead skin exfoliation" },
-                      { treatment: "Botox & Fillers", concern: "Fine lines, wrinkles, volume loss, and facial contouring" },
-                      { treatment: "PRP Hair Restoration", concern: "Hair thinning, early-stage baldness, and hair fall" },
-                      { treatment: "GFC Hair Treatment", concern: "Weak hair follicles and poor hair density" }
+                      { treatment: "Laser Hair Reduction", concern: "Unwanted body and facial hair removal with long-lasting reduction" },
+                      { treatment: "Hair Transplant", concern: "Advanced FUE/FUT techniques for permanent hair restoration and baldness resolution" },
+                      { treatment: "Tattoo Removal Service", concern: "Safely erase unwanted ink pigment using advanced Q-switched laser technology" },
+                      { treatment: "HydraFacial", concern: "Cleanse, exfoliate, extract and hydrate the skin for a glowing complexion" },
+                      { treatment: "PRP Treatment", concern: "Platelet-rich plasma therapy for natural skin rejuvenation and hair thinning" },
+                      { treatment: "Chemical Peel Service", concern: "Exfoliate dead skin, treat superficial scars, and revitalize skin texture" },
+                      { treatment: "Double Chin Reduction", concern: "Slim and sculpt the jawline using targeted non-invasive fat reduction" },
+                      { treatment: "Laser Treatment by CO2", concern: "Fractional CO2 laser for deep scar revision, skin resurfacing, and aging lines" },
+                      { treatment: "Lip Blushing Service", concern: "Enhance natural lip color, symmetry, and definition cosmetically" },
+                      { treatment: "Beard Transplant", concern: "Follicular restoration for a fuller, natural-looking beard and mustache" },
+                      { treatment: "Scar Transplant", concern: "Reconstructive follicle graft to cover and smooth scars on the scalp/face" },
+                      { treatment: "Acne Treatment (Laser)", concern: "Target active acne lesions, breakouts, and bacterial inflammation using lasers" },
+                      { treatment: "Mole/Wart Removal", concern: "Radiofrequency or CO2 laser excision for smooth, blemish-free skin" },
+                      { treatment: "Hollywood Peel", concern: "Carbon paste laser treatment for instant skin brightening, pore contraction, and glow" },
+                      { treatment: "Vampire Facial", concern: "Micro-needling with Platelet-Rich Plasma (PRP) for collagen boost and age reversal" },
+                      { treatment: "HIFU Treatment", concern: "High-Intensity Focused Ultrasound for non-invasive skin lifting and tightening" },
+                      { treatment: "Melasma Treatment", concern: "Advanced laser and peel therapies targeting hyperpigmentation and hormonal melasma patches" },
+                      { treatment: "Laser Lip Surgery", concern: "Precision laser lipolysis to sculpt, define, and enhance lip shape" },
+                      { treatment: "Intense Pulsed Light (IPL) treatment", concern: "Treat sun damage, redness, rosacea, and skin blemishes dynamically" },
+                      { treatment: "Hymenoplasty Treatment", concern: "Micro-reconstructive surgical rejuvenation of the hymenal ring" },
+                      { treatment: "Dermapen 4 Treatment", concern: "Advanced fractional micro-needling to stimulate skin repair and refine texture" },
+                      { treatment: "IPL Hair treatment", concern: "Broad-spectrum light pulses for hair follicle destruction and smooth skin" },
+                      { treatment: "Bikini Line Hair Removal Treatment", concern: "Gentle and precise laser hair removal for personal comfort and hygiene" },
+                      { treatment: "Dandruff Treatment Treatment", concern: "Specialized medical scalp cleanses and treatments targeting dry/oily dandruff" },
+                      { treatment: "Dimple Creation", concern: "Minor surgical procedure to create natural-looking, defined facial dimples" },
+                      { treatment: "Skin Blemishes", concern: "Treat dark circles, spots, blemishes, and under-eye bags with targeted care" },
+                      { treatment: "Alopecia areata diagnosis and treatment", concern: "Corticosteroid and medical therapies to address patchy autoimmune hair loss" },
+                      { treatment: "Trichologist for Hair Treatment", concern: "Clinical scalp analysis and customized medication protocols for hair loss" },
+                      { treatment: "G-shot Treatment", concern: "Non-surgical aesthetic enhancement for improved intimate well-being" },
+                      { treatment: "Lymphatic Drainage Massage", concern: "Gentle therapeutic massage to reduce swelling, detoxify, and boost circulation" },
+                      { treatment: "post pregnancy Aesthetic treatments", concern: "Mummy makeover therapies to address stretch marks, loose skin, and body contouring" },
+                      { treatment: "Microblading treatments", concern: "Precision semi-permanent tattooing to define, shape, and fill brows" }
                     ].map((row, index) => (
                       <motion.tr
                         key={index}

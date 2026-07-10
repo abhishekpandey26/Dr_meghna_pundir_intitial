@@ -9,8 +9,20 @@ const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
-// If FRONTEND_URL is set (e.g. in production), restrict CORS to that origin; otherwise allow all (local dev).
-app.use(cors(process.env.FRONTEND_URL ? { origin: process.env.FRONTEND_URL } : {}));
+// Allow FRONTEND_URL, but in local development/testing, also allow any localhost port to prevent CORS blocks
+const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+      return callback(null, true);
+    }
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    callback(new Error('Not allowed by CORS'));
+  }
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
