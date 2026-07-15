@@ -14,7 +14,7 @@ const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+    if (origin.startsWith('https://drmeghapundir.in/') || origin.startsWith('http://127.0.0.1:')) {
       return callback(null, true);
     }
     if (allowedOrigins.indexOf(origin) !== -1) {
