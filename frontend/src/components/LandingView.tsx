@@ -159,6 +159,167 @@ const containerVariants = {
   }
 }
 
+const PROCEDURES_BY_CATEGORY: Record<string, { treatment: string; concern: string; sub?: string }[]> = {
+  'Skin Treatments': [
+    { treatment: "Acne Treatment", concern: "Active acne lesions, pustules, and breakout control", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Hormonal Acne Treatment", concern: "Adult hormonal breakouts and cyclical chin/jaw acne", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Adult Acne Treatment", concern: "Persistent acne flare-ups in mature skin", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Teen Acne Treatment", concern: "Pubertal acne, blackheads, and congestion control", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Acne Scar Treatment", concern: "Textural scarring and post-acne indents", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Box Scar Treatment", concern: "Depressed boxcar scars on cheeks and temples", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Ice Pick Scar Treatment", concern: "Deep, narrow pitted scarring on the face", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Rolling Scar Treatment", concern: "Wavy, sloped skin texture from chronic acne", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Chemical Peel for Acne", concern: "Exfoliating peels to clear blocked pores and prevent breakouts", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Laser Acne Treatment", concern: "Laser targeting of acne bacteria and sebaceous glands", sub: "Acne & Acne Scar Treatment" },
+    { treatment: "Melasma Treatment", concern: "Hormonal brown patches on cheeks, forehead, and upper lip", sub: "Pigmentation Treatment" },
+    { treatment: "Hyperpigmentation Treatment", concern: "Dark spots and post-inflammatory pigmentation", sub: "Pigmentation Treatment" },
+    { treatment: "Sun Spots Treatment", concern: "Solar lentigines and UV-induced sun damage spots", sub: "Pigmentation Treatment" },
+    { treatment: "Freckles Treatment", concern: "Genetic or sun-induced small brown spots", sub: "Pigmentation Treatment" },
+    { treatment: "Age Spots Treatment", concern: "Liver spots and aging pigment marks", sub: "Pigmentation Treatment" },
+    { treatment: "Post Inflammatory Pigmentation", concern: "Dark spots left behind by resolved acne, wounds, or burns", sub: "Pigmentation Treatment" },
+    { treatment: "Uneven Skin Tone Treatment", concern: "Dullness, redness, and patchy facial skin tone", sub: "Pigmentation Treatment" },
+    { treatment: "Skin Brightening Treatment", concern: "Luminosity enhancement and overall skin tone balancing", sub: "Pigmentation Treatment" },
+    { treatment: "Hydra Facial", concern: "Exfoliation, pore extraction, and antioxidant hydration", sub: "Skin Rejuvenation" },
+    { treatment: "Oxygen Facial", concern: "High-pressure oxygen mist infusion for instant plumpness", sub: "Skin Rejuvenation" },
+    { treatment: "Medi Facial", concern: "Medical-grade customized facials for targeted skin health", sub: "Skin Rejuvenation" },
+    { treatment: "OxyGeneo Facial", concern: "Exfoliation, oxygenation, and nutrient infusion", sub: "Skin Rejuvenation" },
+    { treatment: "Carbon Laser Peel", concern: "Q-switched laser peeling for oil regulation and pore tightening", sub: "Skin Rejuvenation" },
+    { treatment: "Glass Skin Facial", concern: "Deep hydration and polishing for a flawless, dewy skin texture", sub: "Skin Rejuvenation" },
+    { treatment: "Skin Polishing", concern: "Microdermabrasion or chemical polishing for smooth skin", sub: "Skin Rejuvenation" },
+    { treatment: "Skin Tightening", concern: "RF or ultrasound-based skin firming and laxity control", sub: "Skin Rejuvenation" },
+    { treatment: "Anti-Aging Treatment", concern: "Fine lines, wrinkles, and cellular skin renewal", sub: "Skin Rejuvenation" },
+    { treatment: "Collagen Boosting Treatment", concern: "Stimulate natural collagen synthesis for firm skin", sub: "Skin Rejuvenation" },
+    { treatment: "Eczema", concern: "Dry, itchy, red, and inflamed skin patches", sub: "Medical Skin Conditions" },
+    { treatment: "Psoriasis", concern: "Scaly, silvery plaques on knees, elbows, and scalp", sub: "Medical Skin Conditions" },
+    { treatment: "Vitiligo", concern: "Loss of skin pigment resulting in white patches", sub: "Medical Skin Conditions" },
+    { treatment: "Rosacea", concern: "Facial redness, flushing, and visible blood vessels", sub: "Medical Skin Conditions" },
+    { treatment: "Fungal Infection", concern: "Tinea, ringworm, and other cutaneous fungal issues", sub: "Medical Skin Conditions" },
+    { treatment: "Urticaria", concern: "Hives, wheals, and acute/chronic allergic skin rashes", sub: "Medical Skin Conditions" },
+    { treatment: "Skin Allergy", concern: "Contact dermatitis and systemic skin reactions", sub: "Medical Skin Conditions" },
+    { treatment: "Contact Dermatitis", concern: "Inflammation caused by direct contact with allergens/irritants", sub: "Medical Skin Conditions" },
+    { treatment: "Seborrheic Dermatitis", concern: "Scaly, greasy, itchy patches on the face and scalp", sub: "Medical Skin Conditions" },
+    { treatment: "Bacterial Skin Infection", concern: "Impetigo, folliculitis, and cellulitis treatments", sub: "Medical Skin Conditions" }
+  ],
+  'Hair Treatments': [
+    { treatment: "Hair Fall Treatment", concern: "Excessive daily hair shedding and follicle weakening", sub: "Hair Fall Solutions" },
+    { treatment: "Female Hair Loss Treatment", concern: "Diffuse thinning and female pattern hair loss", sub: "Hair Fall Solutions" },
+    { treatment: "Male Pattern Baldness", concern: "Androgenetic alopecia, receding hairline, and crown thinning", sub: "Hair Fall Solutions" },
+    { treatment: "Alopecia Treatment", concern: "General hair loss and thinning management", sub: "Hair Fall Solutions" },
+    { treatment: "Alopecia Areata", concern: "Autoimmune patchy hair loss on scalp or beard", sub: "Hair Fall Solutions" },
+    { treatment: "Diffuse Hair Loss", concern: "Telogen effluvium and generalized hair shedding", sub: "Hair Fall Solutions" },
+    { treatment: "PRP Hair Treatment", concern: "Platelet-rich plasma injection to stimulate dormant hair roots", sub: "Hair Regrowth" },
+    { treatment: "QR678 Hair Therapy", concern: "Advanced biomimetic growth factor therapy for hair regrowth", sub: "Hair Regrowth" },
+    { treatment: "GFC Hair Treatment", concern: "Growth Factor Concentrate for highly concentrated root repair", sub: "Hair Regrowth" },
+    { treatment: "Mesotherapy for Hair", concern: "Micro-injections of vitamins and nutrients into the scalp", sub: "Hair Regrowth" },
+    { treatment: "Hair Growth Factor Therapy", concern: "Stem cell and factor-based follicle rejuvenation", sub: "Hair Regrowth" },
+    { treatment: "Dandruff Treatment", concern: "Flaky scalp, oily scales, and malassezia yeast control", sub: "Scalp Treatments" },
+    { treatment: "Scalp Psoriasis", concern: "Thick, scaly plaques on the scalp and hairline", sub: "Scalp Treatments" },
+    { treatment: "Itchy Scalp", concern: "Pruritus, scalp inflammation, and dry scalp irritation", sub: "Scalp Treatments" },
+    { treatment: "Seborrheic Scalp", concern: "Greasy scales and red patches on the scalp", sub: "Scalp Treatments" },
+    { treatment: "Oily Scalp Treatment", concern: "Sebum regulation and scalp clarifying therapy", sub: "Scalp Treatments" }
+  ],
+  'Laser Treatments': [
+    { treatment: "Laser Hair Reduction", concern: "Long-term reduction of unwanted facial and body hair" },
+    { treatment: "Full Body Laser Hair Removal", concern: "Comprehensive whole-body smooth skin treatment" },
+    { treatment: "Face Laser Hair Removal", concern: "Targeted upper lip, chin, and sideburn hair reduction" },
+    { treatment: "Bikini Laser Hair Removal", concern: "Gentle and hygienic intimate area hair reduction" },
+    { treatment: "Underarm Laser", concern: "Smooth underarms and sweat-associated odor control" },
+    { treatment: "Laser Pigmentation Removal", concern: "Treating freckles, age spots, and sun spots using lasers" },
+    { treatment: "Laser Tattoo Removal", concern: "Safe fading and removal of multi-colored ink pigments" },
+    { treatment: "Carbon Laser Peel", concern: "Q-switched carbon paste exfoliation for glow and pores" },
+    { treatment: "Laser Skin Rejuvenation", concern: "Non-ablative laser therapy for texture and tone enhancement" },
+    { treatment: "Laser Scar Treatment", concern: "Ablative/non-ablative fractional laser scar revision" }
+  ],
+  'Cosmetic Injectables': [
+    { treatment: "Botox", concern: "Wrinkle reduction for forehead, glabellar lines, and eyes", sub: "Botox" },
+    { treatment: "Forehead Botox", concern: "Smooth horizontal forehead worry lines", sub: "Botox" },
+    { treatment: "Crow's Feet Botox", concern: "Soften fine lines around the outer corners of eyes", sub: "Botox" },
+    { treatment: "Bunny Lines Botox", concern: "Smooth wrinkles on the bridge of the nose", sub: "Botox" },
+    { treatment: "Gummy Smile Botox", concern: "Relax upper lip elevator muscles to reduce gum exposure", sub: "Botox" },
+    { treatment: "Lip Flip", concern: "Subtle upward lip border relaxation for a fuller appearance", sub: "Botox" },
+    { treatment: "Lip Fillers", concern: "Hyaluronic acid lip augmentation, hydration, and symmetry", sub: "Fillers" },
+    { treatment: "Cheek Fillers", concern: "Volume restoration and contouring of the mid-face", sub: "Fillers" },
+    { treatment: "Chin Fillers", concern: "Chin projection, elongation, and jawline balancing", sub: "Fillers" },
+    { treatment: "Jawline Fillers", concern: "Sculpting and defining a sharp, structured jawline", sub: "Fillers" },
+    { treatment: "Under Eye Fillers", concern: "Tear trough restoration to eliminate hollows and shadow circles", sub: "Fillers" },
+    { treatment: "Nasolabial Fold Fillers", concern: "Soften laugh lines running from nose to mouth", sub: "Fillers" },
+    { treatment: "Thread Lift", concern: "Non-surgical face lifting and sagging skin suspension", sub: "Fillers" }
+  ],
+  'Anti-Aging Treatments': [
+    { treatment: "Wrinkle Treatment", concern: "Targeted botulinum, fillers, or laser wrinkle reduction" },
+    { treatment: "Fine Line Treatment", concern: "Soften superficial aging lines on face and neck" },
+    { treatment: "Skin Tightening", concern: "Non-surgical skin firming using RF/Ultrasound devices" },
+    { treatment: "Collagen Induction Therapy", concern: "Stimulate natural collagen production" },
+    { treatment: "Microneedling", concern: "Micro-injury therapy to trigger healing and texture refinement" },
+    { treatment: "Dermapen Treatment", concern: "Fractional micro-needling for acne scars and skin repair" },
+    { treatment: "RF Microneedling", concern: "Radiofrequency microneedling for deep tightening and scarring" }
+  ],
+  'Chemical Peels': [
+    { treatment: "Acne Peel", concern: "Salicylic acid peels to clear active acne and congestion" },
+    { treatment: "Pigmentation Peel", concern: "Glycolic or lactic peels to fade sun damage and dark spots" },
+    { treatment: "Glow Peel", concern: "Gentle fruit acid peels for immediate radiance" },
+    { treatment: "Anti-Aging Peel", concern: "Peels targeting fine lines, wrinkles, and age spots" },
+    { treatment: "Salicylic Peel", concern: "BHA chemical peel for oil control and deep pore cleansing" },
+    { treatment: "Glycolic Peel", concern: "AHA chemical peel for superficial skin exfoliation" },
+    { treatment: "TCA Peel", concern: "Medium-depth trichloroacetic acid peel for deep scar revision" },
+    { treatment: "Yellow Peel", concern: "Retinol and vitamin C peel for hyperpigmentation and melasma" },
+    { treatment: "Pumpkin Peel", concern: "Enzymatic peel for skin polishing and hydration" },
+    { treatment: "Cosmelan Peel", concern: "Depigmentation treatment for severe melasma and brown patches" }
+  ],
+  'Medi Facials': [
+    { treatment: "HydraFacial", concern: "Cleanse, exfoliate, extract and hydrate with vacuum suction" },
+    { treatment: "Oxygeneo MediFacial", concern: "Exfoliation, oxygenation, and customized serum infusion" },
+    { treatment: "Brightening MediFacial", concern: "Infusion of vitamin C and brightening agents for glow" },
+    { treatment: "Acne MediFacial", concern: "Medical facial focusing on extractions and anti-inflammatory care" },
+    { treatment: "Anti-Aging MediFacial", concern: "Peptides and collagen infusion for mature skin" },
+    { treatment: "Collagen MediFacial", concern: "Deep hydration facial to replenish skin elasticity" },
+    { treatment: "Derma Bright MediFacial", concern: "Customized facial targeting pigmentation spots" },
+    { treatment: "Barrier Repair MediFacial", concern: "Calming facial for sensitive, dry, or compromised skin barrier" },
+    { treatment: "Fire & Ice MediFacial", concern: "Resurfacing thermal peel followed by a cooling moisture mask" },
+    { treatment: "Glass Glow MediFacial", concern: "Polishing facial for maximum reflectivity and radiance" },
+    { treatment: "Radiance Reliance MediFacial", concern: "Restores skin radiance and reverses environmental damage" },
+    { treatment: "Korean Glass MediFacial", concern: "Dewy, poreless-looking skin hydration protocol" },
+    { treatment: "K-Silk MediFacial", concern: "Deep exfoliation and skin softening treatment" },
+    { treatment: "Exosome Facial", concern: "Regenerative facial using cell-free exosome therapy" },
+    { treatment: "10-Step European MediFacial", concern: "Comprehensive relaxation, extraction, massage, and mask facial" }
+  ],
+  'Scar Treatments': [
+    { treatment: "Acne Scar", concern: "Comprehensive therapy targeting active acne scarring" },
+    { treatment: "Surgical Scar", concern: "Revision of post-operative surgical incisions" },
+    { treatment: "Burn Scar", concern: "Contracture and texture improvement of post-burn scars" },
+    { treatment: "Stretch Marks", concern: "Targeting striae distensae on abdomen, hips, and thighs" },
+    { treatment: "Keloid Scar", concern: "Intralesional therapies and laser reduction of raised keloids" }
+  ],
+  'Mole / Wart / Skin Tag': [
+    { treatment: "Mole Removal", concern: "Radiofrequency ablation or punch excision of benign moles" },
+    { treatment: "Wart Removal", concern: "Cryotherapy or RF cautery of viral cutaneous warts" },
+    { treatment: "Skin Tag Removal", concern: "Quick RF removal of soft fibromas on neck and underarms" },
+    { treatment: "Corn Removal", concern: "Excision and offloading therapy for painful plantar corns" },
+    { treatment: "Xanthelasma Removal", concern: "Removal of cholesterol deposits around the eyelids" }
+  ],
+  'Nail Treatments': [
+    { treatment: "Fungal Nail Infection", concern: "Laser and topical therapy for onychomycosis" },
+    { treatment: "Ingrown Nail", concern: "Surgical nail splinting or partial matricectomy" },
+    { treatment: "Brittle Nails", concern: "Nail plate strengthening and hydration protocols" },
+    { treatment: "Nail Psoriasis", concern: "Targeting nail pitting, discoloration, and thickening" },
+    { treatment: "Nail Pigmentation", concern: "Diagnosis and management of nail plate hyperpigmentation" }
+  ],
+  'Pediatric Dermatology': [
+    { treatment: "Childhood Eczema", concern: "Atopic dermatitis management in infants and children" },
+    { treatment: "Childhood Acne", concern: "Pre-pubertal and early adolescent acne control" },
+    { treatment: "Birthmarks", concern: "Evaluation and laser removal of vascular/pigmented birthmarks" },
+    { treatment: "Molluscum", concern: "Safe curettage or topical treatment of molluscum contagiosum" },
+    { treatment: "Warts in Children", concern: "Painless wart treatment customized for kids" }
+  ],
+  'STD & Intimate Skin Care': [
+    { treatment: "Genital Warts", concern: "Removal and management of HPV genital lesions" },
+    { treatment: "Fungal Infection", concern: "Tinea cruris and candidiasis intimate area care" },
+    { treatment: "Pigmentation Around Intimate Areas", concern: "Gentle lightening of underarms and groins" },
+    { treatment: "Excessive Sweating", concern: "Botox injections for hyperhidrosis of palms/underarms" },
+    { treatment: "Razor Bumps", concern: "Treating pseudofolliculitis barbae and shave irritation" }
+  ]
+};
+
 export const LandingView: React.FC = () => {
   const {
     setView,
@@ -176,6 +337,7 @@ export const LandingView: React.FC = () => {
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
+  const [selectedProcedureCategory, setSelectedProcedureCategory] = useState<string>('Skin Treatments');
   const [treatmentsOpen, setTreatmentsOpen] = useState(false);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [navScrolled, setNavScrolled] = useState(false);
@@ -1693,67 +1855,67 @@ export const LandingView: React.FC = () => {
               </p>
             </motion.div>
 
-            <div className="max-w-4xl mx-auto overflow-hidden shadow-sm border border-[var(--border)] bg-white rounded-none">
-              <div className="overflow-x-auto max-h-[550px] overflow-y-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead className="sticky top-0 z-10 bg-white">
-                    <tr style={{ background: 'var(--terracotta)' }}>
-                      <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider text-white w-1/2">Treatment</th>
-                      <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider text-white w-1/2">Concern Addressed</th>
-                    </tr>
-                  </thead>
-                  <motion.tbody
-                    variants={staggerContainer}
-                    initial="hidden"
-                    whileInView="show"
-                    viewport={{ once: false, amount: 0.2 }}
-                    className="divide-y divide-[var(--border)]"
-                  >
-                    {[
-                      { treatment: "Laser Hair Reduction", concern: "Unwanted body and facial hair removal with long-lasting reduction" },
-                      { treatment: "Hair Transplant", concern: "Advanced FUE/FUT techniques for permanent hair restoration and baldness resolution" },
-                      { treatment: "Tattoo Removal Service", concern: "Safely erase unwanted ink pigment using advanced Q-switched laser technology" },
-                      { treatment: "HydraFacial", concern: "Cleanse, exfoliate, extract and hydrate the skin for a glowing complexion" },
-                      { treatment: "PRP Treatment", concern: "Platelet-rich plasma therapy for natural skin rejuvenation and hair thinning" },
-                      { treatment: "Chemical Peel Service", concern: "Exfoliate dead skin, treat superficial scars, and revitalize skin texture" },
-                      { treatment: "Double Chin Reduction", concern: "Slim and sculpt the jawline using targeted non-invasive fat reduction" },
-                      { treatment: "Laser Treatment by CO2", concern: "Fractional CO2 laser for deep scar revision, skin resurfacing, and aging lines" },
-                      { treatment: "Lip Blushing Service", concern: "Enhance natural lip color, symmetry, and definition cosmetically" },
-                      { treatment: "Beard Transplant", concern: "Follicular restoration for a fuller, natural-looking beard and mustache" },
-                      { treatment: "Scar Transplant", concern: "Reconstructive follicle graft to cover and smooth scars on the scalp/face" },
-                      { treatment: "Acne Treatment (Laser)", concern: "Target active acne lesions, breakouts, and bacterial inflammation using lasers" },
-                      { treatment: "Mole/Wart Removal", concern: "Radiofrequency or CO2 laser excision for smooth, blemish-free skin" },
-                      { treatment: "Hollywood Peel", concern: "Carbon paste laser treatment for instant skin brightening, pore contraction, and glow" },
-                      { treatment: "Vampire Facial", concern: "Micro-needling with Platelet-Rich Plasma (PRP) for collagen boost and age reversal" },
-                      { treatment: "HIFU Treatment", concern: "High-Intensity Focused Ultrasound for non-invasive skin lifting and tightening" },
-                      { treatment: "Melasma Treatment", concern: "Advanced laser and peel therapies targeting hyperpigmentation and hormonal melasma patches" },
-                      { treatment: "Laser Lip Surgery", concern: "Precision laser lipolysis to sculpt, define, and enhance lip shape" },
-                      { treatment: "Intense Pulsed Light (IPL) treatment", concern: "Treat sun damage, redness, rosacea, and skin blemishes dynamically" },
-                      { treatment: "Hymenoplasty Treatment", concern: "Micro-reconstructive surgical rejuvenation of the hymenal ring" },
-                      { treatment: "Dermapen 4 Treatment", concern: "Advanced fractional micro-needling to stimulate skin repair and refine texture" },
-                      { treatment: "IPL Hair treatment", concern: "Broad-spectrum light pulses for hair follicle destruction and smooth skin" },
-                      { treatment: "Bikini Line Hair Removal Treatment", concern: "Gentle and precise laser hair removal for personal comfort and hygiene" },
-                      { treatment: "Dandruff Treatment Treatment", concern: "Specialized medical scalp cleanses and treatments targeting dry/oily dandruff" },
-                      { treatment: "Dimple Creation", concern: "Minor surgical procedure to create natural-looking, defined facial dimples" },
-                      { treatment: "Skin Blemishes", concern: "Treat dark circles, spots, blemishes, and under-eye bags with targeted care" },
-                      { treatment: "Alopecia areata diagnosis and treatment", concern: "Corticosteroid and medical therapies to address patchy autoimmune hair loss" },
-                      { treatment: "Trichologist for Hair Treatment", concern: "Clinical scalp analysis and customized medication protocols for hair loss" },
-                      { treatment: "G-shot Treatment", concern: "Non-surgical aesthetic enhancement for improved intimate well-being" },
-                      { treatment: "Lymphatic Drainage Massage", concern: "Gentle therapeutic massage to reduce swelling, detoxify, and boost circulation" },
-                      { treatment: "post pregnancy Aesthetic treatments", concern: "Mummy makeover therapies to address stretch marks, loose skin, and body contouring" },
-                      { treatment: "Microblading treatments", concern: "Precision semi-permanent tattooing to define, shape, and fill brows" }
-                    ].map((row, index) => (
-                      <motion.tr
-                        key={index}
-                        variants={staggerItem}
-                        className="transition-colors hover:bg-neutral-50"
-                      >
-                        <td className="py-4 px-6 text-sm font-medium" style={{ color: 'var(--ink)' }}>{row.treatment}</td>
-                        <td className="py-4 px-6 text-sm" style={{ color: 'var(--muted)' }}>{row.concern}</td>
-                      </motion.tr>
-                    ))}
-                  </motion.tbody>
-                </table>
+            <div className="flex flex-col md:flex-row gap-8 max-w-5xl mx-auto items-start">
+              {/* Left Column: Categories Navigation List */}
+              <div className="w-full md:w-1/3 flex flex-row md:flex-col overflow-x-auto md:overflow-x-visible gap-2 bg-[#FAF5F9]/60 p-3.5 rounded-2xl md:sticky md:top-24 border border-purple-100/30 scrollbar-thin">
+                {Object.keys(PROCEDURES_BY_CATEGORY).map((cat) => {
+                  const active = selectedProcedureCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setSelectedProcedureCategory(cat)}
+                      className={`text-left text-xs font-bold uppercase tracking-wider py-3 px-4 rounded-xl transition-all whitespace-nowrap cursor-pointer hover:bg-white/60 ${
+                        active 
+                        ? 'bg-white text-[#8A256E] shadow-sm border border-purple-100' 
+                        : 'text-neutral-500 hover:text-neutral-800'
+                      }`}
+                    >
+                      {cat}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Right Column: Dynamic Category Table */}
+              <div className="flex-1 w-full bg-white border border-[var(--border)] overflow-hidden shadow-sm">
+                <div className="overflow-x-auto max-h-[500px] overflow-y-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead className="sticky top-0 z-10 bg-white">
+                      <tr style={{ background: 'var(--terracotta)' }}>
+                        <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider text-white w-1/2">Treatment / Procedure</th>
+                        <th className="py-4 px-6 text-sm font-semibold uppercase tracking-wider text-white w-1/2">Concern Addressed</th>
+                      </tr>
+                    </thead>
+                    <motion.tbody
+                      key={selectedProcedureCategory}
+                      variants={staggerContainer}
+                      initial="hidden"
+                      whileInView="show"
+                      viewport={{ once: true }}
+                      className="divide-y divide-[var(--border)]"
+                    >
+                      {PROCEDURES_BY_CATEGORY[selectedProcedureCategory].map((row, index) => (
+                        <motion.tr
+                          key={index}
+                          variants={staggerItem}
+                          className="transition-colors hover:bg-neutral-50"
+                        >
+                          <td className="py-4 px-6 text-sm font-medium" style={{ color: 'var(--ink)' }}>
+                            {row.sub && (
+                              <span className="block text-[9px] font-extrabold uppercase tracking-widest text-[#8A256E] mb-0.5">
+                                {row.sub}
+                              </span>
+                            )}
+                            {row.treatment}
+                          </td>
+                          <td className="py-4 px-6 text-sm text-neutral-500 font-medium leading-relaxed">
+                            {row.concern}
+                          </td>
+                        </motion.tr>
+                      ))}
+                    </motion.tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

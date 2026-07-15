@@ -198,6 +198,7 @@ export const CLINIC_HOUR_OPTIONS = [
 ];
 
 export const SLOT_DURATION_OPTIONS = [
+  { value: 10, label: '10 MINUTES' },
   { value: 15, label: '15 MINUTES' },
   { value: 30, label: '30 MINUTES' },
   { value: 45, label: '45 MINUTES' },
@@ -207,7 +208,7 @@ export const SLOT_DURATION_OPTIONS = [
 export const DEFAULT_CONFIG: ClinicConfig = {
   startHour: '09:00',
   endHour: '19:30',
-  slotDuration: 30,
+  slotDuration: 10,
   blockedDates: [],
   holidays: []
 };
