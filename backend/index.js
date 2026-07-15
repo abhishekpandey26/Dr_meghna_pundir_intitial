@@ -10,16 +10,53 @@ const PORT = process.env.PORT || 5001;
 
 // Middleware
 // Allow FRONTEND_URL, but in local development/testing, also allow any localhost port to prevent CORS blocks
-const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
+// Support comma-separated URLs and strip trailing slashes for robustness
+const allowedOrigins = process.env.FRONTEND_URL
+  ? process.env.FRONTEND_URL.split(',').map(url => url.trim().replace(/\/$/, ''))
+  : [];
+
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (origin.startsWith('https://drmeghapundir.in/') || origin.startsWith('http://127.0.0.1:')) {
+
+    const cleanOrigin = origin.replace(/\/$/, '');
+
+    // Allow local development origins
+    if (cleanOrigin.startsWith('http://localhost:') || cleanOrigin.startsWith('http://127.0.0.1:')) {
       return callback(null, true);
     }
-    if (allowedOrigins.indexOf(origin) !== -1) {
+
+    // Check direct match
+    if (allowedOrigins.indexOf(cleanOrigin) !== -1) {
       return callback(null, true);
     }
+
+    // Support automatic matching for www vs non-www su b[domains
+    let isAllowed = false;
+    try {
+      const originUrl = new URL(cleanOrigin);
+      isAllowed = allowedOrigins.some(allowedUrl => {
+        try {
+          const allowed = new URL(allowedUrl);
+          if (allowed.protocol !== originUrl.protocol) return false;
+          
+          const allowedHost = allowed.hostname.replace(/^www\./, '');
+          const originHost = originUrl.hostname.replace(/^www\./, '');
+          return allowedHost === originHost;
+        } catch {
+          return allowedUrl === cleanOrigin;
+        }
+      });
+    } catch (e) {
+      // Fallback in case origin is not a valid URL structure
+      isAllowed = allowedOrigins.includes(cleanOrigin);
+    }
+
+    if (isAllowed) {
+      return callback(null, true);
+    }
+
+    console.warn(`[CORS Blocked] Origin "${origin}" is not allowed. Configured FRONTEND_URL: "${process.env.FRONTEND_URL || ''}" (Parsed: ${JSON.stringify(allowedOrigins)})`);
     callback(new Error('Not allowed by CORS'));
   }
 }));
