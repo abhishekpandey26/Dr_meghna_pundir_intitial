@@ -1072,6 +1072,31 @@ export const LandingView: React.FC = () => {
         </motion.div>
       </div>
 
+      {/* ── AI SKIN SCAN FEATURE PROMO BANNER ───────────────────────────────── */}
+      <section className="py-12 md:py-16 px-5 md:px-16" style={{ background: 'linear-gradient(135deg, rgba(138, 37, 110, 0.05) 0%, rgba(184, 103, 79, 0.05) 100%)', borderBottom: '1px solid var(--border)' }}>
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 bg-white/70 backdrop-blur-sm p-6 md:p-10 rounded-[32px] border border-white shadow-xl">
+          <div className="flex-1 space-y-4 text-left">
+            <span className="inline-flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[0.2em] text-[#8A256E] bg-purple-50 border border-purple-200/50 px-3.5 py-1.5 rounded-full">
+              <span className="material-symbols-outlined text-xs animate-pulse">sparkles</span> Clinical AI Innovation
+            </span>
+            <h2 className="font-serif text-2xl md:text-3xl font-bold tracking-tight text-neutral-800 leading-tight">
+              Analyze Your Dermal Health in Seconds with AI Face Scan
+            </h2>
+            <p className="text-xs md:text-sm text-neutral-500 leading-relaxed max-w-2xl font-medium">
+              Take or upload a photo to receive a detailed dermis health report analyzing spots, redness, pores, and hydration levels, with direct clinical recommendations from Dr. Megha Pundir Singh.
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4 flex-shrink-0 w-full lg:w-auto">
+            <button
+              onClick={() => setView('skin-analyzer')}
+              className="w-full lg:w-auto text-center bg-[#8A256E] text-white hover:bg-[#721F5B] py-4 px-8 rounded-full font-bold text-xs uppercase tracking-[0.15em] shadow-md shadow-purple-900/10 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
+            >
+              <span className="material-symbols-outlined text-base">face</span> Try AI Skin Scan
+            </button>
+          </div>
+        </div>
+      </section>
 
       {/* ── DOCTOR INTRO SECTION ─────────────────────────────────────────── */}
       <section className="py-20 md:py-28 px-5 md:px-16" style={{ background: 'var(--white)' }} id="about">
@@ -2527,7 +2552,7 @@ export const LandingView: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-[10px] text-white/50 uppercase tracking-widest font-bold mb-1">Phone Helpline</p>
-                      <p className="text-sm font-medium">+91 9453238699</p>
+                      <p className="text-sm font-medium">+91 9120010762</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-4">
@@ -2543,7 +2568,7 @@ export const LandingView: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <a href="tel:+919453238699"
+                <a href="tel:+919120010762"
                   className="py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all text-center cursor-pointer"
                   style={{ background: 'var(--white)', color: 'var(--terracotta-dark)' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
@@ -2551,7 +2576,7 @@ export const LandingView: React.FC = () => {
                 >
                   <span className="material-symbols-outlined text-sm">call</span> Call Now
                 </a>
-                <a href="https://api.whatsapp.com/send/?phone=917905587609&text=Hello%21+I+would+like+to+discuss+a+clinical+treatment+with+Dr.+Megha+Pundir+Singh.&type=phone_number&app_absent=0"
+                <a href="https://api.whatsapp.com/send/?phone=919120010762&text=Hello%21+I+would+like+to+discuss+a+clinical+treatment+with+Dr.+Megha+Pundir+Singh.&type=phone_number&app_absent=0"
                   target="_blank" rel="noreferrer"
                   className="py-3.5 px-4 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all text-center cursor-pointer text-white"
                   style={{ background: 'var(--gold-accent)' }}
@@ -2639,20 +2664,27 @@ export const LandingView: React.FC = () => {
 
       {/* ── MOBILE STICKY BAR ────────────────────────────────────────────── */}
       <div className="fixed bottom-0 left-0 right-0 z-50 p-4 lg:hidden" style={{ background: 'rgba(255,249,240,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid var(--border)' }}>
-        <div className="flex justify-center max-w-md mx-auto">
+        <div className="flex gap-3 max-w-md mx-auto w-full">
+          <button
+            onClick={() => setView('skin-analyzer')}
+            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-1.5 font-bold tracking-widest text-[10px] uppercase active:scale-95 transition-all text-white cursor-pointer shadow-md"
+            style={{ background: 'linear-gradient(135deg, #8A256E 0%, #B8674F 100%)' }}
+          >
+            <span className="material-symbols-outlined text-sm animate-pulse">sparkles</span> AI Face Scan
+          </button>
           <button
             onClick={() => startBooking()}
-            className="px-14 h-12 rounded-xl flex items-center justify-center gap-2 font-bold tracking-widest text-xs uppercase active:scale-95 transition-all text-white cursor-pointer shadow-lg"
+            className="flex-1 h-12 rounded-xl flex items-center justify-center gap-1.5 font-bold tracking-widest text-[10px] uppercase active:scale-95 transition-all text-white cursor-pointer shadow-lg"
             style={{ background: 'var(--terracotta)' }}
           >
-            <span className="material-symbols-outlined text-base">calendar_month</span> Book Now
+            <span className="material-symbols-outlined text-sm">calendar_month</span> Book Now
           </button>
         </div>
       </div>
 
       {/* ── FLOATING WHATSAPP BUTTON (bottom-left) ──────────────────────────── */}
       <motion.a
-        href="https://api.whatsapp.com/send/?phone=919453238699&text=Hello%21+I+would+like+to+know+more+about+Derm+Elixir+treatments.&type=phone_number&app_absent=0"
+        href="https://api.whatsapp.com/send/?phone=919120010762&text=Hello%21+I+would+like+to+know+more+about+Derm+Elixir+treatments.&type=phone_number&app_absent=0"
         target="_blank"
         rel="noreferrer"
         aria-label="Chat on WhatsApp"

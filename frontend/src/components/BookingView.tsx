@@ -430,7 +430,7 @@ export const BookingView: React.FC = () => {
 
           <div className="hidden md:block mt-8 space-y-1">
             <p className="text-[10px] font-extrabold uppercase text-neutral-400">Questions?</p>
-            <p className="text-xs font-bold text-[#8A256E]">Call (880) 887-2742 for help</p>
+            <p className="text-xs font-bold text-[#8A256E]">Call +91 9120010762 for help</p>
           </div>
         </div>
 

@@ -272,7 +272,7 @@ export const SkinAnalyzer: React.FC = () => {
           {/* SCREEN 2: QUESTIONNAIRE */}
           {screen === 'questions' && (
             <motion.div key="questions" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="max-w-2xl w-full">
-              <h2 className="font-serif text-3xl md:text-4xl font-bold text-center text-emerald-950 mb-8 tracking-tighter">Your Skin Context</h2>
+              <h2 className="font-serif text-3xl md:text-4xl font-bold text-center text-neutral-800 mb-8 tracking-tighter">Your Skin Context</h2>
               <div className="glass-card bg-white/60 p-8 rounded-[32px] border border-white shadow-xl space-y-6">
                 
                 {/* Skin Type selector */}
@@ -280,7 +280,7 @@ export const SkinAnalyzer: React.FC = () => {
                   <label className="text-[9px] uppercase font-bold tracking-[0.3em] text-neutral-400 ml-2">Skin Texture Type</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {['Dry', 'Oily', 'Combination', 'Sensitive'].map(t => (
-                      <button key={t} onClick={() => setSkinType(t)} className={`py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${skinType === t ? 'bg-emerald-900 text-white' : 'bg-white/40 border border-neutral-100 text-neutral-600 hover:bg-neutral-50'}`}>{t}</button>
+                      <button key={t} onClick={() => setSkinType(t)} className={`py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${skinType === t ? 'bg-[#8A256E] text-white' : 'bg-white/40 border border-neutral-100 text-neutral-600 hover:bg-neutral-50'}`}>{t}</button>
                     ))}
                   </div>
                 </div>
@@ -290,7 +290,7 @@ export const SkinAnalyzer: React.FC = () => {
                   <label className="text-[9px] uppercase font-bold tracking-[0.3em] text-neutral-400 ml-2">Primary Skin Obstacle</label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     {['Acne', 'Spots', 'Redness', 'Hair'].map(t => (
-                      <button key={t} onClick={() => setPrimaryConcern(t)} className={`py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${primaryConcern === t ? 'bg-emerald-900 text-white' : 'bg-white/40 border border-neutral-100 text-neutral-600 hover:bg-neutral-50'}`}>{t}</button>
+                      <button key={t} onClick={() => setPrimaryConcern(t)} className={`py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${primaryConcern === t ? 'bg-[#8A256E] text-white' : 'bg-white/40 border border-neutral-100 text-neutral-600 hover:bg-neutral-50'}`}>{t}</button>
                     ))}
                   </div>
                 </div>
@@ -300,14 +300,14 @@ export const SkinAnalyzer: React.FC = () => {
                   <label className="text-[9px] uppercase font-bold tracking-[0.3em] text-neutral-400 ml-2">Daily Sun Exposure</label>
                   <div className="grid grid-cols-3 gap-2">
                     {['Low', 'Moderate', 'High'].map(t => (
-                      <button key={t} onClick={() => setSunExposure(t)} className={`py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${sunExposure === t ? 'bg-emerald-900 text-white' : 'bg-white/40 border border-neutral-100 text-neutral-600 hover:bg-neutral-50'}`}>{t}</button>
+                      <button key={t} onClick={() => setSunExposure(t)} className={`py-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${sunExposure === t ? 'bg-[#8A256E] text-white' : 'bg-white/40 border border-neutral-100 text-neutral-600 hover:bg-neutral-50'}`}>{t}</button>
                     ))}
                   </div>
                 </div>
 
                 <div className="pt-4 flex justify-between">
-                  <button onClick={() => setScreen('intro')} className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-emerald-950 transition-all underline">← Back</button>
-                  <button onClick={() => { setScreen('capture'); startCamera(); }} className="bg-emerald-950 text-white py-3.5 px-8 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-black transition-all cursor-pointer">Proceed to Camera</button>
+                  <button onClick={() => setScreen('intro')} className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 hover:text-[#8A256E] transition-all underline">← Back</button>
+                  <button onClick={() => { setScreen('capture'); startCamera(); }} className="bg-[#8A256E] text-white py-3.5 px-8 rounded-xl font-bold text-[10px] uppercase tracking-wider hover:bg-[#721F5B] transition-all cursor-pointer">Proceed to Camera</button>
                 </div>
               </div>
             </motion.div>
@@ -316,7 +316,7 @@ export const SkinAnalyzer: React.FC = () => {
           {/* SCREEN 3: CAPTURE PHOTO */}
           {screen === 'capture' && (
             <motion.div key="capture" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="max-w-xl w-full text-center space-y-6">
-              <h2 className="font-serif text-3xl font-bold text-emerald-950 tracking-tighter">Scan Facial Dermis</h2>
+              <h2 className="font-serif text-3xl font-bold text-neutral-800 tracking-tighter">Scan Facial Dermis</h2>
               
               <div className="relative aspect-[4/3] rounded-[32px] overflow-hidden shadow-2xl border-4 border-white bg-neutral-950">
                 {!cameraError && (
@@ -347,19 +347,19 @@ export const SkinAnalyzer: React.FC = () => {
               {/* Controls */}
               <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
                 {cameraActive && (
-                  <button onClick={capturePhoto} className="bg-emerald-950 text-white hover:bg-black py-4 px-8 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg cursor-pointer">
+                  <button onClick={capturePhoto} className="bg-[#8A256E] text-white hover:bg-[#721F5B] py-4 px-8 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-lg cursor-pointer">
                     <span className="material-symbols-outlined">photo_camera</span> Take Snapshot
                   </button>
                 )}
 
-                <label className="bg-white hover:bg-neutral-50 border border-neutral-200 text-emerald-950 py-4 px-8 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-sm">
+                <label className="bg-white hover:bg-neutral-50 border border-neutral-200 text-[#8A256E] py-4 px-8 rounded-xl font-bold text-xs uppercase tracking-wider flex items-center gap-2 cursor-pointer transition-all shadow-sm">
                   <span className="material-symbols-outlined">upload_file</span> Choose Photo File
                   <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
                 </label>
               </div>
 
               <div className="pt-2">
-                <button onClick={() => { stopCamera(); setScreen('questions'); }} className="text-neutral-400 text-xs hover:text-emerald-950 underline font-bold uppercase tracking-wider">Adjust Context</button>
+                <button onClick={() => { stopCamera(); setScreen('questions'); }} className="text-neutral-400 text-xs hover:text-[#8A256E] underline font-bold uppercase tracking-wider">Adjust Context</button>
               </div>
             </motion.div>
           )}
@@ -373,19 +373,19 @@ export const SkinAnalyzer: React.FC = () => {
                 )}
                 
                 {/* Sweep Laser Grid Effect */}
-                <div className="absolute inset-0 bg-emerald-900/10 pointer-events-none" />
+                <div className="absolute inset-0 bg-[#8A256E]/10 pointer-events-none" />
                 <motion.div 
                   initial={{ top: '0%' }}
                   animate={{ top: ['0%', '100%', '0%'] }}
                   transition={{ repeat: Infinity, duration: 2.2, ease: 'easeInOut' }}
-                  className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_15px_rgba(52,211,153,1)] z-10"
+                  className="absolute left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#8A256E] to-transparent shadow-[0_0_15px_rgba(138,37,110,1)] z-10"
                 />
               </div>
 
               <div className="space-y-3">
-                <div className="w-12 h-12 border-4 border-emerald-900 border-t-emerald-300 rounded-full animate-spin mx-auto" />
-                <h3 className="font-serif text-2xl font-bold text-emerald-950">Analyzing Skin Dermis...</h3>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 animate-pulse">{scanStatus}</p>
+                <div className="w-12 h-12 border-4 border-purple-100 border-t-[#8A256E] rounded-full animate-spin mx-auto" />
+                <h3 className="font-serif text-2xl font-bold text-neutral-800">Analyzing Skin Dermis...</h3>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#B8674F] animate-pulse">{scanStatus}</p>
               </div>
             </motion.div>
           )}
@@ -394,7 +394,7 @@ export const SkinAnalyzer: React.FC = () => {
           {screen === 'details' && (
             <motion.div key="details" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full">
               <div className="text-center mb-6">
-                <h3 className="font-serif text-3xl font-bold text-emerald-950 tracking-tighter">Almost Ready</h3>
+                <h3 className="font-serif text-3xl font-bold text-neutral-800 tracking-tighter">Almost Ready</h3>
                 <p className="text-neutral-500 text-xs font-bold uppercase tracking-widest mt-1">Please enter details to calculate scores</p>
               </div>
 
@@ -412,7 +412,7 @@ export const SkinAnalyzer: React.FC = () => {
                         if (fieldErrors.name) setFieldErrors(prev => ({...prev, name: ''}));
                       }} 
                       className={`w-full bg-white/50 border rounded-2xl py-4 px-6 text-sm font-medium outline-none transition-all ${
-                        fieldErrors.name ? 'border-rose-400 focus:border-rose-500' : 'border-emerald-900/5'
+                        fieldErrors.name ? 'border-rose-400 focus:border-rose-500' : 'border-purple-200/50'
                       }`} 
                       placeholder="Enter name..." 
                     />
@@ -431,7 +431,7 @@ export const SkinAnalyzer: React.FC = () => {
                         if (fieldErrors.email) setFieldErrors(prev => ({...prev, email: ''}));
                       }} 
                       className={`w-full bg-white/50 border rounded-2xl py-4 px-6 text-sm font-medium outline-none transition-all ${
-                        fieldErrors.email ? 'border-rose-400 focus:border-rose-500' : 'border-emerald-900/5'
+                        fieldErrors.email ? 'border-rose-400 focus:border-rose-500' : 'border-purple-200/50'
                       }`} 
                       placeholder="Enter email..." 
                     />
@@ -450,7 +450,7 @@ export const SkinAnalyzer: React.FC = () => {
                         if (fieldErrors.mobile) setFieldErrors(prev => ({...prev, mobile: ''}));
                       }} 
                       className={`w-full bg-white/50 border rounded-2xl py-4 px-6 text-sm font-medium outline-none transition-all ${
-                        fieldErrors.mobile ? 'border-rose-400 focus:border-rose-500' : 'border-emerald-900/5'
+                        fieldErrors.mobile ? 'border-rose-400 focus:border-rose-500' : 'border-purple-200/50'
                       }`} 
                       placeholder="Enter phone..." 
                     />
@@ -469,7 +469,7 @@ export const SkinAnalyzer: React.FC = () => {
                         if (fieldErrors.age) setFieldErrors(prev => ({...prev, age: ''}));
                       }} 
                       className={`w-full bg-white/50 border rounded-2xl py-4 px-6 text-sm font-medium outline-none transition-all ${
-                        fieldErrors.age ? 'border-rose-400 focus:border-rose-500' : 'border-emerald-900/5'
+                        fieldErrors.age ? 'border-rose-400 focus:border-rose-500' : 'border-purple-200/50'
                       }`} 
                     />
                     {fieldErrors.age && (
@@ -479,7 +479,7 @@ export const SkinAnalyzer: React.FC = () => {
                 </div>
 
                 <div className="pt-2">
-                  <button onClick={handleLeadSubmit} className="w-full bg-emerald-950 text-white hover:bg-black py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-lg cursor-pointer">
+                  <button onClick={handleLeadSubmit} className="w-full bg-[#8A256E] text-white hover:bg-[#721F5B] py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-lg cursor-pointer">
                     Calculate Diagnosis Scores
                   </button>
                 </div>
@@ -491,8 +491,8 @@ export const SkinAnalyzer: React.FC = () => {
           {screen === 'results' && (
             <motion.div key="results" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-4xl w-full px-4 space-y-8">
               <div className="text-center">
-                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-emerald-800 bg-emerald-100/40 px-3 py-1.5 rounded-full border border-emerald-900/5">Scan Analysis Complete</span>
-                <h2 className="font-serif text-3xl md:text-5xl font-bold text-emerald-950 mt-3 tracking-tighter">Your Skin Report</h2>
+                <span className="text-[9px] font-bold uppercase tracking-[0.4em] text-[#B8674F] bg-purple-50 px-3 py-1.5 rounded-full border border-purple-100">Scan Analysis Complete</span>
+                <h2 className="font-serif text-3xl md:text-5xl font-bold text-neutral-800 mt-3 tracking-tighter">Your Skin Report</h2>
               </div>
 
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
@@ -501,15 +501,15 @@ export const SkinAnalyzer: React.FC = () => {
                 <div className="lg:col-span-3 glass-card bg-white/70 border border-white rounded-[32px] p-6 shadow-2xl space-y-6">
                   
                   {/* Overall score radial header */}
-                  <div className="flex items-center gap-6 p-4 bg-emerald-950 text-white rounded-2xl relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-900/30 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
-                    <div className="w-20 h-20 rounded-full border-4 border-emerald-400/40 flex items-center justify-center flex-none">
-                      <span className="font-serif font-extrabold text-2xl text-emerald-300">{scanScores.overallScore}</span>
+                  <div className="flex items-center gap-6 p-4 bg-[#8A256E] text-white rounded-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-900/30 rounded-full blur-xl -translate-y-1/2 translate-x-1/2" />
+                    <div className="w-20 h-20 rounded-full border-4 border-purple-300/40 flex items-center justify-center flex-none">
+                      <span className="font-serif font-extrabold text-2xl text-purple-200">{scanScores.overallScore}</span>
                     </div>
                     <div>
-                      <p className="text-[9px] font-bold uppercase tracking-widest text-emerald-300">Dermal Score Index</p>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-purple-200">Dermal Score Index</p>
                       <h3 className="font-serif text-xl font-bold mt-1">Dermis Health: Satisfactory</h3>
-                      <p className="text-[10px] text-emerald-200/60 mt-0.5 leading-relaxed font-semibold">Your overall score falls within acceptable medical limits. Mild details require localized dermatology treatment.</p>
+                      <p className="text-[10px] text-purple-100/60 mt-0.5 leading-relaxed font-semibold">Your overall score falls within acceptable medical limits. Mild details require localized dermatology treatment.</p>
                     </div>
                   </div>
 
@@ -526,14 +526,14 @@ export const SkinAnalyzer: React.FC = () => {
                       <div key={metric.label} className="space-y-2">
                         <div className="flex justify-between items-end">
                           <span className="text-xs font-bold text-neutral-700">{metric.label}</span>
-                          <span className="text-xs font-extrabold text-emerald-950">{metric.value}%</span>
+                          <span className="text-xs font-extrabold text-[#8A256E]">{metric.value}%</span>
                         </div>
                         <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
                           <motion.div 
                             initial={{ width: '0%' }}
                             animate={{ width: `${metric.value}%` }}
                             transition={{ duration: 1.5, ease: 'easeOut' }}
-                            className={`h-full ${metric.value < 60 ? 'bg-amber-500' : 'bg-emerald-900'}`}
+                            className={`h-full ${metric.value < 60 ? 'bg-amber-500' : 'bg-[#8A256E]'}`}
                           />
                         </div>
                         <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-neutral-400">
@@ -549,14 +549,14 @@ export const SkinAnalyzer: React.FC = () => {
                 {/* Treatment recommendations - 2 columns */}
                 <div className="lg:col-span-2 space-y-6">
                   <div className="glass-card bg-white/70 border border-white rounded-[32px] p-6 shadow-2xl space-y-6">
-                    <h3 className="font-serif text-lg font-bold text-emerald-950 border-b border-emerald-900/5 pb-3">Clinical Recommendations</h3>
+                    <h3 className="font-serif text-lg font-bold text-neutral-800 border-b border-purple-100 pb-3">Clinical Recommendations</h3>
                     
                     <div className="space-y-4">
-                      <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-950/5 flex items-start gap-3">
-                        <span className="material-symbols-outlined text-emerald-800 text-xl flex-none">medical_information</span>
+                      <div className="p-4 rounded-xl bg-[#FAF5F9] border border-purple-100 flex items-start gap-3">
+                        <span className="material-symbols-outlined text-[#B8674F] text-xl flex-none">medical_information</span>
                         <div>
-                          <p className="text-[10px] font-bold uppercase tracking-widest text-emerald-900">Dr. Megha's Recommendation</p>
-                          <p className="font-serif font-bold text-base text-emerald-950 mt-1">{recommendedTreatment}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#8A256E]">Dr. Megha's Recommendation</p>
+                          <p className="font-serif font-bold text-base text-neutral-800 mt-1">{recommendedTreatment}</p>
                           <p className="text-[10px] text-neutral-500 mt-1 leading-relaxed">
                             Based on your primary concern ({primaryConcern}) and scoring analysis, this clinical treatment is recommended to target dermal irregularities.
                           </p>
@@ -565,13 +565,13 @@ export const SkinAnalyzer: React.FC = () => {
                     </div>
 
                     <div className="pt-2">
-                      <button onClick={handleBookWithTreatment} className="w-full bg-emerald-950 text-white hover:bg-black py-4 px-6 rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] shadow-lg flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
+                      <button onClick={handleBookWithTreatment} className="w-full bg-[#8A256E] text-white hover:bg-[#721F5B] py-4 px-6 rounded-xl font-bold text-[10px] uppercase tracking-[0.2em] shadow-lg flex items-center justify-center gap-2 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
                         <span className="material-symbols-outlined text-sm">event_available</span> BOOK Slot WITH THIS TREATMENT
                       </button>
                     </div>
 
                     <div className="text-center pt-2">
-                      <button onClick={resetAnalyzer} className="text-xs font-bold text-neutral-400 hover:text-emerald-950 underline uppercase tracking-widest">
+                      <button onClick={resetAnalyzer} className="text-xs font-bold text-neutral-400 hover:text-[#8A256E] underline uppercase tracking-widest">
                         Scan Again
                       </button>
                     </div>
@@ -586,8 +586,8 @@ export const SkinAnalyzer: React.FC = () => {
         </AnimatePresence>
       </main>
 
-      <footer className="py-12 border-t border-emerald-950/5 text-center opacity-30 select-none">
-        <p className="font-serif text-2xl font-bold tracking-tighter text-emerald-950 mb-2">DERMELIXIR</p>
+      <footer className="py-12 border-t border-purple-100/30 text-center opacity-30 select-none">
+        <p className="font-serif text-2xl font-bold tracking-tighter text-neutral-800 mb-2">DERMELIXIR</p>
         <p className="text-[8px] font-black uppercase tracking-[0.5em]">Private Aesthetics Node &bull; Varanasi 2026</p>
       </footer>
     </div>
