@@ -47,7 +47,7 @@ const sendBookingEmail = async (appt) => {
           Gyandeep Medicare Hospital, Samne Ghat, Lanka, Varanasi, Uttar Pradesh 221010
         </p>
         <p style="margin: 5px 0 0 0; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600; color: #064e3b;">
-          Helpline: +91 9453238699
+          Helpline: +91 9120010762
         </p>
       </div>
     `
