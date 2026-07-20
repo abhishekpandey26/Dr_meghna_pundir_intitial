@@ -38,9 +38,9 @@ interface AppContextProps {
   adminSearchQuery: string;
   setAdminSearchQuery: (query: string) => void;
   galleryItems: { _id: string, title: string, url: string, order?: number }[];
-  addGalleryItem: (item: { title: string, url: string, order?: number }) => Promise<void>;
+  addGalleryItem: (item: { title: string, url?: string, order?: number } | FormData) => Promise<void>;
   removeGalleryItem: (id: string) => Promise<void>;
-  updateGalleryItem: (id: string, item: { title: string, url: string, order?: number }) => Promise<void>;
+  updateGalleryItem: (id: string, item: { title: string, url?: string, order?: number } | FormData) => Promise<void>;
   reels: ReelInsight[];
   addReel: (reel: { title: string, coverImage: string, videoUrl: string, type: 'photo_camera' | 'smart_display' }) => Promise<void>;
   removeReel: (id: string) => Promise<void>;
@@ -286,12 +286,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return await res.json();
   };
 
-  const addGalleryItem = async (item: { title: string, url: string, order?: number }) => {
-    await fetch(`${API_BASE}/gallery`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item)
-    });
+  const addGalleryItem = async (item: { title: string, url?: string, order?: number } | FormData) => {
+    if (item instanceof FormData) {
+      await fetch(`${API_BASE}/gallery`, {
+        method: 'POST',
+        body: item
+      });
+    } else {
+      await fetch(`${API_BASE}/gallery`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+    }
     const res = await fetch(`${API_BASE}/gallery`);
     setGalleryItems(await res.json());
   };
@@ -302,12 +309,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setGalleryItems(await res.json());
   };
 
-  const updateGalleryItem = async (id: string, item: { title: string, url: string, order?: number }) => {
-    await fetch(`${API_BASE}/gallery/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(item)
-    });
+  const updateGalleryItem = async (id: string, item: { title: string, url?: string, order?: number } | FormData) => {
+    if (item instanceof FormData) {
+      await fetch(`${API_BASE}/gallery/${id}`, {
+        method: 'PUT',
+        body: item
+      });
+    } else {
+      await fetch(`${API_BASE}/gallery/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item)
+      });
+    }
     const res = await fetch(`${API_BASE}/gallery`);
     setGalleryItems(await res.json());
   };

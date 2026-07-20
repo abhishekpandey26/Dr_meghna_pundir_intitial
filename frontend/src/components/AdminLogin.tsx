@@ -23,7 +23,7 @@ export const AdminLogin: React.FC = () => {
 
   const showError = (msg: string) => {
     setErrorMsg(msg);
-    setTimeout(() => setErrorMsg(null), 4000);
+    setTimeout(() => setErrorMsg(null), 8000);
   };
 
   const showSuccess = (msg: string) => {
@@ -65,17 +65,12 @@ export const AdminLogin: React.FC = () => {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      showError('Please enter the owner email address.');
-      return;
-    }
-
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/auth/admin/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({})
       });
       const data = await response.json();
       if (response.ok && data.success) {
@@ -114,7 +109,7 @@ export const AdminLogin: React.FC = () => {
       const response = await fetch(`${API_BASE}/auth/admin/verify-otp-reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code: otp, newPassword })
+        body: JSON.stringify({ code: otp, newPassword })
       });
       const data = await response.json();
       if (response.ok && data.success) {
@@ -157,14 +152,9 @@ export const AdminLogin: React.FC = () => {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">
                     Owner Email
                   </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="owner@example.com"
-                    className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none px-5 py-4 rounded-2xl transition-all font-medium text-sm text-center"
-                    required
-                  />
+                  <div className="w-full bg-surface-container/60 border border-outline-variant/30 px-5 py-4 rounded-2xl text-center font-bold text-sm text-[#8A256E] select-none">
+                    abhishekkumarp383@gmail.com
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -239,14 +229,9 @@ export const AdminLogin: React.FC = () => {
                   <label className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/70 ml-1">
                     Owner Email
                   </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="owner@example.com"
-                    className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary focus:ring-1 focus:ring-primary outline-none px-5 py-4 rounded-2xl transition-all font-medium text-sm text-center"
-                    required
-                  />
+                  <div className="w-full bg-surface-container/60 border border-outline-variant/30 px-5 py-4 rounded-2xl text-center font-bold text-sm text-[#8A256E] select-none">
+                    abhishekkumarp383@gmail.com
+                  </div>
                 </div>
 
                 {errorMsg && (

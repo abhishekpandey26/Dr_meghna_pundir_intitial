@@ -7,7 +7,17 @@ import {
   ArrowLeft, X, ChevronLeft, ChevronRight, Maximize2,
   MapPin, Phone, Clock, Award, MessageCircle, Navigation, ExternalLink
 } from 'lucide-react';
+import { API_BASE } from '../config';
 import { InstagramSection } from './InstagramSection';
+
+const getMediaUrl = (url: string) => {
+  if (!url) return '';
+  if (url.startsWith('/uploads/')) {
+    const serverBase = API_BASE.replace('/api', '');
+    return `${serverBase}${url}`;
+  }
+  return url;
+};
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
@@ -214,7 +224,7 @@ export const GalleryView: React.FC = () => {
                 style={{ height: '280px' }}
               >
                 <img
-                  src={photo.url}
+                  src={getMediaUrl(photo.url)}
                   alt={photo.title}
                   className="w-full h-full object-cover"
                 />
@@ -299,7 +309,7 @@ export const GalleryView: React.FC = () => {
               className="w-full max-w-5xl h-auto max-h-[80vh] flex flex-col justify-center items-center select-none"
             >
               <img
-                src={displayPhotos[activePhotoIdx].url}
+                src={getMediaUrl(displayPhotos[activePhotoIdx].url)}
                 alt={displayPhotos[activePhotoIdx].title}
                 className="max-w-[90vw] max-h-[75vh] object-contain rounded-lg shadow-2xl"
               />

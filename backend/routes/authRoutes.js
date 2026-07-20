@@ -164,8 +164,47 @@ router.put('/update-profile', authMiddleware, async (req, res) => {
 const Admin = require('../models/Admin');
 const { hashPassword, verifyPassword } = require('../utils/passwordHelper');
 const { sendAdminOtpEmail } = require('../utils/emailService');
+const rateLimit = require('express-rate-limit');
 
 const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'abhishekkumarp383@gmail.com').toLowerCase().trim();
+
+// 1. Rate limiter for Admin Login: max 5 failed password attempts per 15 minutes
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: {
+    success: false,
+    message: 'Too many failed login attempts. Access locked for 15 minutes for security.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// 2. Rate limiter for Sending OTP: max 3 requests per 15 minutes
+const adminOtpSendLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 3,
+  message: {
+    success: false,
+    message: 'Too many OTP requests sent. Please wait 15 minutes before requesting another code.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
+// 3. Rate limiter for Verifying OTP: max 5 failed attempts per 15 minutes
+const adminOtpVerifyLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: {
+    success: false,
+    message: 'Too many invalid verification attempts. Reset process locked for 15 minutes.'
+  },
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 // Helper to ensure Admin document exists for owner
 const ensureAdminExists = async () => {
@@ -185,19 +224,9 @@ const ensureAdminExists = async () => {
  * @route POST /api/auth/admin/send-otp
  * @desc Generate and send OTP to owner email for password setup/reset
  */
-router.post('/admin/send-otp', async (req, res) => {
+router.post('/admin/send-otp', adminOtpSendLimiter, async (req, res) => {
   try {
-    let { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email is required' });
-    }
-
-    email = email.trim().toLowerCase();
-
-    // Verify requested email matches owner email
-    if (email !== OWNER_EMAIL) {
-      return res.status(403).json({ success: false, message: 'Unauthorized. OTP can only be sent to the owner email.' });
-    }
+    const email = OWNER_EMAIL;
 
     // Ensure admin document exists in collection
     await ensureAdminExists();
@@ -226,19 +255,15 @@ router.post('/admin/send-otp', async (req, res) => {
  * @route POST /api/auth/admin/verify-otp-reset-password
  * @desc Verify OTP and set a new password for the owner admin account
  */
-router.post('/admin/verify-otp-reset-password', async (req, res) => {
+router.post('/admin/verify-otp-reset-password', adminOtpVerifyLimiter, async (req, res) => {
   try {
-    let { email, code, newPassword } = req.body;
-    if (!email || !code || !newPassword) {
-      return res.status(400).json({ success: false, message: 'Email, verification code, and new password are required' });
+    let { code, newPassword } = req.body;
+    if (!code || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Verification code and new password are required' });
     }
 
-    email = email.trim().toLowerCase();
+    const email = OWNER_EMAIL;
     code = code.trim();
-
-    if (email !== OWNER_EMAIL) {
-      return res.status(403).json({ success: false, message: 'Unauthorized email' });
-    }
 
     if (newPassword.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters long' });
@@ -270,7 +295,7 @@ router.post('/admin/verify-otp-reset-password', async (req, res) => {
  * @route POST /api/auth/admin/login
  * @desc Authenticate owner admin and return session confirmation
  */
-router.post('/admin/login', async (req, res) => {
+router.post('/admin/login', adminLoginLimiter, async (req, res) => {
   try {
     let { email, password } = req.body;
     if (!email || !password) {

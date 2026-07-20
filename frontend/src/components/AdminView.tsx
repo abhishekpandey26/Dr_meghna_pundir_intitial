@@ -280,6 +280,8 @@ export const AdminView: React.FC = () => {
   });
 
   const [newGallery, setNewGallery] = useState<{ title: string, url: string, order: string }>({ title: '', url: '', order: '' });
+  const [galleryFile, setGalleryFile] = useState<File | null>(null);
+  const [editGalleryFile, setEditGalleryFile] = useState<File | null>(null);
   const [newReel, setNewReel] = useState({ title: '', coverImage: '', videoUrl: '', type: 'smart_display' as 'photo_camera' | 'smart_display' });
 
   const triggerToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -1003,7 +1005,7 @@ export const AdminView: React.FC = () => {
                     <div key={item._id} className="group relative bg-white rounded-[24px] overflow-hidden border border-neutral-100 shadow-sm">
                       <div className="aspect-[4/3] overflow-hidden relative">
                         <img
-                          src={item.url}
+                          src={getMediaUrl(item.url)}
                           alt={item.title}
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                         />
@@ -2359,18 +2361,34 @@ export const AdminView: React.FC = () => {
                   </button>
                 </div>
 
-                <form className="space-y-6" onSubmit={(e) => {
+                <form className="space-y-6" onSubmit={async (e) => {
                   e.preventDefault();
-                  const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
-                  if (!isValidUrl(newGallery.url)) {
-                    return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                  if (!galleryFile && !newGallery.url.trim()) {
+                    return triggerToast('Please upload a photo file or provide an image URL', 'error');
                   }
-                  addGalleryItem({
-                    title: newGallery.title,
-                    url: newGallery.url,
-                    ...(newGallery.order.trim() !== '' ? { order: Number(newGallery.order) } : {})
-                  });
+                  if (!galleryFile) {
+                    const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                    if (!isValidUrl(newGallery.url)) {
+                      return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                    }
+                  }
+                  if (galleryFile) {
+                    const formData = new FormData();
+                    formData.append('title', newGallery.title);
+                    formData.append('galleryImage', galleryFile);
+                    if (newGallery.order.trim() !== '') {
+                      formData.append('order', newGallery.order);
+                    }
+                    await addGalleryItem(formData);
+                  } else {
+                    await addGalleryItem({
+                      title: newGallery.title,
+                      url: newGallery.url,
+                      ...(newGallery.order.trim() !== '' ? { order: Number(newGallery.order) } : {})
+                    });
+                  }
                   setNewGallery({ title: '', url: '', order: '' });
+                  setGalleryFile(null);
                   setShowNewGalleryModal(false);
                   triggerToast('Asset integrated into showcase.');
                 }}>
@@ -2384,10 +2402,34 @@ export const AdminView: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Upload Photo File (Local Image)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setGalleryFile(e.target.files[0]);
+                        }
+                      }}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer"
+                    />
+                    {galleryFile && (
+                      <p className="text-[10px] font-bold text-emerald-800 ml-1">Selected File: {galleryFile.name}</p>
+                    )}
+                  </div>
+                  <div className="relative flex py-1 items-center">
+                    <div className="flex-grow border-t border-neutral-200"></div>
+                    <span className="flex-shrink mx-3 text-[9px] font-bold text-neutral-400 uppercase tracking-widest">OR PASTE EXTERNAL URL</span>
+                    <div className="flex-grow border-t border-neutral-200"></div>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Image Endpoint (URL)</label>
                     <input
-                      required type="url" value={newGallery.url}
-                      onChange={(e) => setNewGallery({ ...newGallery, url: e.target.value })}
+                      type="url" value={newGallery.url}
+                      onChange={(e) => {
+                        setNewGallery({ ...newGallery, url: e.target.value });
+                        if (e.target.value) setGalleryFile(null);
+                      }}
                       placeholder="https://images.unsplash.com/..."
                       className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
                     />
@@ -2404,7 +2446,7 @@ export const AdminView: React.FC = () => {
 
                   <button
                     type="submit"
-                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
                   >
                     Authorize Integration
                   </button>
@@ -2441,20 +2483,29 @@ export const AdminView: React.FC = () => {
                   </button>
                 </div>
 
-                <form className="space-y-6" onSubmit={(e) => {
+                <form className="space-y-6" onSubmit={async (e) => {
                   e.preventDefault();
                   if (editingGalleryItem && editingGalleryItem._id) {
-                    const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
-                    if (!isValidUrl(editingGalleryItem.url)) {
-                      return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                    if (editGalleryFile) {
+                      const formData = new FormData();
+                      formData.append('title', editingGalleryItem.title);
+                      formData.append('galleryImage', editGalleryFile);
+                      formData.append('order', String(editingGalleryItem.order ?? 0));
+                      await updateGalleryItem(editingGalleryItem._id, formData);
+                    } else {
+                      const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                      if (editingGalleryItem.url && !isValidUrl(editingGalleryItem.url)) {
+                        return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                      }
+                      await updateGalleryItem(editingGalleryItem._id, {
+                        title: editingGalleryItem.title,
+                        url: editingGalleryItem.url,
+                        order: editingGalleryItem.order ?? 0
+                      });
                     }
-                    updateGalleryItem(editingGalleryItem._id, {
-                      title: editingGalleryItem.title,
-                      url: editingGalleryItem.url,
-                      order: editingGalleryItem.order ?? 0
-                    });
                     setShowEditGalleryModal(false);
                     setEditingGalleryItem(null);
+                    setEditGalleryFile(null);
                     triggerToast('Showcase item updated.');
                   }
                 }}>
@@ -2468,10 +2519,34 @@ export const AdminView: React.FC = () => {
                     />
                   </div>
                   <div className="space-y-2">
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Replace Photo File (Local Image)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setEditGalleryFile(e.target.files[0]);
+                        }
+                      }}
+                      className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer"
+                    />
+                    {editGalleryFile && (
+                      <p className="text-[10px] font-bold text-emerald-800 ml-1">New Selected File: {editGalleryFile.name}</p>
+                    )}
+                  </div>
+                  <div className="relative flex py-1 items-center">
+                    <div className="flex-grow border-t border-neutral-200"></div>
+                    <span className="flex-shrink mx-3 text-[9px] font-bold text-neutral-400 uppercase tracking-widest">OR EDIT EXTERNAL URL</span>
+                    <div className="flex-grow border-t border-neutral-200"></div>
+                  </div>
+                  <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Image Endpoint (URL)</label>
                     <input
-                      required type="url" value={editingGalleryItem.url}
-                      onChange={(e) => setEditingGalleryItem({ ...editingGalleryItem, url: e.target.value })}
+                      type="url" value={editingGalleryItem.url}
+                      onChange={(e) => {
+                        setEditingGalleryItem({ ...editingGalleryItem, url: e.target.value });
+                        if (e.target.value) setEditGalleryFile(null);
+                      }}
                       placeholder="https://images.unsplash.com/..."
                       className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10"
                     />
@@ -2488,7 +2563,7 @@ export const AdminView: React.FC = () => {
 
                   <button
                     type="submit"
-                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4"
+                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
                   >
                     Save Changes
                   </button>
