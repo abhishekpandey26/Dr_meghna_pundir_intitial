@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
 import { useInView } from 'react-intersection-observer';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { REVIEWS, TREATMENTS } from '../initialData';
 import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { auth, googleProvider } from '../firebase';
@@ -322,7 +323,6 @@ const PROCEDURES_BY_CATEGORY: Record<string, { treatment: string; concern: strin
 
 export const LandingView: React.FC = () => {
   const {
-    setView,
     setSelectedTreatmentForBooking,
     galleryItems,
     reels,
@@ -333,6 +333,7 @@ export const LandingView: React.FC = () => {
     videoTestimonials,
     photoTestimonials
   } = useApp();
+  const navigate = useNavigate();
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState<boolean>(true);
@@ -485,7 +486,7 @@ export const LandingView: React.FC = () => {
 
   const startBooking = (treatmentName: string = '') => {
     setSelectedTreatmentForBooking(treatmentName);
-    setView('booking');
+    navigate('/booking');
   };
 
   const toggleFaq = (index: number) => {
@@ -567,7 +568,7 @@ export const LandingView: React.FC = () => {
         <div className="flex justify-between items-center gap-2 px-3.5 h-16 w-full md:px-7">
 
           {/* Logo */}
-          <button onClick={() => setView('landing')} className="flex flex-col items-start cursor-pointer">
+          <button onClick={() => navigate('/')} className="flex flex-col items-start cursor-pointer">
             <span className="font-serif text-xl md:text-2xl font-semibold leading-none whitespace-nowrap" style={{ color: 'var(--ink)' }}>Derm Elixir</span>
             <span className="text-[9px] md:text-[10px] font-medium uppercase tracking-[0.1em] leading-none mt-0.5 whitespace-nowrap" style={{ color: 'var(--terracotta)' }}>Skin · Hair · Laser</span>
           </button>
@@ -659,8 +660,8 @@ export const LandingView: React.FC = () => {
               </div>
             </div>
 
-            <button onClick={() => setView('skin-analyzer')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
-            <button onClick={() => setView('gallery')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
+            <button onClick={() => navigate('/skin-analyzer')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
+            <button onClick={() => navigate('/gallery')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
             <a href="#transformations" className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>Before & After</a>
           </nav>
 
@@ -671,7 +672,7 @@ export const LandingView: React.FC = () => {
               {patientToken && currentPatient ? (
                 <>
                   <button
-                    onClick={() => setView('patient-portal')}
+                    onClick={() => navigate('/patient-portal')}
                     className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
                     style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
                   >
@@ -799,14 +800,14 @@ export const LandingView: React.FC = () => {
                   </AnimatePresence>
                 </div>
 
-                <button onClick={() => { setView('skin-analyzer'); setMobileMenuOpen(false); }} className="text-left text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
-                <button onClick={() => { setView('gallery'); setMobileMenuOpen(false); }} className="text-left text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
+                <button onClick={() => { navigate('/skin-analyzer'); setMobileMenuOpen(false); }} className="text-left text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
+                <button onClick={() => { navigate('/gallery'); setMobileMenuOpen(false); }} className="text-left text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
                 <a href="#transformations" onClick={() => setMobileMenuOpen(false)} className="text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl hover:bg-white/60" style={{ color: 'var(--ink)' }}>Before &amp; After</a>
 
                 <div className="mt-2 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                   {patientToken && currentPatient ? (
                     <button
-                      onClick={() => { setView('patient-portal'); setMobileMenuOpen(false); }}
+                      onClick={() => { navigate('/patient-portal'); setMobileMenuOpen(false); }}
                       className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer"
                       style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
                     >
@@ -1003,7 +1004,7 @@ export const LandingView: React.FC = () => {
                       Book a Consultation
                     </button>
                     <button
-                      onClick={() => setView('about')}
+                      onClick={() => navigate('/about')}
                       className="group inline-flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-wider border-b pb-0.5 cursor-pointer bg-transparent"
                       style={{ color: 'var(--terracotta-dark)', borderColor: 'var(--border)' }}
                     >
@@ -1089,7 +1090,7 @@ export const LandingView: React.FC = () => {
           
           <div className="flex items-center gap-4 flex-shrink-0 w-full lg:w-auto">
             <button
-              onClick={() => setView('skin-analyzer')}
+              onClick={() => navigate('/skin-analyzer')}
               className="w-full lg:w-auto text-center bg-[#8A256E] text-white hover:bg-[#721F5B] py-4 px-8 rounded-full font-bold text-xs uppercase tracking-[0.15em] shadow-md shadow-purple-900/10 flex items-center justify-center gap-2 cursor-pointer transition-all hover:scale-[1.02] active:scale-[0.98]"
             >
               <span className="material-symbols-outlined text-base">face</span> Try AI Skin Scan
@@ -1249,7 +1250,7 @@ export const LandingView: React.FC = () => {
               </button>
 
               <button
-                onClick={() => setView('about')}
+                onClick={() => navigate('/about')}
                 className="group inline-flex items-center gap-1.5 text-[13px] font-semibold uppercase tracking-wider border-b pb-0.5 cursor-pointer bg-transparent"
                 style={{ color: 'var(--terracotta-dark)', borderColor: 'var(--border)' }}
               >
@@ -2134,7 +2135,7 @@ export const LandingView: React.FC = () => {
                     }
                   }
                 }}
-                onClick={() => setView('gallery')}
+                onClick={() => navigate('/gallery')}
                 className="relative overflow-hidden rounded-2xl group cursor-pointer shadow-md"
                 style={{ height: '320px' }}
               >
@@ -2157,7 +2158,7 @@ export const LandingView: React.FC = () => {
 
           <div className="flex justify-center pt-4">
             <button
-              onClick={() => setView('gallery')}
+              onClick={() => navigate('/gallery')}
               className="border-[1.5px] border-[var(--rose)] text-[var(--rose)] bg-transparent rounded-full px-9 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] transition-all duration-300 hover:bg-[var(--rose)] hover:text-white cursor-pointer"
               style={{ fontFamily: 'Inter, sans-serif' }}
             >
@@ -2248,7 +2249,7 @@ export const LandingView: React.FC = () => {
             <button
               onClick={() => {
                 window.scrollTo({ top: 0, behavior: 'smooth' });
-                setView('testimonials');
+                navigate('/testimonials');
               }}
               className="border-[1.5px] border-[var(--rose)] text-[var(--rose)] bg-transparent rounded-full px-9 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] transition-all duration-300 hover:bg-[var(--rose)] hover:text-white cursor-pointer"
               style={{ fontFamily: 'Inter, sans-serif' }}
@@ -2384,7 +2385,7 @@ export const LandingView: React.FC = () => {
         {/* See More Button */}
         <div className="text-center mt-12">
           <motion.button
-            onClick={() => setView('testimonials')}
+            onClick={() => navigate('/testimonials')}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: false }}
@@ -2418,7 +2419,7 @@ export const LandingView: React.FC = () => {
               <div
                 key={post._id}
                 className="blog-card flex flex-col"
-                onClick={() => setView('blog-detail', post.slug)}
+                onClick={() => navigate('/blog/' + post.slug)}
               >
                 <div className="blog-card-img-container">
                   <img
@@ -2451,7 +2452,7 @@ export const LandingView: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setView('blog-detail', post.slug);
+                      navigate('/blog/' + post.slug);
                     }}
                     className="blog-read-button"
                   >
@@ -2613,7 +2614,7 @@ export const LandingView: React.FC = () => {
 
       {/* ── FOOTER ───────────────────────────────────────────────────────── */}
       <footer className="pt-16 pb-28 px-5 text-center flex flex-col items-center space-y-8" style={{ background: 'var(--ink)' }}>
-        <button onClick={() => setView('landing')} className="cursor-pointer">
+        <button onClick={() => navigate('/')} className="cursor-pointer">
           <span className="font-serif text-3xl font-semibold text-white tracking-tight">Derm Elixir</span>
         </button>
         <nav className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-xs font-medium uppercase tracking-widest">
@@ -2632,7 +2633,7 @@ export const LandingView: React.FC = () => {
             >{link.label}</a>
           ))}
           <button
-            onClick={() => setView('patient-portal')}
+            onClick={() => navigate('/patient-portal')}
             className="transition-colors hover:opacity-100 cursor-pointer text-xs font-medium uppercase tracking-widest"
             style={{ color: 'var(--muted)' }}
             onMouseEnter={e => (e.currentTarget.style.color = '#F5E4D8')}
@@ -2666,7 +2667,7 @@ export const LandingView: React.FC = () => {
       <div className="fixed bottom-0 left-0 right-0 z-50 p-4 lg:hidden" style={{ background: 'rgba(255,249,240,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid var(--border)' }}>
         <div className="flex gap-3 max-w-md mx-auto w-full">
           <button
-            onClick={() => setView('skin-analyzer')}
+            onClick={() => navigate('/skin-analyzer')}
             className="flex-1 h-12 rounded-xl flex items-center justify-center gap-1.5 font-bold tracking-widest text-[10px] uppercase active:scale-95 transition-all text-white cursor-pointer shadow-md"
             style={{ background: 'linear-gradient(135deg, #8A256E 0%, #B8674F 100%)' }}
           >

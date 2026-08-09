@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { SEO } from './SEO';
 import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import {
@@ -36,13 +38,13 @@ const staggerContainer = {
 
 export const GalleryView: React.FC = () => {
   const {
-    setView,
     setSelectedTreatmentForBooking,
     patientToken,
     currentPatient,
     loginPatientWithGoogle,
     galleryItems,
   } = useApp();
+  const navigate = useNavigate();
 
   const [activePhotoIdx, setActivePhotoIdx] = useState<number | null>(null);
 
@@ -92,11 +94,12 @@ export const GalleryView: React.FC = () => {
 
   const startBooking = (treatmentName?: string) => {
     setSelectedTreatmentForBooking(treatmentName || undefined);
-    setView('booking');
+    navigate('/booking');
   };
 
   return (
     <div className="min-h-screen bg-white font-sans text-neutral-800" style={{ color: 'var(--ink)' }}>
+      <SEO title="Gallery" description="Explore our clinic gallery." />
       
       {/* ── TOP BAR NAVIGATION ────────────────────────────────────────────── */}
       <header
@@ -108,7 +111,7 @@ export const GalleryView: React.FC = () => {
       >
         <div className="flex justify-between items-center px-5 h-full w-full max-w-7xl mx-auto md:px-16">
           {/* Logo */}
-          <button onClick={() => setView('landing')} className="flex flex-col items-start cursor-pointer text-left bg-transparent border-0 p-0">
+          <button onClick={() => navigate('/')} className="flex flex-col items-start cursor-pointer text-left bg-transparent border-0 p-0">
             <span className="font-serif text-2xl font-semibold leading-none" style={{ color: 'var(--ink)' }}>Derm Elixir</span>
             <span className="text-[10px] font-medium uppercase tracking-[0.1em] leading-none mt-0.5" style={{ color: 'var(--terracotta)' }}>Skin · Hair · Laser</span>
           </button>
@@ -116,9 +119,9 @@ export const GalleryView: React.FC = () => {
           {/* Nav Links */}
           <nav className="hidden lg:flex items-center space-x-7">
             <span className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors cursor-default" style={{ color: 'var(--rose)' }}>Gallery</span>
-            <button onClick={() => setView('landing')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer bg-transparent border-0 p-0" style={{ color: 'var(--ink)' }}>Home</button>
-            <button onClick={() => setView('about')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer bg-transparent border-0 p-0" style={{ color: 'var(--ink)' }}>About</button>
-            <button onClick={() => setView('testimonials')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer bg-transparent border-0 p-0" style={{ color: 'var(--ink)' }}>Testimonials</button>
+            <button onClick={() => navigate('/')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer bg-transparent border-0 p-0" style={{ color: 'var(--ink)' }}>Home</button>
+            <button onClick={() => navigate('/about')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer bg-transparent border-0 p-0" style={{ color: 'var(--ink)' }}>About</button>
+            <button onClick={() => navigate('/testimonials')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-colors hover:opacity-70 cursor-pointer bg-transparent border-0 p-0" style={{ color: 'var(--ink)' }}>Testimonials</button>
           </nav>
 
           {/* Right side buttons */}
@@ -126,7 +129,7 @@ export const GalleryView: React.FC = () => {
             {patientToken && currentPatient ? (
               <>
                 <button
-                  onClick={() => setView('patient-portal')}
+                  onClick={() => navigate('/patient-portal')}
                   className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 bg-transparent"
                   style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
                 >

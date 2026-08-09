@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
 import { API_BASE } from '../config';
 
 type AuthMode = 'login' | 'forgot-password' | 'reset-password';
 
 export const AdminLogin: React.FC = () => {
-  const { setView, setIsAuthenticated } = useApp();
+  const { setIsAuthenticated } = useApp();
+  const navigate = useNavigate();
   const [mode, setMode] = useState<AuthMode>('login');
   
   // Form fields
-  const [email, setEmail] = useState('abhishekkumarp383@gmail.com');
+  const [email, setEmail] = useState('megha.pundir.singh@gmail.com');
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -51,7 +53,7 @@ export const AdminLogin: React.FC = () => {
           localStorage.setItem('dermelixir_admin_token', data.token);
         }
         setIsAuthenticated(true);
-        setView('admin');
+        navigate('/admin');
       } else {
         showError(data.message || 'Invalid administrative credentials');
       }
@@ -153,7 +155,7 @@ export const AdminLogin: React.FC = () => {
                     Owner Email
                   </label>
                   <div className="w-full bg-surface-container/60 border border-outline-variant/30 px-5 py-4 rounded-2xl text-center font-bold text-sm text-[#8A256E] select-none">
-                    abhishekkumarp383@gmail.com
+                    megha.pundir.singh@gmail.com
                   </div>
                 </div>
 
@@ -230,7 +232,7 @@ export const AdminLogin: React.FC = () => {
                     Owner Email
                   </label>
                   <div className="w-full bg-surface-container/60 border border-outline-variant/30 px-5 py-4 rounded-2xl text-center font-bold text-sm text-[#8A256E] select-none">
-                    abhishekkumarp383@gmail.com
+                    megha.pundir.singh@gmail.com
                   </div>
                 </div>
 
@@ -364,7 +366,7 @@ export const AdminLogin: React.FC = () => {
           )}
 
           <button
-            onClick={() => setView('landing')}
+            onClick={() => navigate('/')}
             className="w-full mt-6 text-on-surface-variant/60 hover:text-primary transition-colors text-[10px] font-bold uppercase tracking-widest text-center border-t border-outline-variant/10 pt-4"
           >
             Return to Homepage

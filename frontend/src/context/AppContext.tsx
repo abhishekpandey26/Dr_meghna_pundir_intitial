@@ -15,9 +15,6 @@ export interface FetchAppointmentsParams {
 }
 
 interface AppContextProps {
-  view: AppView;
-  setView: (view: AppView, slug?: string) => void;
-  blogSlug: string;
   isAuthenticated: boolean;
   setIsAuthenticated: (val: boolean) => void;
   appointments: Appointment[];
@@ -84,10 +81,8 @@ const AppContext = createContext<AppContextProps | undefined>(undefined);
 
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [view, setViewState] = useState<AppView>('landing');
-  const [blogSlug, setBlogSlug] = useState<string>(() => new URLSearchParams(window.location.search).get('slug') || '');
   const [isAuthenticated, setIsAuthenticatedState] = useState<boolean>(() => {
-    return localStorage.getItem('dermelixir_admin_auth') === 'true';
+    return !!localStorage.getItem('dermelixir_admin_token');
   });
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -162,24 +157,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const setView = (newView: AppView, slug?: string) => {
-    setViewState(newView);
-    if (newView === 'blog-detail' && slug) {
-      setBlogSlug(slug);
-    }
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', newView);
-    if (newView === 'blog-detail' && slug) {
-      url.searchParams.set('slug', slug);
-    } else if (newView !== 'blog-detail') {
-      url.searchParams.delete('slug');
-    }
-    window.history.pushState({}, '', url);
-  };
-
   const setIsAuthenticated = (val: boolean) => {
     setIsAuthenticatedState(val);
-    localStorage.setItem('dermelixir_admin_auth', String(val));
+    if (!val) {
+      localStorage.removeItem('dermelixir_admin_token');
+    }
   };
 
   const updateClinicConfig = async (newConfig: ClinicConfig) => {
@@ -442,7 +424,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem('dermelixir_patient_token');
     setCurrentPatient(null);
     setPatientAppointments([]);
-    setView('landing');
+    window.location.href = '/';
   };
 
   const loadPatientProfile = async () => {
@@ -591,9 +573,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{
-      view,
-      setView,
-      blogSlug,
       isAuthenticated,
       setIsAuthenticated,
       appointments,

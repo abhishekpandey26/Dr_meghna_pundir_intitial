@@ -1,44 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const axios = require('axios');
-const { exec } = require('child_process');
 const InstagramPost = require('../models/InstagramPost');
+const { createCloudinaryStorage, cloudinary } = require('../utils/cloudinary');
 
-// Ensure uploads folder exists
-const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
-// Keep multer for optional file upload
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOADS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Multer storage configuration for instagram media using Cloudinary
+const storage = createCloudinaryStorage('dermelixir_instagram');
 const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
-
-// Helper to generate thumbnail from video
-const generateVideoThumbnail = (videoPath, thumbnailPath) => {
-  return new Promise((resolve) => {
-    const cmd = `ffmpeg -ss 00:00:01 -i "${videoPath}" -vframes 1 -vf "scale=400:400:force_original_aspect_ratio=increase,crop=400:400" -y "${thumbnailPath}"`;
-    exec(cmd, (error) => {
-      if (error) {
-        console.warn('⚠️ ffmpeg thumbnail extraction failed, using fallback thumbnail:', error.message);
-        resolve(false);
-      } else {
-        resolve(true);
-      }
-    });
-  });
-};
 
 // Helper to parse Instagram post/reel URLs and extract embed + media cover URLs
 const parseInstagramUrl = (url) => {
@@ -57,7 +26,7 @@ const parseInstagramUrl = (url) => {
   return null;
 };
 
-// Helper to download Instagram thumbnail image to bypass CORP restriction
+// Helper to download Instagram thumbnail image to bypass CORP restriction and upload to Cloudinary
 const downloadThumbnail = async (shortcode) => {
   try {
     const response = await axios({
@@ -69,20 +38,19 @@ const downloadThumbnail = async (shortcode) => {
       }
     });
 
-    const filename = `ig_${shortcode}_${Date.now()}.jpg`;
-    const filepath = path.join(UPLOADS_DIR, filename);
-    const writer = fs.createWriteStream(filepath);
-
-    response.data.pipe(writer);
-
     return new Promise((resolve) => {
-      writer.on('finish', () => {
-        resolve(`/uploads/${filename}`);
-      });
-      writer.on('error', (err) => {
-        console.error('Error writing thumbnail file:', err);
-        resolve(null);
-      });
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: 'dermelixir_instagram' },
+        (error, result) => {
+          if (error) {
+            console.error('Error uploading thumbnail to Cloudinary:', error);
+            resolve(null);
+          } else {
+            resolve(result.secure_url);
+          }
+        }
+      );
+      response.data.pipe(uploadStream);
     });
   } catch (err) {
     console.error('Error downloading Instagram thumbnail:', err.message);
@@ -149,7 +117,7 @@ router.post('/admin', upload.single('mediaFile'), async (req, res) => {
         fullMediaUrl = parsed.embedUrl;
         if (req.file) {
           // If the admin uploaded a custom thumbnail file, use it
-          thumbnailUrl = `/uploads/${req.file.filename}`;
+          thumbnailUrl = req.file.path; // Cloudinary URL
         } else {
           // Otherwise, auto-download the Instagram cover thumbnail
           const localThumb = await downloadThumbnail(parsed.shortcode);
@@ -160,21 +128,12 @@ router.post('/admin', upload.single('mediaFile'), async (req, res) => {
       }
     } else if (req.file) {
       // Direct raw media upload fallback
-      const relativePath = `/uploads/${req.file.filename}`;
-      fullMediaUrl = relativePath;
-      thumbnailUrl = relativePath;
+      fullMediaUrl = req.file.path; // Cloudinary URL
+      thumbnailUrl = req.file.path;
 
       if (mediaType === 'reel') {
-        const thumbnailName = `thumb-${Date.now()}.jpg`;
-        const thumbnailPath = path.join(UPLOADS_DIR, thumbnailName);
-        const videoPath = path.join(UPLOADS_DIR, req.file.filename);
-
-        const thumbnailCreated = await generateVideoThumbnail(videoPath, thumbnailPath);
-        if (thumbnailCreated) {
-          thumbnailUrl = `/uploads/${thumbnailName}`;
-        } else {
-          thumbnailUrl = 'https://images.unsplash.com/photo-1559757175-5700dde675bc?w=400&q=80';
-        }
+        // Cloudinary automatically generates thumbnails for videos by replacing extension
+        thumbnailUrl = fullMediaUrl.replace(/\.(mp4|mov|avi|wmv)$/i, '.jpg');
       }
     }
 

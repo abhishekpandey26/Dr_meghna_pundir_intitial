@@ -25,7 +25,7 @@ const sendBookingEmail = async (appt) => {
   }
 
   const isOnline = appt.consultationType === 'ONLINE';
-  const portalUrl = `${FRONTEND_URL}/?view=video-room&id=${appt._id}`;
+  const portalUrl = `${FRONTEND_URL}/video-room?id=${appt._id}`;
   const meetLinkHtml = isOnline 
     ? `
       <div style="margin: 30px 0; text-align: center;">

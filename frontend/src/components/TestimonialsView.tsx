@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { SEO } from './SEO';
 import { ArrowLeft, Play, Sparkles } from 'lucide-react';
 import { LazyImage } from './LazyImage';
 import { InstagramSection } from './InstagramSection';
 
 export const TestimonialsView: React.FC = () => {
-  const { setView, videoTestimonials, photoTestimonials } = useApp();
+  const { videoTestimonials, photoTestimonials } = useApp();
+  const navigate = useNavigate();
   const [activeVideoId, setActiveVideoId] = useState<string | null>(null);
 
   // Pagination states
@@ -28,31 +31,32 @@ export const TestimonialsView: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-24 font-sans" style={{ background: 'var(--cream)', color: 'var(--ink)' }}>
+      <SEO title="Testimonials" description="See what our patients say about Derm Elixir." />
       {/* Top Bar Navigation */}
       <nav className="h-20 max-w-7xl mx-auto px-6 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
         {/* Logo */}
-        <button onClick={() => setView('landing')} className="flex flex-col items-start cursor-pointer text-left">
+        <button onClick={() => navigate('/')} className="flex flex-col items-start cursor-pointer text-left">
           <span className="font-serif text-2xl font-semibold leading-none" style={{ color: 'var(--ink)' }}>Derm Elixir</span>
           <span className="text-[10px] font-medium uppercase tracking-[0.15em] leading-none mt-1" style={{ color: 'var(--terracotta)' }}>Skin · Hair · Laser</span>
         </button>
 
         {/* Navigation Links */}
         <div className="hidden md:flex items-center gap-8">
-          <button onClick={() => setView('landing')} className="text-[10px] font-bold uppercase tracking-widest hover:text-amber-800 transition-colors cursor-pointer" style={{ color: 'var(--muted)' }}>Home</button>
+          <button onClick={() => navigate('/')} className="text-[10px] font-bold uppercase tracking-widest hover:text-amber-800 transition-colors cursor-pointer" style={{ color: 'var(--muted)' }}>Home</button>
           <span className="text-[10px] font-bold uppercase tracking-widest cursor-pointer" style={{ color: 'var(--terracotta)' }}>Testimonials</span>
         </div>
 
         {/* Actions */}
         <div className="flex items-center gap-4">
           <button
-            onClick={() => setView('landing')}
+            onClick={() => navigate('/')}
             className="flex items-center gap-1.5 font-bold uppercase tracking-[0.15em] text-[10px] hover:opacity-70 transition-opacity cursor-pointer"
             style={{ color: 'var(--muted)' }}
           >
             <ArrowLeft className="w-3.5 h-3.5" /> Lobby
           </button>
           <button
-            onClick={() => setView('booking')}
+            onClick={() => navigate('/booking')}
             className="px-5 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full text-white transition-all active:scale-95 cursor-pointer shadow-sm"
             style={{ background: 'var(--terracotta)' }}
             onMouseEnter={e => (e.currentTarget.style.background = 'var(--gold-accent)')}

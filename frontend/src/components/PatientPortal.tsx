@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { SEO } from './SEO';
 import { 
   Mail, 
   Key, 
@@ -26,7 +28,6 @@ import { signInWithPopup } from 'firebase/auth';
 
 export const PatientPortal: React.FC = () => {
   const { 
-    setView, 
     patientToken, 
     currentPatient, 
     patientAppointments, 
@@ -35,6 +36,7 @@ export const PatientPortal: React.FC = () => {
     updatePatientProfile,
     loadPatientProfile
   } = useApp();
+  const navigate = useNavigate();
 
   // Load patient profile and history on mount or when token is active
   useEffect(() => {
@@ -185,19 +187,16 @@ export const PatientPortal: React.FC = () => {
 
   // Handle joining online call
   const handleJoinCall = (apptId: string) => {
-    const url = new URL(window.location.href);
-    url.searchParams.set('view', 'video-room');
-    url.searchParams.set('id', apptId);
-    window.history.pushState({}, '', url);
-    setView('video-room');
+    navigate(`/video-room?id=${apptId}`);
   };
 
   return (
     <div className="min-h-screen pb-24 font-sans" style={{ background: 'var(--cream)', color: 'var(--ink)' }}>
+      <SEO title="Patient Portal" />
       {/* Top Bar Navigation */}
       <nav className="h-20 max-w-7xl mx-auto px-6 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border)' }}>
         <button
-          onClick={() => setView('landing')}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2.5 font-bold uppercase tracking-[0.2em] text-[10px] hover:opacity-70 transition-opacity cursor-pointer"
           style={{ color: 'var(--muted)' }}
         >
@@ -480,7 +479,7 @@ export const PatientPortal: React.FC = () => {
                     </div>
 
                     <button 
-                      onClick={() => setView('booking')}
+                      onClick={() => navigate('/booking')}
                       className="bg-emerald-950 hover:bg-black text-white text-[9px] font-bold uppercase tracking-widest py-3 px-5 rounded-2xl flex items-center gap-1.5 transition-all shadow-md shadow-emerald-950/10"
                     >
                       <Calendar className="w-3.5 h-3.5" /> Book Session
@@ -498,7 +497,7 @@ export const PatientPortal: React.FC = () => {
                           <p className="font-serif text-lg font-bold text-emerald-950">No Scheduled Sessions</p>
                           <p className="text-stone-500 text-xs max-w-sm mx-auto leading-relaxed">You don't have any upcoming medical or aesthetic consultations booked at the moment.</p>
                           <button 
-                            onClick={() => setView('booking')}
+                            onClick={() => navigate('/booking')}
                             className="bg-emerald-950 hover:bg-black text-white text-[9px] font-bold uppercase tracking-[0.25em] py-4 px-8 rounded-xl transition-all inline-block mt-2 cursor-pointer shadow-lg shadow-emerald-950/10"
                           >
                             Book Consultation Now

@@ -166,11 +166,11 @@ const { hashPassword, verifyPassword } = require('../utils/passwordHelper');
 const { sendAdminOtpEmail } = require('../utils/emailService');
 const rateLimit = require('express-rate-limit');
 
-const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'abhishekkumarp383@gmail.com').toLowerCase().trim();
+const OWNER_EMAIL = (process.env.OWNER_EMAIL || 'megha.pundir.singh@gmail.com').toLowerCase().trim();
 
 // 1. Rate limiter for Admin Login: max 5 failed password attempts per 15 minutes
 const adminLoginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: 1 * 60 * 1000,
   max: 5,
   skipSuccessfulRequests: true,
   message: {

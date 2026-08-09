@@ -48,6 +48,9 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/blogs', require('./routes/blogRoutes'));
 app.use('/api/testimonials', require('./routes/testimonialRoutes'));
 
+// Sitemap and Robots.txt routes
+app.use('/', require('./routes/sitemapRoutes'));
+
 app.listen(PORT, () => {
   console.log(`🚀 Server navigating at http://localhost:${PORT}`);
 });

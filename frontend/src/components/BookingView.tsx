@@ -1,11 +1,12 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { SEO } from './SEO';
 import { API_BASE } from '../config';
 
 export const BookingView: React.FC = () => {
   const {
-    setView,
     clinicConfig,
     blockedDates,
     selectedTreatmentForBooking: initialTreatment,
@@ -19,6 +20,7 @@ export const BookingView: React.FC = () => {
     loginPatientWithGoogle,
     updatePatientProfile
   } = useApp();
+  const navigate = useNavigate();
 
   const [step, setStep] = useState<number>(1);
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -167,7 +169,7 @@ export const BookingView: React.FC = () => {
           alert('Network encryption error.');
         } finally {
           setIsVerifyingPayment(false);
-          window.history.replaceState({}, '', window.location.pathname + '?view=booking');
+          navigate('/booking', { replace: true });
         }
       };
       checkPayment();
@@ -355,7 +357,7 @@ export const BookingView: React.FC = () => {
   };
 
   const triggerReset = () => {
-    setStep(1); setView('landing');
+    setStep(1); navigate('/');
   };
 
   const changeMonth = (offset: number) => {
@@ -366,6 +368,7 @@ export const BookingView: React.FC = () => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-0 md:p-4 pt-6 md:pt-4 bg-neutral-900/60 backdrop-blur-sm overflow-y-auto">
+      <SEO title="Book an Appointment" />
       <div
         onClick={triggerReset}
         className="absolute inset-0 cursor-pointer"

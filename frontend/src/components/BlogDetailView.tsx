@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
+import { useNavigate, useParams } from 'react-router-dom';
+import { SEO } from './SEO';
 import { BlogPost } from '../types';
 import { InstagramSection } from './InstagramSection';
 import { ArrowLeft, Calendar, User, Clock, Search } from 'lucide-react';
@@ -15,14 +17,16 @@ const getMediaUrl = (url: string) => {
 };
 
 export const BlogDetailView: React.FC = () => {
-  const { setView, blogs, blogSlug: slug } = useApp();
+  const { blogs } = useApp();
+  const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!slug) {
-      setView('landing');
+      navigate('/');
       return;
     }
 
@@ -51,7 +55,7 @@ export const BlogDetailView: React.FC = () => {
     }
     // Scroll to top
     window.scrollTo(0, 0);
-  }, [slug, blogs, setView]);
+  }, [slug, blogs, navigate]);
 
   if (loading) {
     return (
@@ -67,7 +71,7 @@ export const BlogDetailView: React.FC = () => {
         <h2 className="font-serif text-3xl text-[var(--ink)] font-bold mb-4">Article Not Found</h2>
         <p className="text-neutral-500 mb-6">The blog post you are looking for does not exist or has been removed.</p>
         <button
-          onClick={() => setView('landing')}
+          onClick={() => navigate('/')}
           className="px-6 py-3 bg-[var(--terracotta)] text-white font-bold rounded-full text-xs uppercase tracking-wider hover:bg-[var(--terracotta-dark)] transition-all cursor-pointer border-0"
         >
           Return Home
@@ -78,10 +82,22 @@ export const BlogDetailView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--cream)] text-neutral-800 selection:bg-[var(--blush)]">
+      <SEO 
+        title={post.title} 
+        description={post.summary || 'Read our latest blog post on Derm Elixir.'} 
+        image={getMediaUrl(post.image)}
+        url={window.location.href}
+        type="article"
+        articleData={{
+          author: post.author,
+          section: post.category,
+          publishedTime: post.dateString // Optionally format if needed
+        }}
+      />
       {/* Navigation */}
       <nav className="h-20 max-w-7xl mx-auto px-6 flex items-center justify-between border-b border-stone-200/40 bg-transparent">
         <button
-          onClick={() => setView('landing')}
+          onClick={() => navigate('/')}
           className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-neutral-400 hover:text-[var(--ink)] transition-all cursor-pointer"
           style={{ background: 'none', border: 'none' }}
         >
@@ -167,7 +183,7 @@ export const BlogDetailView: React.FC = () => {
 
             <div className="text-center lg:text-left">
               <button
-                onClick={() => setView('landing')}
+                onClick={() => navigate('/')}
                 className="px-8 py-4 bg-[var(--terracotta)] text-white font-bold rounded-full text-xs uppercase tracking-wider hover:bg-[var(--terracotta-dark)] transition-all cursor-pointer shadow-lg shadow-neutral-900/10 border-0"
               >
                 Back to Articles
@@ -218,7 +234,7 @@ export const BlogDetailView: React.FC = () => {
                     key={recentPost._id} 
                     className="flex gap-4 items-start group cursor-pointer"
                     onClick={() => {
-                      setView('blog-detail', recentPost.slug);
+                      navigate('/blog/' + recentPost.slug);
                       setSearchQuery('');
                     }}
                   >

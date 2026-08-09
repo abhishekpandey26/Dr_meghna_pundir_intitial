@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { SEO } from './SEO';
 import { Camera, CameraOff, Mic, MicOff, PhoneOff, Send, MessageSquare, ShieldCheck, Activity } from 'lucide-react';
 
 export const VideoRoom: React.FC = () => {
-  const { setView } = useApp();
+  const navigate = useNavigate();
   const [cameraActive, setCameraActive] = useState(true);
   const [micActive, setMicActive] = useState(true);
   const [cameraAccess, setCameraAccess] = useState<'pending' | 'granted' | 'denied'>('pending');
@@ -106,7 +108,7 @@ export const VideoRoom: React.FC = () => {
             <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest">End-to-End Encrypted Link</span>
           </div>
           <button 
-            onClick={() => { stopCamera(); setView('landing'); }}
+            onClick={() => { stopCamera(); navigate('/'); }}
             className="text-neutral-400 hover:text-white transition-colors cursor-pointer"
           >
             <PhoneOff className="w-5 h-5" />
@@ -194,7 +196,7 @@ export const VideoRoom: React.FC = () => {
               {cameraActive ? <Camera className="w-5 h-5" /> : <CameraOff className="w-5 h-5" />}
             </button>
             <button 
-              onClick={() => { stopCamera(); setView('landing'); }}
+              onClick={() => { stopCamera(); navigate('/'); }}
               className="p-4 rounded-full bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-600/30 transition-all cursor-pointer"
             >
               <PhoneOff className="w-5 h-5" />

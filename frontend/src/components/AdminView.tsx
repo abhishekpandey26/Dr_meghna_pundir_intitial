@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
   useApp
 } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { SEO } from './SEO';
 import { API_BASE } from '../config';
 import { BlogPost } from '../types';
 import {
@@ -57,7 +59,6 @@ const getMediaUrl = (url: string) => {
 
 export const AdminView: React.FC = () => {
   const {
-    setView,
     appointments,
     fetchAppointments,
     updateAppointmentStatus,
@@ -104,6 +105,7 @@ export const AdminView: React.FC = () => {
     deletePhotoTestimonial,
     updatePhotoTestimonial
   } = useApp();
+  const navigate = useNavigate();
 
   // Navigation State
   const [activeTab, setActiveTab] = useState<'dashboard' | 'appointments' | 'schedule' | 'gallery' | 'beforeafter' | 'skinleads' | 'insights' | 'settings' | 'blogs' | 'testimonials' | 'instagram'>(() => {
@@ -291,7 +293,7 @@ export const AdminView: React.FC = () => {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    setView('landing');
+    navigate('/');
   };
 
   const StatCard = ({ icon: Icon, title, value, trend, color }: any) => (
@@ -318,6 +320,7 @@ export const AdminView: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] flex font-sans text-neutral-900 selection:bg-emerald-100">
+      <SEO title="Admin Dashboard" description="Derm Elixir Administration Panel" />
       {/* Sidebar */}
       <aside className="w-64 bg-white border-r border-neutral-200 flex flex-col sticky top-0 h-screen z-40">
         <div className="p-8">
@@ -407,7 +410,7 @@ export const AdminView: React.FC = () => {
               />
             </div>
             <button
-              onClick={() => setView('landing')}
+              onClick={() => navigate('/')}
               className="text-[10px] font-bold text-neutral-500 hover:text-emerald-900 uppercase tracking-[0.2em] transition-all flex items-center gap-2"
             >
               <ExternalLink className="w-4 h-4" />
@@ -785,7 +788,7 @@ export const AdminView: React.FC = () => {
                               {appt.consultationType === 'ONLINE' && (
                                 <button
                                   onClick={() => {
-                                    setView('video-room');
+                                    navigate('/video-room');
                                   }}
                                   className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-colors animate-pulse"
                                   title="Join Video Consultation"
@@ -1421,7 +1424,7 @@ export const AdminView: React.FC = () => {
                       <div className="p-6 pt-0 border-t border-neutral-50 flex justify-between items-center mt-4">
                         <button
                           onClick={() => {
-                            setView('blog-detail', post.slug);
+                            navigate('/blog/' + post.slug);
                           }}
                           className="text-[10px] text-emerald-900 font-bold uppercase tracking-wider flex items-center gap-1 hover:gap-2 transition-all"
                         >

@@ -1,26 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
 const GalleryItem = require('../models/GalleryItem');
+const { createCloudinaryStorage } = require('../utils/cloudinary');
 
-// Ensure uploads folder exists
-const UPLOADS_DIR = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(UPLOADS_DIR)) {
-  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
-}
-
-// Multer storage configuration for gallery showcase images
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, UPLOADS_DIR);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'gallery-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
+// Multer storage configuration for gallery showcase images using Cloudinary
+const storage = createCloudinaryStorage('dermelixir_gallery');
 const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
 
 // Create
@@ -28,7 +13,7 @@ router.post('/', upload.single('galleryImage'), async (req, res) => {
   try {
     let { title, url, order } = req.body;
     if (req.file) {
-      url = `/uploads/${req.file.filename}`;
+      url = req.file.path; // Cloudinary URL
     }
     if (!title || !url) {
       return res.status(400).json({ error: 'Title and image are required' });
@@ -60,7 +45,7 @@ router.put('/:id', upload.single('galleryImage'), async (req, res) => {
   try {
     let updateData = { ...req.body };
     if (req.file) {
-      updateData.url = `/uploads/${req.file.filename}`;
+      updateData.url = req.file.path; // Cloudinary URL
     }
     if (updateData.order !== undefined && updateData.order !== null && updateData.order !== '') {
       updateData.order = Number(updateData.order);

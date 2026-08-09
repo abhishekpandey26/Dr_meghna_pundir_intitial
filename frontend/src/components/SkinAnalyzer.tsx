@@ -1,11 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { SEO } from './SEO';
 
 type ScanScreen = 'intro' | 'questions' | 'capture' | 'scanning' | 'details' | 'results';
 
 export const SkinAnalyzer: React.FC = () => {
-  const { setView, submitSkinLead, setSelectedTreatmentForBooking } = useApp();
+  const { submitSkinLead, setSelectedTreatmentForBooking } = useApp();
+  const navigate = useNavigate();
 
   const [screen, setScreen] = useState<ScanScreen>('intro');
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -209,7 +212,7 @@ export const SkinAnalyzer: React.FC = () => {
 
   const handleBookWithTreatment = () => {
     setSelectedTreatmentForBooking(recommendedTreatment);
-    setView('booking');
+    navigate('/booking');
   };
 
   const resetAnalyzer = () => {
@@ -226,8 +229,8 @@ export const SkinAnalyzer: React.FC = () => {
       <nav className="fixed top-0 w-full z-50 px-6 md:px-20 h-20 flex items-center justify-between"
         style={{ background: 'rgba(255,249,240,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--border)' }}
       >
-        <button onClick={() => setView('landing')} className="font-serif text-2xl font-semibold cursor-pointer" style={{ color: 'var(--ink)' }}>Derm Elixir</button>
-        <button onClick={() => setView('landing')} className="text-[10px] uppercase font-bold tracking-[0.3em] flex items-center gap-2 transition-all cursor-pointer" style={{ color: 'var(--muted)' }}>
+        <button onClick={() => navigate('/')} className="font-serif text-2xl font-semibold cursor-pointer" style={{ color: 'var(--ink)' }}>Derm Elixir</button>
+        <button onClick={() => navigate('/')} className="text-[10px] uppercase font-bold tracking-[0.3em] flex items-center gap-2 transition-all cursor-pointer" style={{ color: 'var(--muted)' }}>
           <span className="material-symbols-outlined text-sm">close</span> Close Scan
         </button>
       </nav>

@@ -7,7 +7,7 @@ const adminSchema = new mongoose.Schema({
     unique: true,
     lowercase: true,
     trim: true,
-    default: 'abhishekkumarp383@gmail.com'
+    default: 'megha.pundir.singh@gmail.com'
   },
   password: {
     type: String, // Hashed password
