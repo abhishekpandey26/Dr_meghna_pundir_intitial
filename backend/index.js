@@ -4,6 +4,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const path = require('path');
+const multer = require('multer'); // Added multer for error handling
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -66,6 +67,15 @@ app.use('/api/testimonials', require('./routes/testimonialRoutes'));
 
 // Sitemap and Robots.txt routes
 app.use('/', require('./routes/sitemapRoutes'));
+
+// Global error handler to prevent HTML [object Object] responses
+app.use((err, req, res, next) => {
+  console.error('Global Error Handler:', err);
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({ error: `Upload error: ${err.message}` });
+  }
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
+});
 
 app.listen(PORT, () => {
   console.log(`🚀 Server navigating at http://localhost:${PORT}`);

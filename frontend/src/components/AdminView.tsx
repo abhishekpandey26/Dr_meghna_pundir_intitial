@@ -259,6 +259,7 @@ export const AdminView: React.FC = () => {
 
   const [blogImageFile, setBlogImageFile] = useState<File | null>(null);
   const [editBlogImageFile, setEditBlogImageFile] = useState<File | null>(null);
+  const [isSubmittingGallery, setIsSubmittingGallery] = useState(false);
 
   const generateSlug = (title: string) => {
     return title
@@ -2366,6 +2367,8 @@ export const AdminView: React.FC = () => {
 
                 <form className="space-y-6" onSubmit={async (e) => {
                   e.preventDefault();
+                  if (isSubmittingGallery) return;
+
                   if (!galleryFile && !newGallery.url.trim()) {
                     return triggerToast('Please upload a photo file or provide an image URL', 'error');
                   }
@@ -2375,25 +2378,34 @@ export const AdminView: React.FC = () => {
                       return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
                     }
                   }
-                  if (galleryFile) {
-                    const formData = new FormData();
-                    formData.append('title', newGallery.title);
-                    formData.append('galleryImage', galleryFile);
-                    if (newGallery.order.trim() !== '') {
-                      formData.append('order', newGallery.order);
+
+                  setIsSubmittingGallery(true);
+                  try {
+                    if (galleryFile) {
+                      const formData = new FormData();
+                      formData.append('title', newGallery.title);
+                      formData.append('galleryImage', galleryFile);
+                      if (newGallery.order.trim() !== '') {
+                        formData.append('order', newGallery.order);
+                      }
+                      await addGalleryItem(formData);
+                    } else {
+                      await addGalleryItem({
+                        title: newGallery.title,
+                        url: newGallery.url,
+                        ...(newGallery.order.trim() !== '' ? { order: Number(newGallery.order) } : {})
+                      });
                     }
-                    await addGalleryItem(formData);
-                  } else {
-                    await addGalleryItem({
-                      title: newGallery.title,
-                      url: newGallery.url,
-                      ...(newGallery.order.trim() !== '' ? { order: Number(newGallery.order) } : {})
-                    });
+                    setNewGallery({ title: '', url: '', order: '' });
+                    setGalleryFile(null);
+                    setShowNewGalleryModal(false);
+                    triggerToast('Asset integrated into showcase successfully!', 'success');
+                  } catch (error) {
+                    console.error('Failed to add gallery item:', error);
+                    triggerToast('Failed to add gallery item. Please check your connection and try again.', 'error');
+                  } finally {
+                    setIsSubmittingGallery(false);
                   }
-                  setNewGallery({ title: '', url: '', order: '' });
-                  setGalleryFile(null);
-                  setShowNewGalleryModal(false);
-                  triggerToast('Asset integrated into showcase.');
                 }}>
                   <div className="space-y-2">
                     <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 ml-1">Asset Title</label>
@@ -2449,9 +2461,10 @@ export const AdminView: React.FC = () => {
 
                   <button
                     type="submit"
-                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                    disabled={isSubmittingGallery}
+                    className={`w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer ${isSubmittingGallery ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    Authorize Integration
+                    {isSubmittingGallery ? 'Uploading...' : 'Authorize Integration'}
                   </button>
                 </form>
               </div>
@@ -2488,28 +2501,40 @@ export const AdminView: React.FC = () => {
 
                 <form className="space-y-6" onSubmit={async (e) => {
                   e.preventDefault();
+                  if (isSubmittingGallery) return;
+                  
                   if (editingGalleryItem && editingGalleryItem._id) {
-                    if (editGalleryFile) {
-                      const formData = new FormData();
-                      formData.append('title', editingGalleryItem.title);
-                      formData.append('galleryImage', editGalleryFile);
-                      formData.append('order', String(editingGalleryItem.order ?? 0));
-                      await updateGalleryItem(editingGalleryItem._id, formData);
-                    } else {
-                      const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
-                      if (editingGalleryItem.url && !isValidUrl(editingGalleryItem.url)) {
-                        return triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                    setIsSubmittingGallery(true);
+                    try {
+                      if (editGalleryFile) {
+                        const formData = new FormData();
+                        formData.append('title', editingGalleryItem.title);
+                        formData.append('galleryImage', editGalleryFile);
+                        formData.append('order', String(editingGalleryItem.order ?? 0));
+                        await updateGalleryItem(editingGalleryItem._id, formData);
+                      } else {
+                        const isValidUrl = (url: string) => /^https?:\/\/.+/.test(url);
+                        if (editingGalleryItem.url && !isValidUrl(editingGalleryItem.url)) {
+                          triggerToast('Image endpoint must be a valid URL starting with http:// or https://', 'error');
+                          setIsSubmittingGallery(false);
+                          return;
+                        }
+                        await updateGalleryItem(editingGalleryItem._id, {
+                          title: editingGalleryItem.title,
+                          url: editingGalleryItem.url,
+                          order: editingGalleryItem.order ?? 0
+                        });
                       }
-                      await updateGalleryItem(editingGalleryItem._id, {
-                        title: editingGalleryItem.title,
-                        url: editingGalleryItem.url,
-                        order: editingGalleryItem.order ?? 0
-                      });
+                      setEditingGalleryItem(null);
+                      setEditGalleryFile(null);
+                      setShowEditGalleryModal(false);
+                      triggerToast('Portfolio item updated successfully!', 'success');
+                    } catch (error) {
+                      console.error('Failed to update gallery item:', error);
+                      triggerToast('Failed to update gallery item. Please check your connection and try again.', 'error');
+                    } finally {
+                      setIsSubmittingGallery(false);
                     }
-                    setShowEditGalleryModal(false);
-                    setEditingGalleryItem(null);
-                    setEditGalleryFile(null);
-                    triggerToast('Showcase item updated.');
                   }
                 }}>
                   <div className="space-y-2">
@@ -2566,9 +2591,10 @@ export const AdminView: React.FC = () => {
 
                   <button
                     type="submit"
-                    className="w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer"
+                    disabled={isSubmittingGallery}
+                    className={`w-full bg-emerald-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-[0.2em] shadow-xl shadow-emerald-900/20 hover:scale-[1.01] active:scale-[0.99] transition-all mt-4 cursor-pointer ${isSubmittingGallery ? 'opacity-70 cursor-not-allowed' : ''}`}
                   >
-                    Save Changes
+                    {isSubmittingGallery ? 'Saving Changes...' : 'Save Changes'}
                   </button>
                 </form>
               </div>
