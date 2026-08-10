@@ -4,8 +4,10 @@ import {
   useApp
 } from '../context/AppContext';
 import { useNavigate } from 'react-router-dom';
+import { InstagramSection } from './InstagramSection';
 import { SEO } from './SEO';
 import { API_BASE } from '../config';
+import { compressImage } from '../utils/imageCompression';
 import { BlogPost } from '../types';
 import {
   LayoutDashboard,
@@ -1848,9 +1850,15 @@ export const AdminView: React.FC = () => {
                           type="file"
                           name="instagramThumbFile"
                           accept="image/*"
-                          onChange={(e) => {
+                          onChange={async (e) => {
                             if (e.target.files && e.target.files[0]) {
-                              setInstagramFile(e.target.files[0]);
+                              try {
+                                const compressed = await compressImage(e.target.files[0], 5);
+                                setInstagramFile(compressed);
+                              } catch (err) {
+                                console.error('Compression failed', err);
+                                setInstagramFile(e.target.files[0]);
+                              }
                             }
                           }}
                           className="w-full bg-neutral-50 rounded-xl py-2 px-3 text-xs font-medium outline-none focus:ring-2 focus:ring-emerald-950/5 cursor-pointer"
@@ -2421,9 +2429,15 @@ export const AdminView: React.FC = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         if (e.target.files && e.target.files[0]) {
-                          setGalleryFile(e.target.files[0]);
+                          try {
+                            const compressed = await compressImage(e.target.files[0], 5);
+                            setGalleryFile(compressed);
+                          } catch (err) {
+                            console.error('Compression failed', err);
+                            setGalleryFile(e.target.files[0]);
+                          }
                         }
                       }}
                       className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer"
@@ -2551,9 +2565,15 @@ export const AdminView: React.FC = () => {
                     <input
                       type="file"
                       accept="image/*"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         if (e.target.files && e.target.files[0]) {
-                          setEditGalleryFile(e.target.files[0]);
+                          try {
+                            const compressed = await compressImage(e.target.files[0], 5);
+                            setEditGalleryFile(compressed);
+                          } catch (err) {
+                            console.error('Compression failed', err);
+                            setEditGalleryFile(e.target.files[0]);
+                          }
                         }
                       }}
                       className="w-full bg-neutral-50 border-none rounded-2xl py-3 px-4 text-xs font-bold ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer"
@@ -2897,9 +2917,15 @@ export const AdminView: React.FC = () => {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           if (e.target.files && e.target.files[0]) {
-                            setBlogImageFile(e.target.files[0]);
+                            try {
+                              const compressed = await compressImage(e.target.files[0], 5);
+                              setBlogImageFile(compressed);
+                            } catch (err) {
+                              console.error('Compression failed', err);
+                              setBlogImageFile(e.target.files[0]);
+                            }
                           }
                         }}
                         className="w-full bg-neutral-50 rounded-2xl py-2 px-3 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer"
@@ -3057,9 +3083,15 @@ export const AdminView: React.FC = () => {
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={(e) => {
+                        onChange={async (e) => {
                           if (e.target.files && e.target.files[0]) {
-                            setEditBlogImageFile(e.target.files[0]);
+                            try {
+                              const compressed = await compressImage(e.target.files[0], 5);
+                              setEditBlogImageFile(compressed);
+                            } catch (err) {
+                              console.error('Compression failed', err);
+                              setEditBlogImageFile(e.target.files[0]);
+                            }
                           }
                         }}
                         className="w-full bg-neutral-50 rounded-2xl py-2 px-3 text-xs font-medium ring-1 ring-neutral-200 outline-none focus:ring-emerald-900/10 cursor-pointer"
