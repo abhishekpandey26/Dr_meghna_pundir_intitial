@@ -2,10 +2,9 @@
   RewriteEngine On
   RewriteBase /
 
-  # Forward sitemap.xml via a 301 Redirect (which always works on Hostinger).
-  # If your backend is accessed via port 5002 on your domain, this will redirect Googlebot directly there.
-  # IMPORTANT: Change "drmeghapundir.in:5002" if your API actually uses a different domain (like api.drmeghapundir.in).
-  RewriteRule ^sitemap\.xml$ http://drmeghapundir.in:5002/sitemap.xml [R=301,L]
+  # Forward sitemap.xml to your Node.js backend which is running on the /api subfolder!
+  # This uses an internal Apache rewrite, which is completely silent to the user and avoids any loop.
+  RewriteRule ^sitemap\.xml$ /api/sitemap.xml [L]
 
   # 2. React Router SPA configuration
   # This makes sure direct visits to /blog/slug or /admin do not return 404 errors on Hostinger
