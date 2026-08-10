@@ -6,7 +6,7 @@ const { createCloudinaryStorage } = require('../utils/cloudinary');
 
 // Multer storage configuration for blog cover images using Cloudinary
 const storage = createCloudinaryStorage('dermelixir_blogs');
-const upload = multer({ storage, limits: { fileSize: 10 * 1024 * 1024 } });
+const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // GET all blogs
 router.get('/', async (req, res) => {

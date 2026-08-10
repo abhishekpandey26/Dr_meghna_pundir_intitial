@@ -16,7 +16,10 @@ const createCloudinaryStorage = (folderName) => {
     params: {
       folder: folderName,
       allowed_formats: ['jpg', 'png', 'jpeg', 'webp', 'mp4'],
-      // transformation: [{ width: 1000, crop: 'limit' }] // Optional transformation
+      transformation: [
+        { width: 1920, crop: 'limit' },
+        { quality: 'auto', fetch_format: 'webp' }
+      ]
     }
   });
 };

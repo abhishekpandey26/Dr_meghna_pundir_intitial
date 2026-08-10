@@ -6,7 +6,7 @@ const { createCloudinaryStorage } = require('../utils/cloudinary');
 
 // Multer storage configuration for gallery showcase images using Cloudinary
 const storage = createCloudinaryStorage('dermelixir_gallery');
-const upload = multer({ storage, limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({ storage, limits: { fileSize: 50 * 1024 * 1024 } });
 
 // Create
 router.post('/', upload.single('galleryImage'), async (req, res) => {
