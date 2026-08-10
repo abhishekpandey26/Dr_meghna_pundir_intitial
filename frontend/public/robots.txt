@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Replace the URL below with your actual deployed Node.js backend API URL
+Sitemap: https://your-backend-api.com/sitemap.xml
