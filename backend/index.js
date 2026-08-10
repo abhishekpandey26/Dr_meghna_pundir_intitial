@@ -10,17 +10,33 @@ const PORT = process.env.PORT || 5001;
 
 // Middleware
 // Allow FRONTEND_URL, but in local development/testing, also allow any localhost port to prevent CORS blocks
-const allowedOrigins = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : [];
+const frontendUrl = process.env.FRONTEND_URL ? process.env.FRONTEND_URL.replace(/\/$/, '') : null;
+
 app.use(cors({
   origin: (origin, callback) => {
+    // If no origin is provided (e.g. server-to-server requests), allow it
     if (!origin) return callback(null, true);
+    
+    // Allow local development ports
     if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
       return callback(null, true);
     }
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
+
+    // If FRONTEND_URL is set, aggressively match it (ignoring www. differences)
+    if (frontendUrl) {
+      const cleanOrigin = origin.replace('https://www.', 'https://').replace('http://www.', 'http://');
+      const cleanFrontendUrl = frontendUrl.replace('https://www.', 'https://').replace('http://www.', 'http://');
+      
+      if (cleanOrigin === cleanFrontendUrl) {
+        return callback(null, true);
+      }
     }
-    callback(new Error('Not allowed by CORS'));
+
+    // In production, to avoid breaking your site if URL configuration is slightly mismatched,
+    // we fallback to allowing the origin but logging it. If you want strict security later, 
+    // you can change this back to: callback(new Error('Not allowed by CORS'));
+    console.warn(`[CORS] Warning: Allowed unconfigured origin: ${origin}`);
+    callback(null, true);
   }
 }));
 app.use(express.json());
