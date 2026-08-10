@@ -2,11 +2,9 @@
   RewriteEngine On
   RewriteBase /
 
-  # 1. Forward sitemap.xml and robots.txt to the backend server dynamically.
-  # Replace "https://your-backend-api.com" with your actual deployed Node.js backend URL.
-  # If Hostinger gives a 500 Internal Error, change [P,L] to [R=301,L] to use redirects instead of proxy.
-  RewriteRule ^sitemap\.xml$ https://drmeghapundir.in/sitemap.xml [P,L]
-  RewriteRule ^robots\.txt$ https://drmeghapundir.in/robots.txt [P,L]
+  # Forward sitemap.xml and robots.txt locally to your Node.js backend on port 5002
+  RewriteRule ^sitemap\.xml$ http://127.0.0.1:5002/sitemap.xml [P,L]
+  # We do not need to proxy robots.txt, we will just use a static one in the public folder.
 
   # 2. React Router SPA configuration
   # This makes sure direct visits to /blog/slug or /admin do not return 404 errors on Hostinger
