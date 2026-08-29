@@ -145,7 +145,7 @@ export const AboutView: React.FC = () => {
 
           {/* Right side buttons */}
           <div className="flex items-center gap-3">
-            {patientToken && currentPatient ? (
+            {patientToken && currentPatient && (
               <>
                 <button
                   onClick={() => navigate('/patient-portal')}
@@ -161,14 +161,6 @@ export const AboutView: React.FC = () => {
                   {currentPatient.name ? currentPatient.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : currentPatient.email.slice(0, 2)}
                 </div>
               </>
-            ) : (
-              <button
-                onClick={handleGoogleLoginClick}
-                className="px-5 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 bg-transparent"
-                style={{ border: '1.5px solid var(--terracotta)', color: 'var(--terracotta)' }}
-              >
-                Login
-              </button>
             )}
             <button
               onClick={() => startBooking()}

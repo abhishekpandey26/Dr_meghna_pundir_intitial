@@ -10,6 +10,7 @@ import { auth, googleProvider } from '../firebase';
 import { signInWithPopup } from 'firebase/auth';
 import { InstagramSection } from './InstagramSection';
 import { API_BASE } from '../config';
+import { FAQ_DATA } from '../data/faqs';
 
 const getMediaUrl = (url: string) => {
   if (!url) return '';
@@ -345,10 +346,17 @@ export const LandingView: React.FC = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileTreatmentsOpen, setMobileTreatmentsOpen] = useState(false);
   const [heroPhase, setHeroPhase] = useState<'video' | 'profile'>('video');
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
   const heroVideoRef = useRef<HTMLVideoElement>(null);
   const heroPhaseGuard = useRef(false);
   const reviewsSectionRef = useRef<HTMLDivElement>(null);
   const blogSectionRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const revealHeroProfile = () => {
     if (heroPhaseGuard.current) return;
@@ -578,7 +586,7 @@ export const LandingView: React.FC = () => {
             {/* Treatments Mega-Dropdown */}
             <div className="relative mega-trigger">
               <button
-                onClick={() => setTreatmentsOpen(!treatmentsOpen)}
+                onClick={() => navigate('/treatments')}
                 className="flex items-center gap-1 text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60"
                 style={{ color: 'var(--ink)' }}
               >
@@ -592,19 +600,17 @@ export const LandingView: React.FC = () => {
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--terracotta)' }}>Skin</p>
                     {[
-                      'Acne Treatment (Laser)',
+                      'Acne Treatment',
                       'Acne Scar Treatment',
                       'Melasma Treatment',
-                      'Chemical Peel Service',
+                      'Chemical Peel',
                       'Hollywood Peel',
                       'Vampire Facial',
                       'HydraFacial',
-                      'Dermapen 4 Treatment',
-                      'Skin Blemishes',
-                      'Laser Treatment by CO2',
+                      'Dermapen Treatment',
                       'HIFU Treatment'
                     ].map(item => (
-                      <button key={item} onClick={() => startBooking(item)}
+                      <button key={item} onClick={() => navigate(`/treatments/${item.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-')}`)}
                         className="block w-full text-left text-xs py-1.5 px-3 rounded-lg font-medium transition-all cursor-pointer"
                         style={{ color: 'var(--ink)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--blush)')}
@@ -615,15 +621,15 @@ export const LandingView: React.FC = () => {
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--terracotta)' }}>Hair</p>
                     {[
-                      'Hair Transplant',
-                      'Beard Transplant',
-                      'Scar Transplant',
-                      'PRP Treatment',
-                      'Dandruff Treatment Treatment',
-                      'Alopecia areata diagnosis and treatment',
-                      'Trichologist for Hair Treatment'
+                      'Hair Fall Treatment',
+                      'PRP Hair Treatment',
+                      'GFC Hair Treatment',
+                      'Female Hair Loss Treatment',
+                      'Male Pattern Baldness',
+                      'Alopecia Treatment',
+                      'Dandruff Treatment'
                     ].map(item => (
-                      <button key={item} onClick={() => startBooking(item)}
+                      <button key={item} onClick={() => navigate(`/treatments/${item.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-')}`)}
                         className="block w-full text-left text-xs py-1.5 px-3 rounded-lg font-medium transition-all cursor-pointer"
                         style={{ color: 'var(--ink)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--blush)')}
@@ -635,20 +641,14 @@ export const LandingView: React.FC = () => {
                     <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: 'var(--terracotta)' }}>Aesthetics</p>
                     {[
                       'Laser Hair Reduction',
-                      'Bikini Line Hair Removal Treatment',
-                      'Tattoo Removal Service',
-                      'Double Chin Reduction',
-                      'Lip Blushing Service',
-                      'Laser Lip Surgery',
-                      'Dimple Creation',
-                      'Hymenoplasty Treatment',
-                      'G-shot Treatment',
-                      'Lymphatic Drainage Massage',
-                      'post pregnancy Aesthetic treatments',
-                      'Microblading treatments',
-                      'Botox & Fillers'
+                      'Botox',
+                      'Lip Fillers',
+                      'Skin Tightening',
+                      'RF Microneedling',
+                      'Tattoo Removal',
+                      'Thread Lift'
                     ].map(item => (
-                      <button key={item} onClick={() => startBooking(item)}
+                      <button key={item} onClick={() => navigate(`/treatments/${item.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-')}`)}
                         className="block w-full text-left text-xs py-1.5 px-3 rounded-lg font-medium transition-all cursor-pointer"
                         style={{ color: 'var(--ink)' }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'var(--blush)')}
@@ -662,39 +662,30 @@ export const LandingView: React.FC = () => {
 
             <button onClick={() => navigate('/skin-analyzer')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>AI Skin Scan</button>
             <button onClick={() => navigate('/gallery')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
+            <button onClick={() => navigate('/faqs')} className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all cursor-pointer px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>FAQs</button>
             <a href="#transformations" className="text-[13px] font-medium uppercase tracking-[0.05em] transition-all px-4 py-2 rounded-full hover:bg-white/60" style={{ color: 'var(--ink)' }}>Before & After</a>
           </nav>
 
           {/* Right side buttons */}
           <div className="flex items-center gap-1.5 md:gap-3">
-            {/* Login / Dashboard cluster — desktop only, tucked into the mobile drawer below */}
-            <div className="hidden lg:flex items-center gap-3">
-              {patientToken && currentPatient ? (
-                <>
-                  <button
-                    onClick={() => navigate('/patient-portal')}
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
-                    style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
-                  >
-                    Dashboard 🚀
-                  </button>
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shadow flex-shrink-0"
-                    style={{ background: 'var(--terracotta)' }}
-                  >
-                    {currentPatient.name ? currentPatient.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : currentPatient.email.slice(0, 2)}
-                  </div>
-                </>
-              ) : (
+            {/* Dashboard cluster if logged in */}
+            {patientToken && currentPatient && (
+              <div className="hidden lg:flex items-center gap-3">
                 <button
-                  onClick={handleGoogleLoginClick}
-                  className="px-5 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
-                  style={{ border: '1.5px solid var(--terracotta)', color: 'var(--terracotta)', background: 'transparent' }}
+                  onClick={() => navigate('/patient-portal')}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer hover:opacity-80 whitespace-nowrap"
+                  style={{ border: '1px solid var(--terracotta)', color: 'var(--terracotta)' }}
                 >
-                  Login
+                  Dashboard 🚀
                 </button>
-              )}
-            </div>
+                <div
+                  className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs text-white shadow flex-shrink-0"
+                  style={{ background: 'var(--terracotta)' }}
+                >
+                  {currentPatient.name ? currentPatient.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2) : currentPatient.email.slice(0, 2)}
+                </div>
+              </div>
+            )}
 
             <button
               onClick={() => startBooking()}
@@ -804,8 +795,8 @@ export const LandingView: React.FC = () => {
                 <button onClick={() => { navigate('/gallery'); setMobileMenuOpen(false); }} className="text-left text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl cursor-pointer hover:bg-white/60" style={{ color: 'var(--ink)' }}>Gallery</button>
                 <a href="#transformations" onClick={() => setMobileMenuOpen(false)} className="text-[13px] font-semibold uppercase tracking-[0.05em] px-3 py-3 rounded-xl hover:bg-white/60" style={{ color: 'var(--ink)' }}>Before &amp; After</a>
 
-                <div className="mt-2 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
-                  {patientToken && currentPatient ? (
+                {patientToken && currentPatient && (
+                  <div className="mt-2 pt-3" style={{ borderTop: '1px solid rgba(0,0,0,0.06)' }}>
                     <button
                       onClick={() => { navigate('/patient-portal'); setMobileMenuOpen(false); }}
                       className="w-full flex items-center justify-center gap-2 px-4 py-3 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer"
@@ -813,16 +804,8 @@ export const LandingView: React.FC = () => {
                     >
                       Dashboard 🚀
                     </button>
-                  ) : (
-                    <button
-                      onClick={() => { handleGoogleLoginClick(); setMobileMenuOpen(false); }}
-                      className="w-full px-4 py-3 text-xs font-semibold uppercase tracking-[0.05em] rounded-full transition-all cursor-pointer"
-                      style={{ border: '1.5px solid var(--terracotta)', color: 'var(--terracotta)', background: 'transparent' }}
-                    >
-                      Login
-                    </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}
@@ -837,7 +820,7 @@ export const LandingView: React.FC = () => {
       {/* A two-slide loop: intro video plays to completion, then holds on a
           doctor-profile split for a few seconds, then repeats. */}
       <section
-        className="relative h-[78vh] md:h-[82vh] min-h-[520px] w-full overflow-hidden"
+        className="relative h-[78vh] md:h-[86vh] min-h-[520px] md:min-h-[640px] w-full overflow-hidden"
         style={{
           background: 'var(--blush)',
           height: heroPhase === 'video' ? 'clamp(220px, 56.25vw, 760px)' : undefined,
@@ -853,7 +836,7 @@ export const LandingView: React.FC = () => {
             initial={false}
             animate={
               heroPhase === 'profile'
-                ? { flexBasis: '48%', padding: '36px' }
+                ? { flexBasis: '48%', padding: isMobile ? '24px 16px 24px 16px' : '108px 36px 36px 36px' }
                 : { flexBasis: '100%', padding: '0px' }
             }
             transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
@@ -977,7 +960,7 @@ export const LandingView: React.FC = () => {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
                   transition={{ duration: 0.6, delay: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                  className="pl-14 pr-6 sm:pl-16 sm:pr-10 md:pl-20 md:pr-12 py-8 max-w-xl"
+                  className="pl-8 pr-6 sm:pl-12 sm:pr-10 md:pl-16 md:pr-12 pt-24 md:pt-28 pb-8 max-w-xl"
                 >
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] mb-4" style={{ color: 'var(--rose)' }}>
                     Meet Your Doctor
@@ -2470,22 +2453,19 @@ export const LandingView: React.FC = () => {
 
       {/* ── FAQ ──────────────────────────────────────────────────────────── */}
       <section className="py-20 px-5 md:px-16" style={{ background: 'var(--white)' }} id="faq">
-        <div className="max-w-3xl mx-auto space-y-10">
+        <div className="max-w-4xl mx-auto space-y-10">
           <div className="text-center space-y-3">
             <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: 'var(--terracotta)' }}>Patient Inquiries</span>
             <h2 className="font-serif text-4xl font-semibold" style={{ color: 'var(--ink)' }}>Common Questions</h2>
-            <p className="text-xs" style={{ color: 'var(--muted)' }}>Curated answers representing treatment guidelines, consult pricing, and clinic safety.</p>
+            <p className="text-xs max-w-xl mx-auto" style={{ color: 'var(--muted)' }}>
+              Curated answers covering skin treatments, hair loss remedies, consult fees, and clinic guidelines in Varanasi.
+            </p>
           </div>
 
           <div className="space-y-0">
-            {[
-              { q: 'What is the consultation fee?', a: 'The initial comprehensive skin and hair consultation fee with Dr. Megha is ₹500. This includes diagnostics, scalp/skin mapping, and a bespoke treatment roadmap.' },
-              { q: 'Are laser treatments safe for sensitive skin?', a: 'Yes, we use US-FDA approved laser technologies calibrated precisely. Dr. Megha performs skin analysis and patch tests to guarantee optimal safety with any procedure.' },
-              { q: 'How long does active acne treatment take?', a: 'Visible improvements are usually seen within 2-4 weeks. A full clinical regimen spanning acne peels, medication, and skin rejuvenation typically lasts 3 to 6 months depending on individual severity.' },
-              { q: 'Do you offer hair fall and thinning treatments?', a: 'We provide specialized clinical hair loss treatments including PRP (Platelet Rich Plasma) therapy, clinical Mesotherapy, and personalized hair growth diagnostics.' }
-            ].map((faq, idx) => (
+            {FAQ_DATA.slice(0, 6).map((faq, idx) => (
               <div
-                key={idx}
+                key={faq.id}
                 className="overflow-hidden"
                 style={{ borderBottom: '1px solid var(--border)' }}
               >
@@ -2495,7 +2475,7 @@ export const LandingView: React.FC = () => {
                   onMouseEnter={e => (e.currentTarget.style.background = 'var(--cream)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <span className="font-serif text-lg font-medium" style={{ color: 'var(--ink)' }}>{faq.q}</span>
+                  <span className="font-serif text-lg font-medium pr-4" style={{ color: 'var(--ink)' }}>{faq.question}</span>
                   <span
                     className="material-symbols-outlined flex-shrink-0 ml-4 transition-transform duration-300"
                     style={{ color: 'var(--terracotta)', transform: activeFaq === idx ? 'rotate(180deg)' : 'rotate(0deg)' }}
@@ -2510,12 +2490,22 @@ export const LandingView: React.FC = () => {
                       exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.3 }}
                       className="overflow-hidden"
                     >
-                      <p className="pb-5 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{faq.a}</p>
+                      <p className="pb-5 text-sm leading-relaxed" style={{ color: 'var(--muted)' }}>{faq.answer}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ))}
+          </div>
+
+          <div className="flex justify-center pt-4">
+            <button
+              onClick={() => navigate('/faqs')}
+              className="border-[1.5px] border-[var(--rose)] text-[var(--rose)] bg-transparent rounded-full px-9 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] transition-all duration-300 hover:bg-[var(--rose)] hover:text-white cursor-pointer shadow-xs"
+              style={{ fontFamily: 'Inter, sans-serif' }}
+            >
+              VIEW ALL 40 FAQS →
+            </button>
           </div>
         </div>
       </section>
@@ -2633,6 +2623,13 @@ export const LandingView: React.FC = () => {
             >{link.label}</a>
           ))}
           <button
+            onClick={() => navigate('/faqs')}
+            className="transition-colors hover:opacity-100 cursor-pointer text-xs font-medium uppercase tracking-widest"
+            style={{ color: 'var(--muted)' }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#F5E4D8')}
+            onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted)')}
+          >FAQs</button>
+          <button
             onClick={() => navigate('/patient-portal')}
             className="transition-colors hover:opacity-100 cursor-pointer text-xs font-medium uppercase tracking-widest"
             style={{ color: 'var(--muted)' }}
@@ -2730,7 +2727,7 @@ export const LandingView: React.FC = () => {
               <div className="aspect-video">
                 <iframe
                   width="100%" height="100%"
-                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1"
+                  src="https://www.youtube.com/embed/ifUytQr8hvU?autoplay=1"
                   title="Dr. Megha Pundir Singh — Derm Elixir"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen

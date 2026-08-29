@@ -20,6 +20,9 @@ import { BlogDetailView } from './components/BlogDetailView';
 import { TestimonialsView } from './components/TestimonialsView';
 import { AboutView } from './components/AboutView';
 import { GalleryView } from './components/GalleryView';
+import { FaqView } from './components/FaqView';
+import { TreatmentsView } from './components/TreatmentsView';
+import { TreatmentDetailView } from './components/TreatmentDetailView';
 
 import { motion, useScroll, useSpring } from 'framer-motion';
 import { initGA, logPageView } from './utils/analytics';
@@ -93,6 +96,9 @@ export default function App() {
               <Route path="/about" element={<AboutView />} />
               <Route path="/gallery" element={<GalleryView />} />
               <Route path="/testimonials" element={<TestimonialsView />} />
+              <Route path="/faqs" element={<FaqView />} />
+              <Route path="/treatments" element={<TreatmentsView />} />
+              <Route path="/treatments/:slug" element={<TreatmentDetailView />} />
               <Route path="/skin-analyzer" element={<SkinAnalyzer />} />
               <Route path="/patient-portal" element={<PatientPortal />} />
               <Route path="/video-room" element={<VideoRoom />} />

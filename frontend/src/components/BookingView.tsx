@@ -376,6 +376,16 @@ export const BookingView: React.FC = () => {
 
       <div ref={modalCardRef} className="bg-white w-full max-w-5xl md:rounded-[32px] rounded-t-[28px] overflow-x-hidden overflow-y-auto md:overflow-y-hidden shadow-2xl relative z-10 flex flex-col md:flex-row min-h-[550px] max-h-[94vh] md:max-h-[90vh]">
 
+        {/* Top-Right Absolute Close Button */}
+        <button
+          onClick={triggerReset}
+          aria-label="Close modal"
+          className="absolute top-4 right-4 z-30 w-9 h-9 rounded-full bg-neutral-100 hover:bg-rose-50 hover:text-rose-600 border border-neutral-200/80 text-neutral-500 transition-all flex items-center justify-center cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+          title="Close Booking Modal"
+        >
+          <span className="material-symbols-outlined text-xl leading-none">close</span>
+        </button>
+
         {/* Left Branded Side Panel — compact single row on mobile, full showcase on desktop */}
         <div className="w-full md:w-[32%] bg-[#FAF5F9] flex flex-row md:flex-col md:justify-between items-center text-left md:text-center relative border-b md:border-b-0 md:border-r border-purple-100/50 px-5 py-4 md:p-8 gap-3 md:gap-0 flex-shrink-0">
           <div className="flex-1 md:flex-1 flex flex-row md:flex-col items-center md:justify-center gap-3 md:gap-0 md:space-y-6 min-w-0">
@@ -443,17 +453,11 @@ export const BookingView: React.FC = () => {
           {/* Main Form Area */}
           <div ref={formAreaRef} className="flex-1 p-5 md:p-8 overflow-visible md:overflow-y-auto md:max-h-[85vh]">
 
-            {/* Header Close button */}
-            <div className="flex justify-between items-center mb-6">
+            {/* Header Step Counter */}
+            <div className="flex justify-between items-center mb-6 pr-8">
               <span className="text-sm font-bold text-neutral-400 uppercase tracking-wider">
                 {step < 6 ? `Step ${step} of 5` : ''}
               </span>
-              <button
-                onClick={triggerReset}
-                className="p-1 hover:bg-neutral-100 rounded-lg text-neutral-400 hover:text-neutral-700 transition-colors"
-              >
-                <span className="material-symbols-outlined text-lg">close</span>
-              </button>
             </div>
 
             <AnimatePresence mode="wait">
@@ -774,12 +778,17 @@ export const BookingView: React.FC = () => {
                       <div className="space-y-2">
                         <p className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Location</p>
                         <div className="space-y-1">
-                          <p className="text-xs font-bold text-[#8A256E] flex items-center gap-1">
-                            Skin Savvy Clinic
+                          <a
+                            href="https://maps.google.com/?q=N1/66,+Nagwa+Rd,+inside+Gyandeep+Medicare+Hospital,+Samne+Ghat,+Nagwa+Lanka,+Varanasi,+Uttar+Pradesh+221005"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs font-bold text-[#8A256E] hover:underline flex items-center gap-1"
+                          >
+                            Derm Elixir Clinic
                             <span className="material-symbols-outlined text-[13px]">open_in_new</span>
-                          </p>
+                          </a>
                           <p className="text-[10px] text-neutral-500 font-medium leading-relaxed">
-                            Malviya kunj, SHARABH HOSPITAL, B31/13 D-P, Saket Nagar Colony, Lanka, Varanasi, Uttar Pradesh 221005
+                            N1/66, Nagwa Rd, inside Gyandeep Medicare Hospital, Samne Ghat, Nagwa Lanka, Varanasi, Uttar Pradesh 221005
                           </p>
                         </div>
                       </div>
@@ -875,7 +884,7 @@ export const BookingView: React.FC = () => {
                     </p>
                   )}
                   {step >= 5 && (
-                    <p className="text-[10px] text-neutral-400 font-medium">Location: Skin Savvy Clinic</p>
+                    <p className="text-[10px] text-neutral-400 font-medium">Location: Derm Elixir Clinic</p>
                   )}
                   {step >= 4 && (
                     <p className="text-[10px] font-bold mt-2 text-[#8A256E]">
